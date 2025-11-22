@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Load Assets with cache busting
-        const v = Date.now() + 6; // Force new version (v6)
+        const v = Date.now() + 7; // Force new version (v7)
         k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
@@ -42,6 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
         k.loadSprite("macrophage-idle-excited", `assets/animation_frames/Macrophage/Macrophage_Idle(Excited).png?v=${v}`);
         k.loadSprite("macrophage-prepare", `assets/animation_frames/Macrophage/Macrophage_Attack(Prepare_To_Eat).png?v=${v}`);
         k.loadSprite("macrophage-attack", `assets/animation_frames/Macrophage/Macrophage_Attack(Big_Munch).png?v=${v}`);
+        k.loadSprite("platelet-idle", `assets/animation_frames/Platelet/Platelet_Idle.png?v=${v}`);
+        k.loadSprite("platelet-idle2", `assets/animation_frames/Platelet/Platelet_Idle1.png?v=${v}`);
+        k.loadSprite("platelet-prepare", `assets/animation_frames/Platelet/Platelet_PrepareToThrow.png?v=${v}`);
+        k.loadSprite("platelet-throw", `assets/animation_frames/Platelet/Platelet_AfterThrowSwing.png?v=${v}`);
+        k.loadSprite("fibrin-projectile", `assets/animation_frames/Platelet/Fibrin-net_Projectile.png?v=${v}`);
+        k.loadSprite("fibrin-expanded", `assets/animation_frames/Platelet/Fibrin-net_Expanded.png?v=${v}`);
 
         // Define Paths (Waypoints)
         // Path 1: Top path
@@ -175,6 +181,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 k.z(101)
             ]);
 
+            // Shop Item: Platelet
+            const shopItemPlatelet = k.add([
+                k.sprite("platelet-idle"),
+                k.pos(280, 50),
+                k.anchor("center"),
+                k.scale(0.12),
+                k.z(101),
+                k.area(),
+                "shop-item-platelet"
+            ]);
+
+            k.add([
+                k.text("Platelet", { size: 14 }),
+                k.pos(280, 85),
+                k.anchor("center"),
+                k.color(255, 255, 255),
+                k.z(101)
+            ]);
+
             // Dragging State
             let isDragging = false;
             let dragSprite = null;
@@ -232,6 +257,34 @@ document.addEventListener("DOMContentLoaded", () => {
                     k.opacity(0.2),
                     k.color(200, 100, 255),
                     k.outline(2, k.rgb(200, 100, 255)),
+                    k.z(199),
+                    "range-indicator"
+                ]);
+            });
+
+            // Handle Drag Start - Platelet
+            shopItemPlatelet.onClick(() => {
+                if (isDragging) return;
+                isDragging = true;
+                selectedTowerType = "platelet";
+
+                dragSprite = k.add([
+                    k.sprite("platelet-idle"),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.opacity(0.7),
+                    k.z(200),
+                    "drag-ghost"
+                ]);
+
+                rangeIndicator = k.add([
+                    k.circle(GAME_CONFIG.towers.platelet.range),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.opacity(0.2),
+                    k.color(100, 255, 100),
+                    k.outline(2, k.rgb(100, 255, 100)),
                     k.z(199),
                     "range-indicator"
                 ]);
@@ -313,6 +366,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     placeBCell(dropPos);
                 } else if (selectedTowerType === "macrophage") {
                     placeMacrophage(dropPos);
+                } else if (selectedTowerType === "platelet") {
+                    placePlatelet(dropPos);
                 }
 
                 selectedTowerType = null;
@@ -498,6 +553,151 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             }
 
+            // Function to place Platelet tower
+            function placePlatelet(dropPos) {
+                const platelet = k.add([
+                    k.sprite("platelet-idle"),
+                    k.pos(dropPos),
+                    k.anchor("center"),
+                    k.scale(0.15),
+                    k.opacity(1),
+                    k.color(255, 255, 255),
+                    k.z(50),
+                    "platelet",
+                    {
+                        attackTimer: 0,
+                        idleTimer: 0,
+                        idleFrame: 0,
+                        range: GAME_CONFIG.towers.platelet.range,
+                        attackSpeed: GAME_CONFIG.towers.platelet.attackSpeed,
+                        damage: GAME_CONFIG.towers.platelet.damage,
+                        attackState: "idle" // States: "idle", "prepare", "throw"
+                    }
+                ]);
+
+                const idleFrames = ["platelet-idle", "platelet-idle2"];
+
+                platelet.onUpdate(() => {
+                    if (platelet.attackState === "idle") {
+                        // Idle animation cycle
+                        platelet.idleTimer += k.dt();
+                        if (platelet.idleTimer > 0.3) {
+                            platelet.idleTimer = 0;
+                            platelet.idleFrame = (platelet.idleFrame + 1) % idleFrames.length;
+                            platelet.use(k.sprite(idleFrames[platelet.idleFrame]));
+                        }
+
+                        // Check for attack
+                        platelet.attackTimer += k.dt();
+                        if (platelet.attackTimer >= platelet.attackSpeed) {
+                            // Find nearest enemy in range
+                            const enemies = k.get("enemy");
+                            let nearestEnemy = null;
+                            let nearestDist = platelet.range;
+
+                            for (const enemy of enemies) {
+                                const dist = platelet.pos.dist(enemy.pos);
+                                if (dist <= platelet.range && dist < nearestDist) {
+                                    nearestEnemy = enemy;
+                                    nearestDist = dist;
+                                }
+                            }
+
+                            // Start throw sequence if enemy in range
+                            if (nearestEnemy) {
+                                platelet.attackTimer = 0;
+                                platelet.attackState = "prepare";
+                                platelet.use(k.sprite("platelet-prepare"));
+
+                                const targetEnemy = nearestEnemy;
+                                const targetPos = targetEnemy.pos.clone();
+
+                                // Transition to throw after prepare animation
+                                k.wait(0.2, () => {
+                                    if (!platelet.exists()) return;
+
+                                    platelet.attackState = "throw";
+                                    platelet.use(k.sprite("platelet-throw"));
+
+                                    // Create fibrin net projectile
+                                    const projectile = k.add([
+                                        k.sprite("fibrin-projectile"),
+                                        k.pos(platelet.pos),
+                                        k.anchor("center"),
+                                        k.scale(0.1),
+                                        k.z(30),
+                                        "fibrin-projectile",
+                                        {
+                                            speed: GAME_CONFIG.towers.platelet.projectileSpeed,
+                                            targetPos: targetPos,
+                                            damage: platelet.damage,
+                                            hasLanded: false
+                                        }
+                                    ]);
+
+                                    projectile.onUpdate(() => {
+                                        if (projectile.hasLanded) return;
+
+                                        const dir = projectile.targetPos.sub(projectile.pos);
+                                        const dist = dir.len();
+
+                                        if (dist < 5) {
+                                            // Projectile landed
+                                            projectile.hasLanded = true;
+                                            const landPos = projectile.pos.clone();
+                                            k.destroy(projectile);
+
+                                            // Deal damage to enemy at landing spot
+                                            const enemiesNearLanding = k.get("enemy");
+                                            for (const enemy of enemiesNearLanding) {
+                                                if (enemy.pos.dist(landPos) < 30) {
+                                                    showDamageNumber(enemy.pos, GAME_CONFIG.towers.platelet.damage);
+                                                    enemy.hp -= GAME_CONFIG.towers.platelet.damage;
+                                                }
+                                            }
+
+                                            // Create expanded net at landing location
+                                            const expandedNet = k.add([
+                                                k.sprite("fibrin-expanded"),
+                                                k.pos(landPos),
+                                                k.anchor("center"),
+                                                k.scale(0.15),
+                                                k.opacity(0.6),
+                                                k.z(5),
+                                                k.area(),
+                                                "fibrin-net",
+                                                {
+                                                    slowEffect: GAME_CONFIG.towers.platelet.slowEffect,
+                                                    duration: GAME_CONFIG.towers.platelet.netDuration,
+                                                    elapsed: 0
+                                                }
+                                            ]);
+
+                                            // Remove net after duration
+                                            expandedNet.onUpdate(() => {
+                                                expandedNet.elapsed += k.dt();
+                                                if (expandedNet.elapsed >= expandedNet.duration) {
+                                                    k.destroy(expandedNet);
+                                                }
+                                            });
+                                        } else {
+                                            projectile.move(dir.unit().scale(projectile.speed));
+                                        }
+                                    });
+
+                                    // Return to idle after throw
+                                    k.wait(0.3, () => {
+                                        if (!platelet.exists()) return;
+                                        platelet.attackState = "idle";
+                                        platelet.use(k.sprite(idleFrames[platelet.idleFrame]));
+                                    });
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
             // Enemy Logic
             function spawnEnemy(pathPoints) {
                 const enemy = k.add([
@@ -542,9 +742,20 @@ document.addEventListener("DOMContentLoaded", () => {
                         return;
                     }
 
+                    // Check if enemy is on a fibrin net
+                    const nets = k.get("fibrin-net");
+                    let slowMultiplier = 1.0;
+                    for (const net of nets) {
+                        if (enemy.pos.dist(net.pos) < 50) { // Within net range
+                            slowMultiplier = 1.0 - net.slowEffect; // 30% slow = 0.7x speed
+                            break;
+                        }
+                    }
+
                     const target = enemy.path[enemy.currentPointIndex + 1];
                     const dir = target.sub(enemy.pos).unit();
-                    enemy.move(dir.scale(enemy.speed));
+                    const effectiveSpeed = enemy.speed * slowMultiplier;
+                    enemy.move(dir.scale(effectiveSpeed));
 
                     if (enemy.pos.dist(target) < 5) {
                         enemy.currentPointIndex++;

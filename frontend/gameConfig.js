@@ -14,6 +14,14 @@ const GAME_CONFIG = {
             attackSpeed: 2.0,     // Slow attack speed (2 seconds between attacks)
             damage: 50,           // High damage per attack
             isAreaDamage: true    // Deals damage in area
+        },
+        platelet: {
+            range: 180,           // Medium attack range in pixels
+            attackSpeed: 1.2,     // Medium attack speed (1.2 seconds between throws)
+            damage: 5,            // Low damage per net
+            projectileSpeed: 300, // Net projectile speed (pixels/second)
+            slowEffect: 0.3,      // 30% slow (reduces speed by 30%)
+            netDuration: 5.0      // Net stays on ground for 5 seconds
         }
     },
 
