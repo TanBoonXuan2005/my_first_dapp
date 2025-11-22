@@ -62,7 +62,8 @@ def remove_background_floodfill(image_path):
         print(f"Error processing {image_path}: {e}")
 
 paths_to_process = [
-    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Flu-virus.png",
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Flu Virus/Flu-virus.png",
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Flu Virus/Flu-virus_Death.png",
     "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/NK-Cell",
     "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Macrophage",
     "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Basophil",

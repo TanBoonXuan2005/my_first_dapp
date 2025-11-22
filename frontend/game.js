@@ -31,13 +31,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Load Assets with cache busting
-        const v = Date.now() + 4; // Force new version (v4)
+        const v = Date.now() + 5; // Force new version (v5)
         k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
         k.loadSprite("flu-virus", `assets/animation_frames/Flu Virus/Flu-virus.png?v=${v}`);
         k.loadSprite("flu-virus-death", `assets/animation_frames/Flu Virus/Flu-virus_Death.png?v=${v}`);
         k.loadSprite("y-antibody", `assets/animation_frames/B-Cells/Y-Antibody_projectile.png?v=${v}`);
+        k.loadSprite("macrophage-idle", `assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png?v=${v}`);
+        k.loadSprite("macrophage-attack", `assets/animation_frames/Macrophage/Macrophage_Attack(Big_Munch).png?v=${v}`);
 
         // Define Paths (Waypoints)
         // Path 1: Top path
@@ -134,21 +136,40 @@ document.addEventListener("DOMContentLoaded", () => {
             ]);
 
             // Shop Item: B-Cell
-            const shopItem = k.add([
+            const shopItemBCell = k.add([
                 k.sprite("b-cell-neutral"),
-                k.pos(120, 50), // Moved right
+                k.pos(120, 50),
                 k.anchor("center"),
                 k.scale(0.12),
                 k.z(101),
                 k.area(),
-                "shop-item"
+                "shop-item-bcell"
             ]);
 
             k.add([
                 k.text("B-Cell", { size: 14 }),
-                k.pos(120, 85), // Adjusted to match new B-Cell position
+                k.pos(120, 85),
                 k.anchor("center"),
-                k.color(255, 255, 255), // Pure white
+                k.color(255, 255, 255),
+                k.z(101)
+            ]);
+
+            // Shop Item: Macrophage
+            const shopItemMacrophage = k.add([
+                k.sprite("macrophage-idle"),
+                k.pos(200, 50),
+                k.anchor("center"),
+                k.scale(0.12),
+                k.z(101),
+                k.area(),
+                "shop-item-macrophage"
+            ]);
+
+            k.add([
+                k.text("Macrophage", { size: 14 }),
+                k.pos(200, 85),
+                k.anchor("center"),
+                k.color(255, 255, 255),
                 k.z(101)
             ]);
 
@@ -156,33 +177,60 @@ document.addEventListener("DOMContentLoaded", () => {
             let isDragging = false;
             let dragSprite = null;
             let rangeIndicator = null;
+            let selectedTowerType = null;
 
-            // Handle Drag Start
-            shopItem.onClick(() => {
+            // Handle Drag Start - B-Cell
+            shopItemBCell.onClick(() => {
                 if (isDragging) return;
                 isDragging = true;
+                selectedTowerType = "bcell";
 
-                // Create a ghost sprite that follows mouse
-                // Using the neutral frame for dragging
                 dragSprite = k.add([
                     k.sprite("b-cell-neutral"),
                     k.pos(k.mousePos()),
                     k.anchor("center"),
-                    k.scale(0.12), // Match shop scale
+                    k.scale(0.12),
                     k.opacity(0.7),
                     k.z(200),
                     "drag-ghost"
                 ]);
 
-                // Create range indicator circle
                 rangeIndicator = k.add([
                     k.circle(GAME_CONFIG.towers.bCell.range),
                     k.pos(k.mousePos()),
                     k.anchor("center"),
                     k.opacity(0.2),
-                    k.color(100, 200, 255), // Light blue
+                    k.color(100, 200, 255),
                     k.outline(2, k.rgb(100, 200, 255)),
-                    k.z(199), // Below drag sprite
+                    k.z(199),
+                    "range-indicator"
+                ]);
+            });
+
+            // Handle Drag Start - Macrophage
+            shopItemMacrophage.onClick(() => {
+                if (isDragging) return;
+                isDragging = true;
+                selectedTowerType = "macrophage";
+
+                dragSprite = k.add([
+                    k.sprite("macrophage-idle"),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.opacity(0.7),
+                    k.z(200),
+                    "drag-ghost"
+                ]);
+
+                rangeIndicator = k.add([
+                    k.circle(GAME_CONFIG.towers.macrophage.range),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.opacity(0.2),
+                    k.color(200, 100, 255),
+                    k.outline(2, k.rgb(200, 100, 255)),
+                    k.z(199),
                     "range-indicator"
                 ]);
             });
@@ -258,7 +306,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                // Place Tower
+                // Place Tower based on selectedTowerType
+                if (selectedTowerType === "bcell") {
+                    placeBCell(dropPos);
+                } else if (selectedTowerType === "macrophage") {
+                    placeMacrophage(dropPos);
+                }
+
+                selectedTowerType = null;
+            });
+
+            // Function to place B-Cell tower
+            function placeBCell(dropPos) {
                 const bCell = k.add([
                     k.sprite("b-cell-neutral"),
                     k.pos(dropPos),
@@ -350,7 +409,74 @@ document.addEventListener("DOMContentLoaded", () => {
                         }
                     }
                 });
-            });
+            }
+
+            // Function to place Macrophage tower
+            function placeMacrophage(dropPos) {
+                const macrophage = k.add([
+                    k.sprite("macrophage-idle"),
+                    k.pos(dropPos),
+                    k.anchor("center"),
+                    k.scale(0.15),
+                    k.opacity(1),
+                    k.color(255, 255, 255),
+                    k.z(50),
+                    "macrophage",
+                    {
+                        attackTimer: 0,
+                        range: GAME_CONFIG.towers.macrophage.range,
+                        attackSpeed: GAME_CONFIG.towers.macrophage.attackSpeed,
+                        damage: GAME_CONFIG.towers.macrophage.damage,
+                        isAttacking: false,
+                        attackAnimTimer: 0
+                    }
+                ]);
+
+                macrophage.onUpdate(() => {
+                    // Combat logic
+                    macrophage.attackTimer += k.dt();
+
+                    if (macrophage.isAttacking) {
+                        // Handle attack animation
+                        macrophage.attackAnimTimer += k.dt();
+                        if (macrophage.attackAnimTimer >= 0.3) { // Attack animation duration
+                            macrophage.use(k.sprite("macrophage-idle"));
+                            macrophage.isAttacking = false;
+                            macrophage.attackAnimTimer = 0;
+                        }
+                    } else if (macrophage.attackTimer >= macrophage.attackSpeed) {
+                        // Check for enemies in range
+                        const enemies = k.get("enemy");
+                        let hasEnemyInRange = false;
+
+                        for (const enemy of enemies) {
+                            const dist = macrophage.pos.dist(enemy.pos);
+                            if (dist <= macrophage.range) {
+                                hasEnemyInRange = true;
+                                break;
+                            }
+                        }
+
+                        // Attack if enemies in range
+                        if (hasEnemyInRange) {
+                            macrophage.attackTimer = 0;
+                            macrophage.isAttacking = true;
+
+                            // Switch to attack animation
+                            macrophage.use(k.sprite("macrophage-attack"));
+
+                            // Deal area damage
+                            for (const enemy of enemies) {
+                                const dist = macrophage.pos.dist(enemy.pos);
+                                if (dist <= macrophage.range) {
+                                    showDamageNumber(enemy.pos, macrophage.damage);
+                                    enemy.hp -= macrophage.damage;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
 
             // Enemy Logic
             function spawnEnemy(pathPoints) {
