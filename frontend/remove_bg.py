@@ -66,7 +66,8 @@ paths_to_process = [
     "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/NK-Cell",
     "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Macrophage",
     "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Basophil",
-    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Platelet"
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Platelet",
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/B-Cells/Y-Antibody_projectile.png"
 ]
 
 for path in paths_to_process:

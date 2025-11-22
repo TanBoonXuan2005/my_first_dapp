@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Load Assets with cache busting
-        const v = Date.now() + 2; // Force new version (v2)
+        const v = Date.now() + 3; // Force new version (v3)
         k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
