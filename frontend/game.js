@@ -154,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Dragging State
             let isDragging = false;
             let dragSprite = null;
+            let rangeIndicator = null;
 
             // Handle Drag Start
             shopItem.onClick(() => {
@@ -171,12 +172,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     k.z(200),
                     "drag-ghost"
                 ]);
+
+                // Create range indicator circle
+                rangeIndicator = k.add([
+                    k.circle(GAME_CONFIG.towers.bCell.range),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.opacity(0.2),
+                    k.color(100, 200, 255), // Light blue
+                    k.outline(2, k.rgb(100, 200, 255)),
+                    k.z(199), // Below drag sprite
+                    "range-indicator"
+                ]);
             });
 
             // Handle Dragging
             k.onUpdate(() => {
                 if (isDragging && dragSprite) {
                     dragSprite.pos = k.mousePos();
+
+                    // Update range indicator position
+                    if (rangeIndicator) {
+                        rangeIndicator.pos = k.mousePos();
+                    }
 
                     // Visual feedback for validity
                     const validPos = k.mousePos().y > UI_HEIGHT && !isOnPath(k.mousePos());
@@ -195,6 +213,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (dragSprite) {
                     k.destroy(dragSprite);
                     dragSprite = null;
+                }
+
+                // Remove range indicator
+                if (rangeIndicator) {
+                    k.destroy(rangeIndicator);
+                    rangeIndicator = null;
                 }
 
                 // Validate Placement
