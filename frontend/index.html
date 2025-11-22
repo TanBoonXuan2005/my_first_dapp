@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>One Chain Wallet</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="https://unpkg.com/kaboom@3000.1.17/dist/kaboom.js"></script>
     <script src="app.js" defer></script>
+    <script src="game.js" defer></script>
 </head>
+
 <body>
     <header>
         <h1>One Chain Wallet</h1>
@@ -12,6 +16,19 @@
     </header>
 
     <main>
+        <section id="home-screen">
+            <div class="hero-content">
+                <h2>Defend the Body!</h2>
+                <p>Deploy your immune cells to fight off the viral invasion.</p>
+                <button id="play-btn" class="primary-btn">PLAY GAME</button>
+            </div>
+        </section>
+
+        <section id="game-container" style="display: none;">
+            <h2>Tower Defense Prototype</h2>
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+        </section>
+
         <section id="wallet-info">
             <h2>Wallet Information</h2>
             <div id="wallet-content">
@@ -30,4 +47,5 @@
     <footer>
         <p>&copy; 2025 One Chain Wallet</p>
     </footer>
+
 </html>
