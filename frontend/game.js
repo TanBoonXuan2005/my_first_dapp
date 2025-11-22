@@ -31,14 +31,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Load Assets with cache busting
-        const v = Date.now() + 5; // Force new version (v5)
+        const v = Date.now() + 6; // Force new version (v6)
         k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
         k.loadSprite("flu-virus", `assets/animation_frames/Flu Virus/Flu-virus.png?v=${v}`);
         k.loadSprite("flu-virus-death", `assets/animation_frames/Flu Virus/Flu-virus_Death.png?v=${v}`);
         k.loadSprite("y-antibody", `assets/animation_frames/B-Cells/Y-Antibody_projectile.png?v=${v}`);
-        k.loadSprite("macrophage-idle", `assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png?v=${v}`);
+        k.loadSprite("macrophage-idle-neutral", `assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png?v=${v}`);
+        k.loadSprite("macrophage-idle-excited", `assets/animation_frames/Macrophage/Macrophage_Idle(Excited).png?v=${v}`);
+        k.loadSprite("macrophage-prepare", `assets/animation_frames/Macrophage/Macrophage_Attack(Prepare_To_Eat).png?v=${v}`);
         k.loadSprite("macrophage-attack", `assets/animation_frames/Macrophage/Macrophage_Attack(Big_Munch).png?v=${v}`);
 
         // Define Paths (Waypoints)
@@ -156,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Shop Item: Macrophage
             const shopItemMacrophage = k.add([
-                k.sprite("macrophage-idle"),
+                k.sprite("macrophage-idle-neutral"),
                 k.pos(200, 50),
                 k.anchor("center"),
                 k.scale(0.12),
@@ -214,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 selectedTowerType = "macrophage";
 
                 dragSprite = k.add([
-                    k.sprite("macrophage-idle"),
+                    k.sprite("macrophage-idle-neutral"),
                     k.pos(k.mousePos()),
                     k.anchor("center"),
                     k.scale(0.12),
@@ -414,7 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Function to place Macrophage tower
             function placeMacrophage(dropPos) {
                 const macrophage = k.add([
-                    k.sprite("macrophage-idle"),
+                    k.sprite("macrophage-idle-neutral"),
                     k.pos(dropPos),
                     k.anchor("center"),
                     k.scale(0.15),
@@ -424,54 +426,72 @@ document.addEventListener("DOMContentLoaded", () => {
                     "macrophage",
                     {
                         attackTimer: 0,
+                        idleTimer: 0,
+                        idleFrame: 0,
                         range: GAME_CONFIG.towers.macrophage.range,
                         attackSpeed: GAME_CONFIG.towers.macrophage.attackSpeed,
                         damage: GAME_CONFIG.towers.macrophage.damage,
-                        isAttacking: false,
-                        attackAnimTimer: 0
+                        attackState: "idle" // States: "idle", "prepare", "attack"
                     }
                 ]);
 
+                const idleFrames = ["macrophage-idle-neutral", "macrophage-idle-excited"];
+
                 macrophage.onUpdate(() => {
-                    // Combat logic
-                    macrophage.attackTimer += k.dt();
-
-                    if (macrophage.isAttacking) {
-                        // Handle attack animation
-                        macrophage.attackAnimTimer += k.dt();
-                        if (macrophage.attackAnimTimer >= 0.3) { // Attack animation duration
-                            macrophage.use(k.sprite("macrophage-idle"));
-                            macrophage.isAttacking = false;
-                            macrophage.attackAnimTimer = 0;
-                        }
-                    } else if (macrophage.attackTimer >= macrophage.attackSpeed) {
-                        // Check for enemies in range
-                        const enemies = k.get("enemy");
-                        let hasEnemyInRange = false;
-
-                        for (const enemy of enemies) {
-                            const dist = macrophage.pos.dist(enemy.pos);
-                            if (dist <= macrophage.range) {
-                                hasEnemyInRange = true;
-                                break;
-                            }
+                    if (macrophage.attackState === "idle") {
+                        // Idle animation cycle
+                        macrophage.idleTimer += k.dt();
+                        if (macrophage.idleTimer > 0.3) { // Change idle frame every 0.3s
+                            macrophage.idleTimer = 0;
+                            macrophage.idleFrame = (macrophage.idleFrame + 1) % idleFrames.length;
+                            macrophage.use(k.sprite(idleFrames[macrophage.idleFrame]));
                         }
 
-                        // Attack if enemies in range
-                        if (hasEnemyInRange) {
-                            macrophage.attackTimer = 0;
-                            macrophage.isAttacking = true;
+                        // Check for attack
+                        macrophage.attackTimer += k.dt();
+                        if (macrophage.attackTimer >= macrophage.attackSpeed) {
+                            // Check for enemies in range
+                            const enemies = k.get("enemy");
+                            let hasEnemyInRange = false;
 
-                            // Switch to attack animation
-                            macrophage.use(k.sprite("macrophage-attack"));
-
-                            // Deal area damage
                             for (const enemy of enemies) {
                                 const dist = macrophage.pos.dist(enemy.pos);
                                 if (dist <= macrophage.range) {
-                                    showDamageNumber(enemy.pos, macrophage.damage);
-                                    enemy.hp -= macrophage.damage;
+                                    hasEnemyInRange = true;
+                                    break;
                                 }
+                            }
+
+                            // Start attack sequence if enemies in range
+                            if (hasEnemyInRange) {
+                                macrophage.attackTimer = 0;
+                                macrophage.attackState = "prepare";
+                                macrophage.use(k.sprite("macrophage-prepare"));
+
+                                // Transition to attack after prepare animation
+                                k.wait(0.2, () => {
+                                    if (!macrophage.exists()) return;
+
+                                    macrophage.attackState = "attack";
+                                    macrophage.use(k.sprite("macrophage-attack"));
+
+                                    // Deal area damage
+                                    const enemies = k.get("enemy");
+                                    for (const enemy of enemies) {
+                                        const dist = macrophage.pos.dist(enemy.pos);
+                                        if (dist <= macrophage.range) {
+                                            showDamageNumber(enemy.pos, macrophage.damage);
+                                            enemy.hp -= macrophage.damage;
+                                        }
+                                    }
+
+                                    // Return to idle after attack
+                                    k.wait(0.3, () => {
+                                        if (!macrophage.exists()) return;
+                                        macrophage.attackState = "idle";
+                                        macrophage.use(k.sprite(idleFrames[macrophage.idleFrame]));
+                                    });
+                                });
                             }
                         }
                     }
