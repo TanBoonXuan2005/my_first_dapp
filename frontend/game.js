@@ -22,64 +22,245 @@ document.addEventListener("DOMContentLoaded", () => {
     function initGame() {
         k = kaboom({
             canvas: canvas,
-            background: [30, 30, 30],
+            background: [20, 20, 30], // Dark biological background
             width: 800,
             height: 600,
             scale: 1,
-            global: false, // Do not import into global scope
+            global: false,
             debug: true,
         });
 
-        // Load Assets
-        k.loadSprite("b-cell-neutral", "assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png");
-        k.loadSprite("b-cell-squash", "assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png");
-        k.loadSprite("b-cell-stretch", "assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png");
+        // Load Assets with cache busting
+        const v = Date.now() + 1; // Force new version
+        k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
+        k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
+        k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
+
+        // Define Paths (Waypoints)
+        // Path 1: Top path
+        const path1Points = [
+            k.vec2(0, 150),
+            k.vec2(200, 150),
+            k.vec2(300, 250),
+            k.vec2(500, 250),
+            k.vec2(600, 300), // Convergence point
+            k.vec2(800, 300)  // End
+        ];
+
+        // Path 2: Bottom path
+        const path2Points = [
+            k.vec2(0, 450),
+            k.vec2(200, 450),
+            k.vec2(300, 350),
+            k.vec2(500, 350),
+            k.vec2(600, 300), // Convergence point
+            k.vec2(800, 300)  // End
+        ];
+
+        const UI_HEIGHT = 100;
+
+        // Helper: Distance from point to line segment
+        function distToSegment(p, v, w) {
+            const l2 = v.dist(w) * v.dist(w);
+            if (l2 === 0) return p.dist(v);
+            let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+            t = Math.max(0, Math.min(1, t));
+            const projection = k.vec2(v.x + t * (w.x - v.x), v.y + t * (w.y - v.y));
+            return p.dist(projection);
+        }
+
+        // Helper: Check if point is on any path
+        function isOnPath(pos) {
+            const pathWidth = 40; // Half-width of the path (allowance)
+
+            // Check Path 1
+            for (let i = 0; i < path1Points.length - 1; i++) {
+                if (distToSegment(pos, path1Points[i], path1Points[i + 1]) < pathWidth) {
+                    return true;
+                }
+            }
+
+            // Check Path 2
+            for (let i = 0; i < path2Points.length - 1; i++) {
+                if (distToSegment(pos, path2Points[i], path2Points[i + 1]) < pathWidth) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         // Define Game Scene
         k.scene("main", () => {
-            // Background
+            // Draw the Map/Path visually
+            k.onDraw(() => {
+                // Draw Path 1
+                k.drawLines({
+                    pts: path1Points,
+                    width: 60,
+                    color: k.rgb(60, 0, 0),
+                    join: "round",
+                    cap: "round",
+                });
+
+                // Draw Path 2
+                k.drawLines({
+                    pts: path2Points,
+                    width: 60,
+                    color: k.rgb(60, 0, 0),
+                    join: "round",
+                    cap: "round",
+                });
+            });
+
+            // UI Background
             k.add([
-                k.rect(k.width(), k.height()),
-                k.color(20, 20, 25),
+                k.rect(k.width(), UI_HEIGHT),
                 k.pos(0, 0),
+                k.color(50, 50, 60),
+                k.z(100), // Ensure UI is on top
+                "ui-bg"
             ]);
 
-            // UI Text
             k.add([
-                k.text("Click to place B-Cell", { size: 24 }),
+                k.text("SHOP", { size: 20 }),
                 k.pos(20, 20),
-                k.color(255, 255, 255),
+                k.color(255, 255, 255), // Pure white
+                k.z(101)
             ]);
 
-            // Tower Placement Logic
-            k.onClick(() => {
-                const p = k.mousePos();
+            // Shop Item: B-Cell
+            const shopItem = k.add([
+                k.sprite("b-cell-neutral"),
+                k.pos(80, 50),
+                k.anchor("center"),
+                k.scale(0.12), // Reduced scale to fit better
+                k.z(101),
+                k.area(),
+                "shop-item"
+            ]);
 
-                // Spawn B-Cell
+            k.add([
+                k.text("B-Cell", { size: 14 }),
+                k.pos(80, 85), // Adjusted text position
+                k.anchor("center"),
+                k.color(255, 255, 255), // Pure white
+                k.z(101)
+            ]);
+
+            // Dragging State
+            let isDragging = false;
+            let dragSprite = null;
+
+            // Handle Drag Start
+            shopItem.onClick(() => {
+                if (isDragging) return;
+                isDragging = true;
+
+                // Create a ghost sprite that follows mouse
+                // Using the neutral frame for dragging
+                dragSprite = k.add([
+                    k.sprite("b-cell-neutral"),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.scale(0.12), // Match shop scale
+                    k.opacity(0.7),
+                    k.z(200),
+                    "drag-ghost"
+                ]);
+            });
+
+            // Handle Dragging
+            k.onUpdate(() => {
+                if (isDragging && dragSprite) {
+                    dragSprite.pos = k.mousePos();
+
+                    // Visual feedback for validity
+                    const validPos = k.mousePos().y > UI_HEIGHT && !isOnPath(k.mousePos());
+                    // If valid, show normal color (white tint = no tint). If invalid, show red.
+                    dragSprite.color = validPos ? k.rgb(255, 255, 255) : k.rgb(255, 100, 100);
+                }
+            });
+
+            // Handle Drag End (Mouse Release)
+            k.onMouseRelease(() => {
+                if (!isDragging) return;
+
+                const dropPos = k.mousePos();
+                isDragging = false;
+
+                if (dragSprite) {
+                    k.destroy(dragSprite);
+                    dragSprite = null;
+                }
+
+                // Validate Placement
+                // 1. Must be below UI
+                if (dropPos.y <= UI_HEIGHT) return;
+
+                // 2. Must NOT be on path
+                if (isOnPath(dropPos)) {
+                    // Optional: Show error effect
+                    k.shake(5);
+                    return;
+                }
+
+                // Place Tower
                 const bCell = k.add([
                     k.sprite("b-cell-neutral"),
-                    k.pos(p),
+                    k.pos(dropPos),
                     k.anchor("center"),
                     k.scale(0.15),
+                    k.opacity(1),
+                    k.color(255, 255, 255),
+                    k.z(50),
                     "b-cell",
                     {
                         timer: 0,
-                        frame: 0,
+                        animFrame: 0,
                     }
                 ]);
 
                 // Animation loop
+                // Cycle: Neutral -> Squash -> Neutral -> Stretch -> Neutral ...
+                // This creates a "breathing" or "bouncing" effect
+                const idleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral", "b-cell-stretch"];
+
                 bCell.onUpdate(() => {
                     bCell.timer += k.dt();
-                    if (bCell.timer > 0.2) {
+                    if (bCell.timer > 0.15) { // Adjust speed (0.15s per frame)
                         bCell.timer = 0;
-                        bCell.frame = (bCell.frame + 1) % 3;
-
-                        if (bCell.frame === 0) bCell.use(k.sprite("b-cell-neutral"));
-                        else if (bCell.frame === 1) bCell.use(k.sprite("b-cell-squash"));
-                        else if (bCell.frame === 2) bCell.use(k.sprite("b-cell-stretch"));
+                        bCell.animFrame = (bCell.animFrame + 1) % idleFrames.length;
+                        bCell.use(k.sprite(idleFrames[bCell.animFrame]));
                     }
                 });
+            });
+
+            // Pre-placed B-Cell for verification
+            const demoBCell = k.add([
+                k.sprite("b-cell-neutral"),
+                k.pos(400, 300), // Center of map
+                k.anchor("center"),
+                k.scale(0.15),
+                k.opacity(1),
+                k.color(255, 255, 255),
+                k.z(50),
+                "b-cell-demo",
+                {
+                    timer: 0,
+                    animFrame: 0,
+                }
+            ]);
+
+            const demoIdleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral", "b-cell-stretch"];
+
+            demoBCell.onUpdate(() => {
+                demoBCell.timer += k.dt();
+                if (demoBCell.timer > 0.15) {
+                    demoBCell.timer = 0;
+                    demoBCell.animFrame = (demoBCell.animFrame + 1) % demoIdleFrames.length;
+                    demoBCell.use(k.sprite(demoIdleFrames[demoBCell.animFrame]));
+                }
             });
         });
 
