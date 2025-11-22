@@ -222,9 +222,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         timer: 0,
                         animFrame: 0,
                         shootTimer: 0,
-                        range: 250,
-                        attackSpeed: 0.5,
-                        damage: 10
+                        range: GAME_CONFIG.towers.bCell.range,
+                        attackSpeed: GAME_CONFIG.towers.bCell.attackSpeed,
+                        damage: GAME_CONFIG.towers.bCell.damage
                     }
                 ]);
 
@@ -272,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 k.z(30),
                                 "projectile",
                                 {
-                                    speed: 400,
+                                    speed: GAME_CONFIG.towers.bCell.projectileSpeed,
                                     target: nearestEnemy,
                                     damage: bCell.damage
                                 }
@@ -309,11 +309,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     k.z(10), // Below towers
                     "enemy",
                     {
-                        speed: 100,
+                        speed: GAME_CONFIG.enemies.fluVirus.speed,
                         currentPointIndex: 0,
                         path: pathPoints,
-                        hp: 80,
-                        maxHp: 80
+                        hp: GAME_CONFIG.enemies.fluVirus.hp,
+                        maxHp: GAME_CONFIG.enemies.fluVirus.hp
                     }
                 ]);
 
@@ -341,11 +341,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Spawn Wave
             async function spawnWave() {
-                for (let i = 0; i < 5; i++) {
+                for (let i = 0; i < GAME_CONFIG.waves.first.enemyCount; i++) {
                     // Alternate paths
                     const path = i % 2 === 0 ? path1Points : path2Points;
                     spawnEnemy(path);
-                    await k.wait(1.5); // Wait 1.5 seconds between spawns
+                    await k.wait(GAME_CONFIG.waves.first.spawnDelay);
                 }
             }
 
