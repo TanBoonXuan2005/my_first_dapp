@@ -441,7 +441,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     {
                         timer: 0,
                         animFrame: 0,
-                        shootTimer: 0,
+                        shootTimer: GAME_CONFIG.towers.bCell.attackSpeed, // Start ready to attack
                         range: GAME_CONFIG.towers.bCell.range,
                         attackSpeed: GAME_CONFIG.towers.bCell.attackSpeed,
                         damage: GAME_CONFIG.towers.bCell.damage
@@ -534,7 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     k.z(50),
                     "macrophage",
                     {
-                        attackTimer: 0,
+                        attackTimer: GAME_CONFIG.towers.macrophage.attackSpeed, // Start ready to attack
                         idleTimer: 0,
                         idleFrame: 0,
                         range: GAME_CONFIG.towers.macrophage.range,
@@ -619,7 +619,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     k.z(50),
                     "platelet",
                     {
-                        attackTimer: 0,
+                        attackTimer: GAME_CONFIG.towers.platelet.attackSpeed, // Start ready to attack
                         idleTimer: 0,
                         idleFrame: 0,
                         range: GAME_CONFIG.towers.platelet.range,
@@ -764,7 +764,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     k.z(50),
                     "basophil",
                     {
-                        attackTimer: 0,
+                        attackTimer: GAME_CONFIG.towers.basophil.attackSpeed, // Start ready to attack
                         idleTimer: 0,
                         idleFrame: 0,
                         range: GAME_CONFIG.towers.basophil.range,
