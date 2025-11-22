@@ -17,11 +17,18 @@ const GAME_CONFIG = {
         },
         platelet: {
             range: 180,           // Medium attack range in pixels
-            attackSpeed: 1.2,     // Medium attack speed (1.2 seconds between throws)
+            attackSpeed: 1.0,     // Medium attack speed (1.2 seconds between throws)
             damage: 5,            // Low damage per net
-            projectileSpeed: 300, // Net projectile speed (pixels/second)
-            slowEffect: 0.3,      // 30% slow (reduces speed by 30%)
-            netDuration: 5.0      // Net stays on ground for 5 seconds
+            projectileSpeed: 500, // Net projectile speed (pixels/second) - increased for accuracy
+            slowEffect: 0.8,      // 30% slow (reduces speed by 30%)
+            netDuration: 3.0      // Net stays on ground for 5 seconds
+        },
+        basophil: {
+            range: 200,           // Medium-long attack range in pixels
+            attackSpeed: 2.5,     // Slow attack speed (2.5 seconds between throws)
+            damage: 25,           // Area damage per bomb
+            projectileSpeed: 500, // Bomb projectile speed (pixels/second)
+            explosionRadius: 80   // Explosion damage radius in pixels
         }
     },
 

@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Load Assets with cache busting
-        const v = Date.now() + 7; // Force new version (v7)
+        const v = Date.now() + 8; // Force new version (v8)
         k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
@@ -48,6 +48,11 @@ document.addEventListener("DOMContentLoaded", () => {
         k.loadSprite("platelet-throw", `assets/animation_frames/Platelet/Platelet_AfterThrowSwing.png?v=${v}`);
         k.loadSprite("fibrin-projectile", `assets/animation_frames/Platelet/Fibrin-net_Projectile.png?v=${v}`);
         k.loadSprite("fibrin-expanded", `assets/animation_frames/Platelet/Fibrin-net_Expanded.png?v=${v}`);
+        k.loadSprite("basophil-idle", `assets/animation_frames/Basophil/Basophil_Idle.png?v=${v}`);
+        k.loadSprite("basophil-idle2", `assets/animation_frames/Basophil/Basophil_Idle1.png?v=${v}`);
+        k.loadSprite("basophil-throw", `assets/animation_frames/Basophil/Basophil_Throw.png?v=${v}`);
+        k.loadSprite("bomb-projectile", `assets/animation_frames/Basophil/Histamin_Bomb_Projectile.png?v=${v}`);
+        k.loadSprite("explosion-effect", `assets/animation_frames/Basophil/Explosion_Effect.png?v=${v}`);
 
         // Define Paths (Waypoints)
         // Path 1: Top path
@@ -200,6 +205,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 k.z(101)
             ]);
 
+            // Shop Item: Basophil
+            const shopItemBasophil = k.add([
+                k.sprite("basophil-idle"),
+                k.pos(360, 50),
+                k.anchor("center"),
+                k.scale(0.12),
+                k.z(101),
+                k.area(),
+                "shop-item-basophil"
+            ]);
+
+            k.add([
+                k.text("Basophil", { size: 14 }),
+                k.pos(360, 85),
+                k.anchor("center"),
+                k.color(255, 255, 255),
+                k.z(101)
+            ]);
+
             // Dragging State
             let isDragging = false;
             let dragSprite = null;
@@ -290,6 +314,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 ]);
             });
 
+            // Handle Drag Start - Basophil
+            shopItemBasophil.onClick(() => {
+                if (isDragging) return;
+                isDragging = true;
+                selectedTowerType = "basophil";
+
+                dragSprite = k.add([
+                    k.sprite("basophil-idle"),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.opacity(0.7),
+                    k.z(200),
+                    "drag-ghost"
+                ]);
+
+                rangeIndicator = k.add([
+                    k.circle(GAME_CONFIG.towers.basophil.range),
+                    k.pos(k.mousePos()),
+                    k.anchor("center"),
+                    k.opacity(0.2),
+                    k.color(255, 150, 50),
+                    k.outline(2, k.rgb(255, 150, 50)),
+                    k.z(199),
+                    "range-indicator"
+                ]);
+            });
+
             // Handle Dragging
             k.onUpdate(() => {
                 if (isDragging && dragSprite) {
@@ -368,6 +420,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     placeMacrophage(dropPos);
                 } else if (selectedTowerType === "platelet") {
                     placePlatelet(dropPos);
+                } else if (selectedTowerType === "basophil") {
+                    placeBasophil(dropPos);
                 }
 
                 selectedTowerType = null;
@@ -691,6 +745,119 @@ document.addEventListener("DOMContentLoaded", () => {
                                         platelet.attackState = "idle";
                                         platelet.use(k.sprite(idleFrames[platelet.idleFrame]));
                                     });
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Function to place Basophil tower
+            function placeBasophil(dropPos) {
+                const basophil = k.add([
+                    k.sprite("basophil-idle"),
+                    k.pos(dropPos),
+                    k.anchor("center"),
+                    k.scale(0.15),
+                    k.opacity(1),
+                    k.color(255, 255, 255),
+                    k.z(50),
+                    "basophil",
+                    {
+                        attackTimer: 0,
+                        idleTimer: 0,
+                        idleFrame: 0,
+                        range: GAME_CONFIG.towers.basophil.range,
+                        attackSpeed: GAME_CONFIG.towers.basophil.attackSpeed,
+                        damage: GAME_CONFIG.towers.basophil.damage,
+                        attackState: "idle"
+                    }
+                ]);
+
+                const idleFrames = ["basophil-idle", "basophil-idle2"];
+
+                basophil.onUpdate(() => {
+                    if (basophil.attackState === "idle") {
+                        basophil.idleTimer += k.dt();
+                        if (basophil.idleTimer > 0.3) {
+                            basophil.idleTimer = 0;
+                            basophil.idleFrame = (basophil.idleFrame + 1) % idleFrames.length;
+                            basophil.use(k.sprite(idleFrames[basophil.idleFrame]));
+                        }
+
+                        basophil.attackTimer += k.dt();
+                        if (basophil.attackTimer >= basophil.attackSpeed) {
+                            const enemies = k.get("enemy");
+                            let nearestEnemy = null;
+                            let nearestDist = basophil.range;
+
+                            for (const enemy of enemies) {
+                                const dist = basophil.pos.dist(enemy.pos);
+                                if (dist <= basophil.range && dist < nearestDist) {
+                                    nearestEnemy = enemy;
+                                    nearestDist = dist;
+                                }
+                            }
+
+                            if (nearestEnemy) {
+                                basophil.attackTimer = 0;
+                                basophil.attackState = "throw";
+                                basophil.use(k.sprite("basophil-throw"));
+
+                                const targetPos = nearestEnemy.pos.clone();
+
+                                const projectile = k.add([
+                                    k.sprite("bomb-projectile"),
+                                    k.pos(basophil.pos),
+                                    k.anchor("center"),
+                                    k.scale(0.1),
+                                    k.z(30),
+                                    {
+                                        speed: GAME_CONFIG.towers.basophil.projectileSpeed,
+                                        targetPos: targetPos,
+                                        hasExploded: false
+                                    }
+                                ]);
+
+                                projectile.onUpdate(() => {
+                                    if (projectile.hasExploded) return;
+
+                                    const dir = projectile.targetPos.sub(projectile.pos);
+                                    const dist = dir.len();
+
+                                    if (dist < 5) {
+                                        projectile.hasExploded = true;
+                                        const explosionPos = projectile.pos.clone();
+                                        k.destroy(projectile);
+
+                                        const explosion = k.add([
+                                            k.sprite("explosion-effect"),
+                                            k.pos(explosionPos),
+                                            k.anchor("center"),
+                                            k.scale(0.2),
+                                            k.z(40)
+                                        ]);
+
+                                        const enemies = k.get("enemy");
+                                        for (const enemy of enemies) {
+                                            if (enemy.pos.dist(explosionPos) <= GAME_CONFIG.towers.basophil.explosionRadius) {
+                                                showDamageNumber(enemy.pos, GAME_CONFIG.towers.basophil.damage);
+                                                enemy.hp -= GAME_CONFIG.towers.basophil.damage;
+                                            }
+                                        }
+
+                                        k.wait(0.3, () => {
+                                            if (explosion.exists()) k.destroy(explosion);
+                                        });
+                                    } else {
+                                        projectile.move(dir.unit().scale(projectile.speed));
+                                    }
+                                });
+
+                                k.wait(0.3, () => {
+                                    if (!basophil.exists()) return;
+                                    basophil.attackState = "idle";
+                                    basophil.use(k.sprite(idleFrames[basophil.idleFrame]));
                                 });
                             }
                         }
