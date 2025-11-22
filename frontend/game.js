@@ -825,7 +825,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     const dir = projectile.targetPos.sub(projectile.pos);
                                     const dist = dir.len();
 
-                                    // Explode when close to target (increased threshold to prevent jittering)
+                                    // Explode when close to target
                                     if (dist < 15) {
                                         projectile.hasExploded = true;
                                         const explosionPos = projectile.pos.clone();
@@ -851,9 +851,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                             if (explosion.exists()) k.destroy(explosion);
                                         });
                                     } else {
-                                        // Move toward target, but don't overshoot
-                                        const moveSpeed = Math.min(projectile.speed * k.dt(), dist);
-                                        projectile.move(dir.unit().scale(moveSpeed));
+                                        projectile.move(dir.unit().scale(projectile.speed));
                                     }
                                 });
 
