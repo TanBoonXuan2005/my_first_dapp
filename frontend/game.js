@@ -31,10 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Load Assets with cache busting
-        const v = Date.now() + 1; // Force new version
+        const v = Date.now() + 2; // Force new version (v2)
         k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
+        k.loadSprite("flu-virus", `assets/animation_frames/Flu-virus.png?v=${v}`);
 
         // Define Paths (Waypoints)
         // Path 1: Top path
@@ -236,6 +237,52 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 });
             });
+
+            // Enemy Logic
+            function spawnEnemy(pathPoints) {
+                const enemy = k.add([
+                    k.sprite("flu-virus"),
+                    k.pos(pathPoints[0]),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.area(),
+                    k.z(10), // Below towers
+                    "enemy",
+                    {
+                        speed: 100,
+                        currentPointIndex: 0,
+                        path: pathPoints
+                    }
+                ]);
+
+                enemy.onUpdate(() => {
+                    if (enemy.currentPointIndex >= enemy.path.length - 1) {
+                        k.destroy(enemy);
+                        return;
+                    }
+
+                    const target = enemy.path[enemy.currentPointIndex + 1];
+                    const dir = target.sub(enemy.pos).unit();
+                    enemy.move(dir.scale(enemy.speed));
+
+                    if (enemy.pos.dist(target) < 5) {
+                        enemy.currentPointIndex++;
+                    }
+                });
+            }
+
+            // Spawn Wave
+            async function spawnWave() {
+                for (let i = 0; i < 5; i++) {
+                    // Alternate paths
+                    const path = i % 2 === 0 ? path1Points : path2Points;
+                    spawnEnemy(path);
+                    await k.wait(1.5); // Wait 1.5 seconds between spawns
+                }
+            }
+
+            // Start the first wave
+            spawnWave();
         });
 
         // Start the scene
