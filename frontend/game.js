@@ -222,9 +222,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 ]);
 
                 // Animation loop
-                // Cycle: Neutral -> Squash -> Neutral -> Stretch -> Neutral ...
-                // This creates a "breathing" or "bouncing" effect
-                const idleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral", "b-cell-stretch"];
+                // Cycle: Neutral -> Squash -> Neutral ...
+                // This creates a "breathing" or "bouncing" effect without stretching
+                const idleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral"];
 
                 bCell.onUpdate(() => {
                     bCell.timer += k.dt();
@@ -234,33 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         bCell.use(k.sprite(idleFrames[bCell.animFrame]));
                     }
                 });
-            });
-
-            // Pre-placed B-Cell for verification
-            const demoBCell = k.add([
-                k.sprite("b-cell-neutral"),
-                k.pos(400, 300), // Center of map
-                k.anchor("center"),
-                k.scale(0.15),
-                k.opacity(1),
-                k.color(255, 255, 255),
-                k.z(50),
-                "b-cell-demo",
-                {
-                    timer: 0,
-                    animFrame: 0,
-                }
-            ]);
-
-            const demoIdleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral", "b-cell-stretch"];
-
-            demoBCell.onUpdate(() => {
-                demoBCell.timer += k.dt();
-                if (demoBCell.timer > 0.15) {
-                    demoBCell.timer = 0;
-                    demoBCell.animFrame = (demoBCell.animFrame + 1) % demoIdleFrames.length;
-                    demoBCell.use(k.sprite(demoIdleFrames[demoBCell.animFrame]));
-                }
             });
         });
 
