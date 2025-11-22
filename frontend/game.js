@@ -31,11 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Load Assets with cache busting
-        const v = Date.now() + 3; // Force new version (v3)
+        const v = Date.now() + 4; // Force new version (v4)
         k.loadSprite("b-cell-neutral", `assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png?v=${v}`);
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
-        k.loadSprite("flu-virus", `assets/animation_frames/Flu-virus.png?v=${v}`);
+        k.loadSprite("flu-virus", `assets/animation_frames/Flu Virus/Flu-virus.png?v=${v}`);
+        k.loadSprite("flu-virus-death", `assets/animation_frames/Flu Virus/Flu-virus_Death.png?v=${v}`);
         k.loadSprite("y-antibody", `assets/animation_frames/B-Cells/Y-Antibody_projectile.png?v=${v}`);
 
         // Define Paths (Waypoints)
@@ -203,6 +204,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             });
 
+            // Helper: Show damage number
+            function showDamageNumber(pos, damage) {
+                const damageText = k.add([
+                    k.text(`-${damage}`, { size: 20 }),
+                    k.pos(pos.add(k.vec2(0, -30))),
+                    k.anchor("center"),
+                    k.color(255, 50, 50), // Red
+                    k.z(150),
+                    k.opacity(1),
+                    "damage-number"
+                ]);
+
+                // Animate: float up and fade out
+                let elapsed = 0;
+                damageText.onUpdate(() => {
+                    elapsed += k.dt();
+                    damageText.pos.y -= k.dt() * 30; // Float up
+                    damageText.opacity = 1 - (elapsed / 0.8); // Fade out over 0.8s
+
+                    if (elapsed >= 0.8) {
+                        k.destroy(damageText);
+                    }
+                });
+            }
+
             // Handle Drag End (Mouse Release)
             k.onMouseRelease(() => {
                 if (!isDragging) return;
@@ -313,6 +339,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                                 // Check collision
                                 if (projectile.pos.dist(projectile.target.pos) < 20) {
+                                    // Show damage number
+                                    showDamageNumber(projectile.target.pos, projectile.damage);
+
+                                    // Apply damage
                                     projectile.target.hp -= projectile.damage;
                                     k.destroy(projectile);
                                 }
@@ -344,7 +374,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 enemy.onUpdate(() => {
                     // Check if dead
                     if (enemy.hp <= 0) {
-                        k.destroy(enemy);
+                        // Change to death sprite
+                        enemy.use(k.sprite("flu-virus-death"));
+
+                        // Stop movement
+                        enemy.speed = 0;
+
+                        // Remove from enemy tag so towers stop targeting
+                        enemy.unuse("enemy");
+                        enemy.use("dead-enemy");
+
+                        // Destroy after 1 second
+                        k.wait(1, () => {
+                            k.destroy(enemy);
+                        });
                         return;
                     }
 
