@@ -124,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             k.add([
                 k.text("SHOP", { size: 20 }),
-                k.pos(20, 20),
+                k.pos(20, 10), // Moved up to avoid overlap
                 k.color(255, 255, 255), // Pure white
                 k.z(101)
             ]);
