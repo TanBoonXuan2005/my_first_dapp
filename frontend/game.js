@@ -695,7 +695,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                         const dir = projectile.targetPos.sub(projectile.pos);
                                         const dist = dir.len();
 
-                                        if (dist < 5) {
+                                        // Check if landed (increased threshold to prevent jittering)
+                                        if (dist < 15) {
                                             // Projectile landed
                                             projectile.hasLanded = true;
                                             const landPos = projectile.pos.clone();
