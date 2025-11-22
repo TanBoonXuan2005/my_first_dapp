@@ -123,18 +123,19 @@ document.addEventListener("DOMContentLoaded", () => {
             ]);
 
             k.add([
-                k.text("SHOP", { size: 20 }),
-                k.pos(20, 10), // Moved up to avoid overlap
-                k.color(255, 255, 255), // Pure white
+                k.text("SHOP", { size: 24, font: "monospace" }), // Made slightly larger and monospace for style
+                k.pos(40, 50), // Centered vertically on the left
+                k.anchor("center"),
+                k.color(255, 255, 255),
                 k.z(101)
             ]);
 
             // Shop Item: B-Cell
             const shopItem = k.add([
                 k.sprite("b-cell-neutral"),
-                k.pos(80, 50),
+                k.pos(120, 50), // Moved right
                 k.anchor("center"),
-                k.scale(0.12), // Reduced scale to fit better
+                k.scale(0.12),
                 k.z(101),
                 k.area(),
                 "shop-item"
@@ -142,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             k.add([
                 k.text("B-Cell", { size: 14 }),
-                k.pos(80, 85), // Adjusted text position
+                k.pos(120, 85), // Adjusted to match new B-Cell position
                 k.anchor("center"),
                 k.color(255, 255, 255), // Pure white
                 k.z(101)
