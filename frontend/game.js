@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
         k.loadSprite("b-cell-squash", `assets/animation_frames/B-Cells/B-Cell_Idle(Squash Form).png?v=${v}`);
         k.loadSprite("b-cell-stretch", `assets/animation_frames/B-Cells/B-Cell_Idle(Stretch Form).png?v=${v}`);
         k.loadSprite("flu-virus", `assets/animation_frames/Flu-virus.png?v=${v}`);
+        k.loadSprite("y-antibody", `assets/animation_frames/B-Cells/Y-Antibody_projectile.png?v=${v}`);
 
         // Define Paths (Waypoints)
         // Path 1: Top path
@@ -220,6 +221,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     {
                         timer: 0,
                         animFrame: 0,
+                        shootTimer: 0,
+                        range: 250,
+                        attackSpeed: 0.5,
+                        damage: 10
                     }
                 ]);
 
@@ -229,11 +234,66 @@ document.addEventListener("DOMContentLoaded", () => {
                 const idleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral"];
 
                 bCell.onUpdate(() => {
+                    // Idle animation
                     bCell.timer += k.dt();
-                    if (bCell.timer > 0.15) { // Adjust speed (0.15s per frame)
+                    if (bCell.timer > 0.15) {
                         bCell.timer = 0;
                         bCell.animFrame = (bCell.animFrame + 1) % idleFrames.length;
                         bCell.use(k.sprite(idleFrames[bCell.animFrame]));
+                    }
+
+                    // Combat logic
+                    bCell.shootTimer += k.dt();
+                    if (bCell.shootTimer >= bCell.attackSpeed) {
+                        // Find nearest enemy in range
+                        const enemies = k.get("enemy");
+                        let nearestEnemy = null;
+                        let nearestDist = bCell.range;
+
+                        for (const enemy of enemies) {
+                            const dist = bCell.pos.dist(enemy.pos);
+                            if (dist <= bCell.range && dist < nearestDist) {
+                                nearestEnemy = enemy;
+                                nearestDist = dist;
+                            }
+                        }
+
+                        // Shoot at nearest enemy
+                        if (nearestEnemy) {
+                            bCell.shootTimer = 0;
+
+                            // Create projectile
+                            const projectile = k.add([
+                                k.sprite("y-antibody"),
+                                k.pos(bCell.pos),
+                                k.anchor("center"),
+                                k.scale(0.08),
+                                k.area(),
+                                k.z(30),
+                                "projectile",
+                                {
+                                    speed: 400,
+                                    target: nearestEnemy,
+                                    damage: bCell.damage
+                                }
+                            ]);
+
+                            projectile.onUpdate(() => {
+                                if (!projectile.target.exists()) {
+                                    k.destroy(projectile);
+                                    return;
+                                }
+
+                                const dir = projectile.target.pos.sub(projectile.pos).unit();
+                                projectile.move(dir.scale(projectile.speed));
+
+                                // Check collision
+                                if (projectile.pos.dist(projectile.target.pos) < 20) {
+                                    projectile.target.hp -= projectile.damage;
+                                    k.destroy(projectile);
+                                }
+                            });
+                        }
                     }
                 });
             });
@@ -251,11 +311,19 @@ document.addEventListener("DOMContentLoaded", () => {
                     {
                         speed: 100,
                         currentPointIndex: 0,
-                        path: pathPoints
+                        path: pathPoints,
+                        hp: 80,
+                        maxHp: 80
                     }
                 ]);
 
                 enemy.onUpdate(() => {
+                    // Check if dead
+                    if (enemy.hp <= 0) {
+                        k.destroy(enemy);
+                        return;
+                    }
+
                     if (enemy.currentPointIndex >= enemy.path.length - 1) {
                         k.destroy(enemy);
                         return;
