@@ -61,8 +61,19 @@ def remove_background_floodfill(image_path):
     except Exception as e:
         print(f"Error processing {image_path}: {e}")
 
-directory = "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/B-Cells"
+paths_to_process = [
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Flu-virus.png",
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/NK-Cell",
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Macrophage",
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Basophil",
+    "/Users/juanjue/Documents/Side Projects/my_first_dapp/frontend/assets/animation_frames/Platelet"
+]
 
-for filename in os.listdir(directory):
-    if filename.endswith(".png"):
-        remove_background_floodfill(os.path.join(directory, filename))
+for path in paths_to_process:
+    if os.path.isfile(path):
+        if path.endswith(".png"):
+            remove_background_floodfill(path)
+    elif os.path.isdir(path):
+        for filename in os.listdir(path):
+            if filename.endswith(".png"):
+                remove_background_floodfill(os.path.join(path, filename))
