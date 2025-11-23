@@ -832,15 +832,9 @@ function GameCanvas() {
                 spawnWave();
             });
 
-            // Wait for assets to load before starting scene
-            k.onLoading((progress) => {
-                console.log(`Loading assets... ${Math.floor(progress * 100)}%`);
-            });
-
-            k.onLoad(() => {
-                console.log("✅ All assets loaded!");
-                k.go("main");
-            });
+            // Start the game scene immediately
+            // Kaboom will handle sprite loading automatically
+            k.go("main");
         };
 
         initGame();
