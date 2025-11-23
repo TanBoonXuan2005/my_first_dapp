@@ -320,6 +320,12 @@ export function placeBasophil(k, dropPos, gameState) {
                     k.wait(0.2, () => {
                         if (!tower.exists()) return;
 
+                        // Update target to enemy's current position for better accuracy
+                        let finalTargetPos = targetPos;
+                        if (nearestEnemy && nearestEnemy.exists()) {
+                            finalTargetPos = nearestEnemy.pos.clone();
+                        }
+
                         const projectile = k.add([
                             k.sprite("bomb-projectile"),
                             k.pos(tower.pos),
@@ -328,14 +334,14 @@ export function placeBasophil(k, dropPos, gameState) {
                             k.z(30),
                             "bomb-projectile",
                             {
-                                speed: GAME_CONFIG.towers.basophil.projectileSpeed,
-                                targetPos: targetPos,
+                                speed: GAME_CONFIG.towers.basophil.projectileSpeed * 1.5, // Faster projectile
+                                targetPos: finalTargetPos,
                                 damage: tower.damage,
                                 aoeRadius: GAME_CONFIG.towers.basophil.aoeRadius
                             }
                         ]);
 
-                        const dir = targetPos.sub(tower.pos).unit();
+                        const dir = finalTargetPos.sub(tower.pos).unit();
 
                         projectile.onUpdate(() => {
                             if (projectile.pos.dist(projectile.targetPos) < 10) {

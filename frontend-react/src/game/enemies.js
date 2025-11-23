@@ -20,7 +20,8 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState) {
     enemy.onUpdate(() => {
         if (enemy.hp <= 0) {
             // Enemy defeated
-            k.add([
+            // Enemy defeated
+            const death = k.add([
                 k.sprite("flu-virus-death"),
                 k.pos(enemy.pos),
                 k.anchor("center"),
@@ -28,10 +29,12 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState) {
                 k.z(9),
                 "death-effect",
                 { timer: 0 }
-            ]).onUpdate((deathSprite) => {
-                deathSprite.timer += k.dt();
-                deathSprite.opacity = 1 - (deathSprite.timer / 0.5);
-                if (deathSprite.timer >= 0.5) k.destroy(deathSprite);
+            ]);
+
+            death.onUpdate(() => {
+                death.timer += k.dt();
+                death.opacity = 1 - (death.timer / 0.5);
+                if (death.timer >= 0.5) k.destroy(death);
             });
 
             k.destroy(enemy);
