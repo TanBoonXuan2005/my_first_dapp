@@ -208,6 +208,12 @@ export function placePlatelet(k, dropPos, gameState) {
                         tower.attackState = "throw";
                         tower.use(k.sprite("platelet-throw"));
 
+                        // Update target to enemy's current position for better accuracy
+                        let finalTargetPos = targetPos;
+                        if (nearestEnemy && nearestEnemy.exists()) {
+                            finalTargetPos = nearestEnemy.pos.clone();
+                        }
+
                         const projectile = k.add([
                             k.sprite("fibrin-projectile"),
                             k.pos(tower.pos),
@@ -216,18 +222,18 @@ export function placePlatelet(k, dropPos, gameState) {
                             k.z(30),
                             "fibrin-projectile",
                             {
-                                speed: GAME_CONFIG.towers.platelet.projectileSpeed,
-                                targetPos: targetPos,
+                                speed: GAME_CONFIG.towers.platelet.projectileSpeed * 1.2,
+                                targetPos: finalTargetPos,
                                 damage: tower.damage,
-                                duration: GAME_CONFIG.towers.platelet.slowDuration,
+                                duration: GAME_CONFIG.towers.platelet.netDuration,
                                 slowEffect: GAME_CONFIG.towers.platelet.slowEffect
                             }
                         ]);
 
-                        const dir = targetPos.sub(tower.pos).unit();
+                        const dir = finalTargetPos.sub(tower.pos).unit();
 
                         projectile.onUpdate(() => {
-                            if (projectile.pos.dist(projectile.targetPos) < 10) {
+                            if (projectile.pos.dist(projectile.targetPos) < 20) {
                                 k.destroy(projectile);
                                 // Create net trap
                                 const net = k.add([
@@ -337,14 +343,14 @@ export function placeBasophil(k, dropPos, gameState) {
                                 speed: GAME_CONFIG.towers.basophil.projectileSpeed * 1.5, // Faster projectile
                                 targetPos: finalTargetPos,
                                 damage: tower.damage,
-                                aoeRadius: GAME_CONFIG.towers.basophil.aoeRadius
+                                aoeRadius: GAME_CONFIG.towers.basophil.explosionRadius
                             }
                         ]);
 
                         const dir = finalTargetPos.sub(tower.pos).unit();
 
                         projectile.onUpdate(() => {
-                            if (projectile.pos.dist(projectile.targetPos) < 10) {
+                            if (projectile.pos.dist(projectile.targetPos) < 20) {
                                 k.destroy(projectile);
                                 // Explosion
                                 const explosion = k.add([
