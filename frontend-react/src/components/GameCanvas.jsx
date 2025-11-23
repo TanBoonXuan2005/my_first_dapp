@@ -829,7 +829,15 @@ function GameCanvas() {
                 spawnWave();
             });
 
-            k.go("main");
+            // Wait for assets to load before starting scene
+            k.onLoading((progress) => {
+                console.log(`Loading assets... ${Math.floor(progress * 100)}%`);
+            });
+
+            k.onLoad(() => {
+                console.log("✅ All assets loaded!");
+                k.go("main");
+            });
         };
 
         initGame();

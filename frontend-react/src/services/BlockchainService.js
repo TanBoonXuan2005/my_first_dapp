@@ -50,9 +50,22 @@ const BlockchainService = {
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
     },
 
-    // Placeholder for future SBT check
-    checkSBT: async (tokenId) => {
-        return false; // Not yet implemented
+    // SBT System - Mock implementation (upgrade to real blockchain later)
+    // Macrophage Tower Unlock SBT
+    checkMacrophageUnlock: async (walletAddress) => {
+        // Check localStorage for Macrophage SBT
+        const key = `sbt_macrophage_${walletAddress}`;
+        const hasUnlock = localStorage.getItem(key) === 'true';
+        console.log(`[SBT] Checking Macrophage unlock for ${walletAddress}: ${hasUnlock}`);
+        return hasUnlock;
+    },
+
+    mintMacrophageSBT: async (walletAddress) => {
+        // Mint Macrophage SBT (mock - stores in localStorage)
+        const key = `sbt_macrophage_${walletAddress}`;
+        localStorage.setItem(key, 'true');
+        console.log(`[SBT] ✅ Minted Macrophage SBT for ${walletAddress}`);
+        return true;
     },
 
     // Placeholder for future randomness
