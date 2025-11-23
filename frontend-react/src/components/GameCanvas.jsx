@@ -224,46 +224,99 @@ function GameCanvas() {
                     k.z(101)
                 ]);
 
-                const shopItemMacrophage = k.add([
-                    k.sprite("macrophage-idle-neutral"),
-                    k.pos(200, 50),
-                    k.anchor("center"),
-                    k.scale(0.12),
-                    k.z(101),
-                    k.area(),
-                    "shop-item-macrophage"
-                ]);
-
-                k.add([
-                    k.text("Macrophage", { size: 14 }),
-                    k.pos(200, 85),
-                    k.anchor("center"),
-                    k.color(255, 255, 255),
-                    k.z(101)
-                ]);
 
                 // SBT System - Check if Macrophage is unlocked
                 const walletState = JSON.parse(sessionStorage.getItem('walletState'));
                 let isMacrophageUnlocked = false;
-                let macrophageLockIcon = null;
+                let shopItemMacrophage = null;
+                let macrophageLabel = null;
+
+                // Function to create Macrophage shop item
+                function createMacrophageShopItem() {
+                    if (shopItemMacrophage) return; // Already exists
+
+                    shopItemMacrophage = k.add([
+                        k.sprite("macrophage-idle-neutral"),
+                        k.pos(200, 50),
+                        k.anchor("center"),
+                        k.scale(0.12),
+                        k.z(101),
+                        k.area(),
+                        "shop-item-macrophage"
+                    ]);
+
+                    macrophageLabel = k.add([
+                        k.text("Macrophage", { size: 14 }),
+                        k.pos(200, 85),
+                        k.anchor("center"),
+                        k.color(255, 255, 255),
+                        k.z(101)
+                    ]);
+
+                    // Set up click handler
+                    setupMacrophageClickHandler();
+                }
+
+                // Set up Macrophage click handler
+                function setupMacrophageClickHandler() {
+                    if (!shopItemMacrophage) return;
+
+                    shopItemMacrophage.onClick(() => {
+                        // Check if Macrophage is locked (SBT not earned)
+                        if (!isMacrophageUnlocked) {
+                            k.shake(8);
+                            // Show message
+                            const lockMsg = k.add([
+                                k.text("Complete Wave 1 to unlock!", { size: 18 }),
+                                k.pos(k.width() / 2, 120),
+                                k.anchor("center"),
+                                k.color(255, 100, 100),
+                                k.z(200),
+                                k.opacity(1)
+                            ]);
+                            k.wait(2, () => k.destroy(lockMsg));
+                            return;
+                        }
+
+                        if (isDragging) return;
+                        isDragging = true;
+                        selectedTowerType = "macrophage";
+                        dragSprite = k.add([
+                            k.sprite("macrophage-idle-neutral"),
+                            k.pos(k.mousePos()),
+                            k.anchor("center"),
+                            k.scale(0.12),
+                            k.opacity(0.7),
+                            k.z(200),
+                            "drag-ghost"
+                        ]);
+                        rangeIndicator = k.add([
+                            k.circle(GAME_CONFIG.towers.macrophage.range),
+                            k.pos(k.mousePos()),
+                            k.anchor("center"),
+                            k.opacity(0.2),
+                            k.color(200, 100, 255),
+                            k.outline(2, k.rgb(200, 100, 255)),
+                            k.z(199),
+                            "range-indicator"
+                        ]);
+                    });
+                }
 
                 if (walletState && walletState.address) {
                     BlockchainService.checkMacrophageUnlock(walletState.address).then(unlocked => {
                         isMacrophageUnlocked = unlocked;
                         setMacrophageUnlocked(unlocked);
 
-                        if (!unlocked) {
-                            // Add lock visual
-                            shopItemMacrophage.opacity = 0.3;
-                            macrophageLockIcon = k.add([
-                                k.text("🔒", { size: 32 }),
-                                k.pos(200, 50),
-                                k.anchor("center"),
-                                k.z(102),
-                                "macrophage-lock"
-                            ]);
+                        if (unlocked) {
+                            // Create the shop item if unlocked
+                            createMacrophageShopItem();
                         }
+                        // If not unlocked, don't create it at all - it will be created after victory
                     });
+                } else {
+                    // No wallet connected - Macrophage stays hidden
+                    isMacrophageUnlocked = false;
                 }
 
                 const shopItemPlatelet = k.add([
@@ -329,47 +382,6 @@ function GameCanvas() {
                         k.opacity(0.2),
                         k.color(100, 200, 255),
                         k.outline(2, k.rgb(100, 200, 255)),
-                        k.z(199),
-                        "range-indicator"
-                    ]);
-                });
-
-                shopItemMacrophage.onClick(() => {
-                    // Check if Macrophage is locked (SBT not earned)
-                    if (!isMacrophageUnlocked) {
-                        k.shake(8);
-                        // Show message
-                        const lockMsg = k.add([
-                            k.text("Complete Wave 1 to unlock!", { size: 18 }),
-                            k.pos(k.width() / 2, 120),
-                            k.anchor("center"),
-                            k.color(255, 100, 100),
-                            k.z(200),
-                            k.opacity(1)
-                        ]);
-                        k.wait(2, () => k.destroy(lockMsg));
-                        return;
-                    }
-
-                    if (isDragging) return;
-                    isDragging = true;
-                    selectedTowerType = "macrophage";
-                    dragSprite = k.add([
-                        k.sprite("macrophage-idle-neutral"),
-                        k.pos(k.mousePos()),
-                        k.anchor("center"),
-                        k.scale(0.12),
-                        k.opacity(0.7),
-                        k.z(200),
-                        "drag-ghost"
-                    ]);
-                    rangeIndicator = k.add([
-                        k.circle(GAME_CONFIG.towers.macrophage.range),
-                        k.pos(k.mousePos()),
-                        k.anchor("center"),
-                        k.opacity(0.2),
-                        k.color(200, 100, 255),
-                        k.outline(2, k.rgb(200, 100, 255)),
                         k.z(199),
                         "range-indicator"
                     ]);
@@ -931,15 +943,22 @@ function GameCanvas() {
 
                 // Check wave completion - only when ALL enemies are gone
                 function checkWaveCompletion() {
+                    console.log(`[Wave Check] processed: ${totalEnemiesProcessed}/${totalEnemiesSpawned}, completed: ${wave1Completed}, active: ${gameActive}`);
+
                     if (!wave1Completed && totalEnemiesProcessed >= totalEnemiesSpawned && totalEnemiesSpawned > 0 && gameActive) {
                         // Double-check no enemies remain on the map
                         const remainingEnemies = k.get("enemy");
+                        console.log(`[Wave Check] Remaining enemies: ${remainingEnemies.length}`);
+
                         if (remainingEnemies.length === 0) {
                             wave1Completed = true;
 
                             // Check if player won (has health remaining)
                             if (playerHealth > 0) {
+                                console.log("[Wave Check] VICTORY!");
                                 onWaveVictory();
+                            } else {
+                                console.log("[Wave Check] Lost (health = 0)");
                             }
                         }
                     }
@@ -973,11 +992,8 @@ function GameCanvas() {
                         isMacrophageUnlocked = true;
                         setMacrophageUnlocked(true);
 
-                        // Remove lock visual
-                        if (macrophageLockIcon && macrophageLockIcon.exists()) {
-                            k.destroy(macrophageLockIcon);
-                        }
-                        shopItemMacrophage.opacity = 1.0;
+                        // Create the Macrophage shop item now that it's unlocked
+                        createMacrophageShopItem();
 
                         // Show unlock message below victory message
                         const celebrationMsg = k.add([
