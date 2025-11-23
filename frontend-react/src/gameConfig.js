@@ -49,7 +49,7 @@ const GAME_CONFIG = {
             spawnDelay: 2.0,        // 2 seconds between spawns
             enemyHp: 80,
             enemySpeed: 100,
-            preparationTime: 30      // 30 seconds to prepare
+            preparationTime: 3      // 30 seconds to prepare
         },
         // Wave 2 - Getting Harder
         {
@@ -58,7 +58,7 @@ const GAME_CONFIG = {
             spawnDelay: 1.5,        // Faster spawns
             enemyHp: 100,           // Tougher enemies
             enemySpeed: 110,        // Faster movement
-            preparationTime: 30
+            preparationTime: 3
         },
         // Wave 3 - Challenging (Platelet unlock)
         {
@@ -67,7 +67,7 @@ const GAME_CONFIG = {
             spawnDelay: 1.2,
             enemyHp: 120,
             enemySpeed: 120,
-            preparationTime: 30
+            preparationTime: 3
         },
         // Wave 4 - Difficult
         {
@@ -76,7 +76,7 @@ const GAME_CONFIG = {
             spawnDelay: 1.0,
             enemyHp: 150,
             enemySpeed: 130,
-            preparationTime: 30
+            preparationTime: 3
         },
         // Wave 5 - Boss Wave (Basophil unlock)
         {
