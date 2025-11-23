@@ -20,101 +20,114 @@ function GameCanvas() {
         if (kRef.current) return;
 
         const initGame = () => {
-            // Calculate responsive canvas size
-            const maxWidth = Math.min(window.innerWidth - 40, 1200);
-            const maxHeight = Math.min(window.innerHeight - 100, 800);
-            const aspectRatio = 4 / 3;
+            // Safety delay to ensure previous context is cleaned up
+            setTimeout(() => {
+                if (kRef.current) return; // Double check
 
-            let canvasWidth = maxWidth;
-            let canvasHeight = canvasWidth / aspectRatio;
+                // Calculate responsive canvas size
+                const maxWidth = Math.min(window.innerWidth - 40, 1200);
+                const maxHeight = Math.min(window.innerHeight - 100, 800);
+                const aspectRatio = 4 / 3;
 
-            if (canvasHeight > maxHeight) {
-                canvasHeight = maxHeight;
-                canvasWidth = canvasHeight * aspectRatio;
-            }
+                let canvasWidth = maxWidth;
+                let canvasHeight = canvasWidth / aspectRatio;
 
-            const k = kaboom({
-                canvas: canvasRef.current,
-                background: [20, 20, 30],
-                width: canvasWidth,
-                height: canvasHeight,
-                scale: 1,
-                global: false,
-                debug: true,
-            });
+                if (canvasHeight > maxHeight) {
+                    canvasHeight = maxHeight;
+                    canvasWidth = canvasHeight * aspectRatio;
+                }
 
-            kRef.current = k;
-            window.k = k; // For debugging
-
-            // Load Assets
-            loadGameAssets(k);
-
-            // Define Paths
-            const { path1Points, path2Points } = getPaths(k, canvasWidth);
-
-            // Define Game Scene
-            k.scene("main", () => {
-                // Draw Paths
-                k.onDraw(() => {
-                    k.drawLines({
-                        pts: path1Points,
-                        width: 60,
-                        color: k.rgb(60, 0, 0),
-                        join: "round",
-                        cap: "round",
+                try {
+                    const k = kaboom({
+                        canvas: canvasRef.current,
+                        background: [20, 20, 30],
+                        width: canvasWidth,
+                        height: canvasHeight,
+                        scale: 1,
+                        global: false,
+                        debug: false, // Disable debug to prevent overlay crashes
                     });
-                    k.drawLines({
-                        pts: path2Points,
-                        width: 60,
-                        color: k.rgb(60, 0, 0),
-                        join: "round",
-                        cap: "round",
-                    });
-                });
 
-                // Setup UI
-                const uiElements = setupGameUI(k, UI_HEIGHT);
+                    kRef.current = k;
+                    window.k = k; // For debugging
 
-                // Initialize Game State
-                const gameState = new GameState(k, uiElements);
+                    // Load Assets
+                    loadGameAssets(k);
 
-                // Setup Input (Drag & Drop)
-                // Returns a function to start dragging, which we pass to the shop
-                const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
+                    // Define Paths
+                    const { path1Points, path2Points } = getPaths(k, canvasWidth);
 
-                // Setup Shop
-                setupShop(k, gameState, startDrag);
+                    // Define Game Scene
+                    k.scene("main", () => {
+                        // Draw Paths
+                        k.onDraw(() => {
+                            k.drawLines({
+                                pts: path1Points,
+                                width: 60,
+                                color: k.rgb(60, 0, 0),
+                                join: "round",
+                                cap: "round",
+                            });
+                            k.drawLines({
+                                pts: path2Points,
+                                width: 60,
+                                color: k.rgb(60, 0, 0),
+                                join: "round",
+                                cap: "round",
+                            });
+                        });
 
-                // Wave Management Callbacks
-                const handleWaveVictory = () => {
-                    onWaveVictory(k, gameState, () => {
+                        // Setup UI
+                        const uiElements = setupGameUI(k, UI_HEIGHT);
+
+                        // Initialize Game State
+                        const gameState = new GameState(k, uiElements);
+
+                        // Setup Input (Drag & Drop)
+                        const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
+
+                        // Setup Shop
+                        setupShop(k, gameState, startDrag);
+
+                        // Wave Management Callbacks
+                        const handleWaveVictory = () => {
+                            onWaveVictory(k, gameState, () => {
+                                startNextWavePreparation(k, gameState, () => {
+                                    spawnWave(k, gameState, () => ({ path1Points, path2Points }));
+                                });
+                            });
+                        };
+
+                        // Start First Wave
                         startNextWavePreparation(k, gameState, () => {
                             spawnWave(k, gameState, () => ({ path1Points, path2Points }));
                         });
+
+                        // Game Loop for Wave Checking
+                        k.onUpdate(() => {
+                            checkWaveCompletion(k, gameState, handleWaveVictory);
+                        });
                     });
-                };
 
-                // Start First Wave
-                startNextWavePreparation(k, gameState, () => {
-                    spawnWave(k, gameState, () => ({ path1Points, path2Points }));
-                });
-
-                // Game Loop for Wave Checking
-                k.onUpdate(() => {
-                    checkWaveCompletion(k, gameState, handleWaveVictory);
-                });
-            });
-
-            // Start the game scene
-            k.go("main");
+                    // Start the game scene
+                    k.go("main");
+                } catch (err) {
+                    console.error("Failed to initialize Kaboom:", err);
+                }
+            }, 100); // 100ms delay
         };
 
         initGame();
 
         // Cleanup on unmount
         return () => {
-            if (kRef.current) {
-                kRef.current.quit();
+            try {
+                if (kRef.current) {
+                    kRef.current.quit();
+                }
+            } catch (e) {
+                console.warn("Error cleaning up Kaboom:", e);
+            } finally {
                 kRef.current = null;
                 window.k = null;
             }
