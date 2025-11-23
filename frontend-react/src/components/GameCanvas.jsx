@@ -162,6 +162,49 @@ function GameCanvas() {
                     k.z(101)
                 ]);
 
+                // Game State
+                let playerHealth = 100;
+                let gameActive = true;
+
+                // Health Display
+                const healthText = k.add([
+                    k.text(`❤️ Health: ${playerHealth}`, { size: 20 }),
+                    k.pos(k.width() - 120, 30),
+                    k.anchor("center"),
+                    k.color(255, 100, 100),
+                    k.z(101),
+                    "health-text"
+                ]);
+
+                // Update health display
+                function updateHealth(amount) {
+                    playerHealth += amount;
+                    healthText.text = `❤️ Health: ${playerHealth}`;
+
+                    if (playerHealth <= 0) {
+                        gameOver();
+                    }
+                }
+
+                // Game Over
+                function gameOver() {
+                    gameActive = false;
+                    k.add([
+                        k.text("GAME OVER", { size: 48 }),
+                        k.pos(k.width() / 2, k.height() / 2 - 50),
+                        k.anchor("center"),
+                        k.color(255, 50, 50),
+                        k.z(300)
+                    ]);
+                    k.add([
+                        k.text("Refresh to try again", { size: 24 }),
+                        k.pos(k.width() / 2, k.height() / 2 + 20),
+                        k.anchor("center"),
+                        k.color(200, 200, 200),
+                        k.z(300)
+                    ]);
+                }
+
                 // Shop Items
                 const shopItemBCell = k.add([
                     k.sprite("b-cell-neutral"),
@@ -840,7 +883,12 @@ function GameCanvas() {
                             return;
                         }
 
+
+                        // Enemy reached the end - damage player
                         if (enemy.currentPointIndex >= enemy.path.length - 1) {
+                            updateHealth(-10);
+                            totalEnemiesKilled++; // Count as "dealt with"
+                            checkWaveCompletion();
                             k.destroy(enemy);
                             return;
                         }
@@ -883,15 +931,37 @@ function GameCanvas() {
 
                 // Check wave completion
                 function checkWaveCompletion() {
-                    if (!wave1Completed && totalEnemiesKilled >= totalEnemiesSpawned && totalEnemiesSpawned > 0) {
+                    if (!wave1Completed && totalEnemiesKilled >= totalEnemiesSpawned && totalEnemiesSpawned > 0 && gameActive) {
                         wave1Completed = true;
-                        onWaveComplete();
+
+                        // Check if player won (has health remaining)
+                        if (playerHealth > 0) {
+                            onWaveVictory();
+                        }
                     }
                 }
 
-                // Wave completion handler - mints Macrophage SBT
-                async function onWaveComplete() {
-                    console.log("🎉 Wave 1 Complete!");
+                // Wave Victory - player survives with health > 0
+                async function onWaveVictory() {
+                    console.log("🎉 Wave 1 Victory!");
+                    gameActive = false; // Pause game
+
+                    // Show victory message
+                    k.add([
+                        k.text("WAVE 1 COMPLETE!", { size: 40 }),
+                        k.pos(k.width() / 2, k.height() / 2 - 100),
+                        k.anchor("center"),
+                        k.color(100, 255, 100),
+                        k.z(250)
+                    ]);
+
+                    k.add([
+                        k.text(`Health Remaining: ${playerHealth}`, { size: 24 }),
+                        k.pos(k.width() / 2, k.height() / 2 - 50),
+                        k.anchor("center"),
+                        k.color(255, 255, 100),
+                        k.z(250)
+                    ]);
 
                     // Mint Macrophage SBT if not already unlocked
                     if (walletState && walletState.address && !isMacrophageUnlocked) {
@@ -905,13 +975,13 @@ function GameCanvas() {
                         }
                         shopItemMacrophage.opacity = 1.0;
 
-                        // Show celebration
+                        // Show unlock message below victory message
                         const celebrationMsg = k.add([
                             k.text("🎉 MACROPHAGE UNLOCKED!", { size: 32 }),
-                            k.pos(k.width() / 2, k.height() / 2),
+                            k.pos(k.width() / 2, k.height() / 2 + 20),
                             k.anchor("center"),
                             k.color(100, 255, 100),
-                            k.z(200),
+                            k.z(250),
                             k.scale(0),
                         ]);
 
@@ -920,7 +990,6 @@ function GameCanvas() {
                         celebrationMsg.onUpdate(() => {
                             t += k.dt();
                             celebrationMsg.scale = Math.min(t * 2, 1);
-                            if (t > 3) k.destroy(celebrationMsg);
                         });
                     }
                 }
