@@ -210,7 +210,7 @@ function GameCanvas() {
                     k.sprite("b-cell-neutral"),
                     k.pos(120, 50),
                     k.anchor("center"),
-                    k.scale(0.12),
+                    k.scale(0.06),
                     k.z(101),
                     k.area(),
                     "shop-item-bcell"
@@ -239,7 +239,7 @@ function GameCanvas() {
                         k.sprite("macrophage-idle-neutral"),
                         k.pos(200, 50),
                         k.anchor("center"),
-                        k.scale(0.12),
+                        k.scale(0.06),
                         k.z(101),
                         k.area(),
                         "shop-item-macrophage"
@@ -285,7 +285,7 @@ function GameCanvas() {
                             k.sprite("macrophage-idle-neutral"),
                             k.pos(k.mousePos()),
                             k.anchor("center"),
-                            k.scale(0.12),
+                            k.scale(0.06),
                             k.opacity(0.7),
                             k.z(200),
                             "drag-ghost"
@@ -323,7 +323,7 @@ function GameCanvas() {
                     k.sprite("platelet-idle"),
                     k.pos(280, 50),
                     k.anchor("center"),
-                    k.scale(0.12),
+                    k.scale(0.06),
                     k.z(101),
                     k.area(),
                     "shop-item-platelet"
@@ -341,7 +341,7 @@ function GameCanvas() {
                     k.sprite("basophil-idle"),
                     k.pos(360, 50),
                     k.anchor("center"),
-                    k.scale(0.12),
+                    k.scale(0.06),
                     k.z(101),
                     k.area(),
                     "shop-item-basophil"
@@ -370,7 +370,7 @@ function GameCanvas() {
                         k.sprite("b-cell-neutral"),
                         k.pos(k.mousePos()),
                         k.anchor("center"),
-                        k.scale(0.12),
+                        k.scale(0.06),
                         k.opacity(0.7),
                         k.z(200),
                         "drag-ghost"
@@ -395,7 +395,7 @@ function GameCanvas() {
                         k.sprite("platelet-idle"),
                         k.pos(k.mousePos()),
                         k.anchor("center"),
-                        k.scale(0.12),
+                        k.scale(0.06),
                         k.opacity(0.7),
                         k.z(200),
                         "drag-ghost"
@@ -420,7 +420,7 @@ function GameCanvas() {
                         k.sprite("basophil-idle"),
                         k.pos(k.mousePos()),
                         k.anchor("center"),
-                        k.scale(0.12),
+                        k.scale(0.06),
                         k.opacity(0.7),
                         k.z(200),
                         "drag-ghost"
@@ -482,7 +482,7 @@ function GameCanvas() {
                         k.sprite("b-cell-neutral"),
                         k.pos(dropPos),
                         k.anchor("center"),
-                        k.scale(0.15),
+                        k.scale(0.075),
                         k.z(50),
                         "b-cell",
                         {
@@ -525,7 +525,7 @@ function GameCanvas() {
                                     k.sprite("y-antibody"),
                                     k.pos(tower.pos),
                                     k.anchor("center"),
-                                    k.scale(0.08),
+                                    k.scale(0.04),
                                     k.area(),
                                     k.z(30),
                                     "projectile",
@@ -561,7 +561,7 @@ function GameCanvas() {
                         k.sprite("macrophage-idle-neutral"),
                         k.pos(dropPos),
                         k.anchor("center"),
-                        k.scale(0.15),
+                        k.scale(0.075),
                         k.z(50),
                         "macrophage",
                         {
@@ -633,7 +633,7 @@ function GameCanvas() {
                         k.sprite("platelet-idle"),
                         k.pos(dropPos),
                         k.anchor("center"),
-                        k.scale(0.15),
+                        k.scale(0.075),
                         k.z(50),
                         "platelet",
                         {
@@ -687,7 +687,7 @@ function GameCanvas() {
                                             k.sprite("fibrin-projectile"),
                                             k.pos(tower.pos),
                                             k.anchor("center"),
-                                            k.scale(0.1),
+                                            k.scale(0.05),
                                             k.z(30),
                                             "fibrin-projectile",
                                             {
@@ -720,7 +720,7 @@ function GameCanvas() {
                                                     k.sprite("fibrin-expanded"),
                                                     k.pos(landPos),
                                                     k.anchor("center"),
-                                                    k.scale(0.15),
+                                                    k.scale(0.075),
                                                     k.opacity(0.6),
                                                     k.z(5),
                                                     k.area(),
@@ -758,7 +758,7 @@ function GameCanvas() {
                         k.sprite("basophil-idle"),
                         k.pos(dropPos),
                         k.anchor("center"),
-                        k.scale(0.15),
+                        k.scale(0.075),
                         k.z(50),
                         "basophil",
                         {
@@ -807,7 +807,7 @@ function GameCanvas() {
                                         k.sprite("bomb-projectile"),
                                         k.pos(tower.pos),
                                         k.anchor("center"),
-                                        k.scale(0.1),
+                                        k.scale(0.05),
                                         k.z(30),
                                         {
                                             speed: GAME_CONFIG.towers.basophil.projectileSpeed,
@@ -830,7 +830,7 @@ function GameCanvas() {
                                                 k.sprite("explosion-effect"),
                                                 k.pos(explosionPos),
                                                 k.anchor("center"),
-                                                k.scale(0.2),
+                                                k.scale(0.1),
                                                 k.z(40)
                                             ]);
 
@@ -867,7 +867,7 @@ function GameCanvas() {
                         k.sprite("flu-virus"),
                         k.pos(pathPoints[0]),
                         k.anchor("center"),
-                        k.scale(0.12),
+                        k.scale(0.06),
                         k.area(),
                         k.z(10),
                         "enemy",
