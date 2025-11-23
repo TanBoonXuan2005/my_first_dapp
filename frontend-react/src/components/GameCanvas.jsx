@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
+
+// Tower costs (ATP) for each tower type
+const TOWER_COST = {
+    bcell: 10,
+    macrophage: 20,
+    platelet: 15,
+    basophil: 25,
+};
 import BlockchainService from '../services/BlockchainService.js';
 
 function GameCanvas() {
@@ -104,7 +112,21 @@ function GameCanvas() {
                 }
                 return false;
             }
-
+            // Helper to check if a placement position is free (no overlap and not on path)
+            function isPlacementFree(pos) {
+                if (isOnPath(pos)) return false;
+                // Check overlap with existing towers
+                const towerTags = ["b-cell", "macrophage", "platelet", "basophil"];
+                for (const tag of towerTags) {
+                    const towers = k.get(tag);
+                    for (const t of towers) {
+                        if (t.pos.dist(pos) < 30) { // minimum distance between towers
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
             function showDamageNumber(pos, damage) {
                 const damageText = k.add([
                     k.text(`-${damage}`, { size: 20 }),
@@ -164,6 +186,7 @@ function GameCanvas() {
 
                 // Game State
                 let playerHealth = 100;
+                let playerATP = 50;  // Starting ATP (currency)
                 let gameActive = true;
 
                 // Health Display
@@ -176,6 +199,16 @@ function GameCanvas() {
                     "health-text"
                 ]);
 
+                // ATP Display (currency)
+                const atpText = k.add([
+                    k.text(`⚡ ATP: ${playerATP}`, { size: 20 }),
+                    k.pos(k.width() - 120, 60),
+                    k.anchor("center"),
+                    k.color(100, 255, 255),
+                    k.z(101),
+                    "atp-text"
+                ]);
+
                 // Update health display
                 function updateHealth(amount) {
                     playerHealth += amount;
@@ -184,6 +217,22 @@ function GameCanvas() {
                     if (playerHealth <= 0) {
                         gameOver();
                     }
+                }
+
+                // Update ATP display
+                function updateATP(amount) {
+                    playerATP += amount;
+                    atpText.text = `⚡ ATP: ${playerATP}`;
+
+                    // Flash color on change
+                    if (amount > 0) {
+                        atpText.color = k.rgb(150, 255, 150); // Green for gain
+                    } else {
+                        atpText.color = k.rgb(255, 150, 150); // Red for spend
+                    }
+                    k.wait(0.2, () => {
+                        atpText.color = k.rgb(100, 255, 255); // Back to cyan
+                    });
                 }
 
                 // Game Over
@@ -224,6 +273,15 @@ function GameCanvas() {
                     k.z(101)
                 ]);
 
+                // Cost label
+                k.add([
+                    k.text(`Cost: ${TOWER_COST.bcell}`, { size: 12 }),
+                    k.pos(120, 105),
+                    k.anchor("center"),
+                    k.color(200, 200, 0),
+                    k.z(101)
+                ]);
+
 
                 // SBT System - Check if Macrophage is unlocked
                 const walletState = JSON.parse(sessionStorage.getItem('walletState'));
@@ -250,6 +308,15 @@ function GameCanvas() {
                         k.pos(200, 85),
                         k.anchor("center"),
                         k.color(255, 255, 255),
+                        k.z(101)
+                    ]);
+
+                    // Cost label
+                    k.add([
+                        k.text(`Cost: ${TOWER_COST.macrophage}`, { size: 12 }),
+                        k.pos(200, 105),
+                        k.anchor("center"),
+                        k.color(200, 200, 0),
                         k.z(101)
                     ]);
 
@@ -337,6 +404,15 @@ function GameCanvas() {
                     k.z(101)
                 ]);
 
+                // Cost label
+                k.add([
+                    k.text(`Cost: ${TOWER_COST.platelet}`, { size: 12 }),
+                    k.pos(280, 105),
+                    k.anchor("center"),
+                    k.color(200, 200, 0),
+                    k.z(101)
+                ]);
+
                 const shopItemBasophil = k.add([
                     k.sprite("basophil-idle"),
                     k.pos(360, 50),
@@ -352,6 +428,15 @@ function GameCanvas() {
                     k.pos(360, 85),
                     k.anchor("center"),
                     k.color(255, 255, 255),
+                    k.z(101)
+                ]);
+
+                // Cost label
+                k.add([
+                    k.text(`Cost: ${TOWER_COST.basophil}`, { size: 12 }),
+                    k.pos(360, 105),
+                    k.anchor("center"),
+                    k.color(200, 200, 0),
                     k.z(101)
                 ]);
 
@@ -463,11 +548,32 @@ function GameCanvas() {
                         rangeIndicator = null;
                     }
 
-                    if (dropPos.y <= UI_HEIGHT || isOnPath(dropPos)) {
+                    // Validate placement
+                    if (dropPos.y <= UI_HEIGHT || !isPlacementFree(dropPos)) {
                         k.shake(5);
                         return;
                     }
 
+                    const cost = TOWER_COST[selectedTowerType];
+                    if (playerATP < cost) {
+                        // Not enough ATP
+                        const msg = k.add([
+                            k.text("Not enough ATP!", { size: 18 }),
+                            k.pos(k.width() / 2, 120),
+                            k.anchor("center"),
+                            k.color(255, 100, 100),
+                            k.z(200),
+                            k.opacity(1)
+                        ]);
+                        k.wait(2, () => k.destroy(msg));
+                        selectedTowerType = null;
+                        return;
+                    }
+
+                    // Deduct ATP
+                    updateATP(-cost);
+
+                    // Place tower
                     if (selectedTowerType === "bcell") placeBCell(dropPos);
                     else if (selectedTowerType === "macrophage") placeMacrophage(dropPos);
                     else if (selectedTowerType === "platelet") placePlatelet(dropPos);
