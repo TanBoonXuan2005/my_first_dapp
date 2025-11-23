@@ -11,6 +11,23 @@
     --shadow: 0 8px 24px rgba(0, 0, 0, .25);
 }
 
+/* Loading Spinner */
+.loader {
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @media (prefers-color-scheme: light) {
     :root {
         --bg: #f6f7fb;
