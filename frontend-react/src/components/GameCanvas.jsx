@@ -862,7 +862,7 @@ function GameCanvas() {
                 }
 
                 // Enemy spawning
-                function spawnEnemy(pathPoints) {
+                function spawnEnemy(pathPoints, waveConfig) {
                     const enemy = k.add([
                         k.sprite("flu-virus"),
                         k.pos(pathPoints[0]),
@@ -872,15 +872,13 @@ function GameCanvas() {
                         k.z(10),
                         "enemy",
                         {
-                            speed: GAME_CONFIG.enemies.fluVirus.speed,
+                            hp: waveConfig.enemyHp,           // Use wave-specific HP
+                            maxHp: waveConfig.enemyHp,
+                            speed: waveConfig.enemySpeed,     // Use wave-specific speed
                             currentPointIndex: 0,
-                            path: pathPoints,
-                            hp: GAME_CONFIG.enemies.fluVirus.hp,
-                            maxHp: GAME_CONFIG.enemies.fluVirus.hp
+                            path: pathPoints
                         }
-                    ]);
-
-                    enemy.onUpdate(() => {
+                    ]); enemy.onUpdate(() => {
                         if (enemy.hp <= 0) {
                             enemy.use(k.sprite("flu-virus-death"));
                             enemy.speed = 0;
@@ -937,32 +935,54 @@ function GameCanvas() {
                 }
 
                 // Wave management
+                let currentWaveIndex = 0;
                 let totalEnemiesSpawned = 0;
                 let totalEnemiesProcessed = 0; // Killed OR escaped
-                let wave1Completed = false;
+                let waveCompleted = false;
+                let preparationCountdown = null;
+                let waveNumberText = null;
+
+                // Wave number display
+                waveNumberText = k.add([
+                    k.text(`Wave ${currentWaveIndex + 1}`, { size: 28 }),
+                    k.pos(k.width() / 2, 30),
+                    k.anchor("center"),
+                    k.color(255, 255, 100),
+                    k.z(101),
+                    "wave-number-text"
+                ]);
 
                 async function spawnWave() {
-                    const enemyCount = GAME_CONFIG.waves.first.enemyCount;
-                    totalEnemiesSpawned = enemyCount;
+                    const waveConfig = GAME_CONFIG.waves[currentWaveIndex];
+                    if (!waveConfig) {
+                        console.log("No more waves!");
+                        return;
+                    }
 
-                    for (let i = 0; i < enemyCount; i++) {
+                    totalEnemiesSpawned = waveConfig.enemyCount;
+                    totalEnemiesProcessed = 0;
+                    waveCompleted = false;
+
+                    console.log(`🌊 Starting Wave ${waveConfig.waveNumber}`);
+
+                    for (let i = 0; i < waveConfig.enemyCount; i++) {
                         const path = i % 2 === 0 ? path1Points : path2Points;
-                        spawnEnemy(path);
-                        await k.wait(GAME_CONFIG.waves.first.spawnDelay);
+                        spawnEnemy(path, waveConfig);
+                        await k.wait(waveConfig.spawnDelay);
                     }
                 }
 
                 // Check wave completion - only when ALL enemies are gone
                 function checkWaveCompletion() {
-                    console.log(`[Wave Check] processed: ${totalEnemiesProcessed}/${totalEnemiesSpawned}, completed: ${wave1Completed}, active: ${gameActive}`);
+                    console.log(`[Wave Check] processed: ${totalEnemiesProcessed}/${totalEnemiesSpawned}, completed: ${waveCompleted}, active: ${gameActive}`);
 
-                    if (!wave1Completed && totalEnemiesProcessed >= totalEnemiesSpawned && totalEnemiesSpawned > 0 && gameActive) {
+                    if (!waveCompleted && totalEnemiesProcessed >= totalEnemiesSpawned && totalEnemiesSpawned > 0 && gameActive) {
                         // Double-check no enemies remain on the map
                         const remainingEnemies = k.get("enemy");
                         console.log(`[Wave Check] Remaining enemies: ${remainingEnemies.length}`);
 
                         if (remainingEnemies.length === 0) {
-                            wave1Completed = true;
+                            waveCompleted = true;
 
                             // Check if player won (has health remaining)
                             if (playerHealth > 0) {
@@ -977,16 +997,17 @@ function GameCanvas() {
 
                 // Wave Victory - player survives with health > 0
                 async function onWaveVictory() {
-                    console.log("🎉 Wave 1 Victory!");
+                    console.log(`🎉 Wave ${currentWaveIndex + 1} Victory!`);
                     gameActive = false; // Pause game
 
                     // Show victory message
                     k.add([
-                        k.text("WAVE 1 COMPLETE!", { size: 40 }),
+                        k.text(`WAVE ${currentWaveIndex + 1} COMPLETE!`, { size: 40 }),
                         k.pos(k.width() / 2, k.height() / 2 - 100),
                         k.anchor("center"),
                         k.color(100, 255, 100),
-                        k.z(250)
+                        k.z(250),
+                        "victory-msg"
                     ]);
 
                     k.add([
@@ -994,11 +1015,13 @@ function GameCanvas() {
                         k.pos(k.width() / 2, k.height() / 2 - 50),
                         k.anchor("center"),
                         k.color(255, 255, 100),
-                        k.z(250)
+                        k.z(250),
+                        "health-msg"
                     ]);
 
-                    // Mint Macrophage SBT if not already unlocked
-                    if (walletState && walletState.address && !isMacrophageUnlocked) {
+                    // Check for SBT unlocks based on wave number
+                    if (currentWaveIndex === 0 && walletState && walletState.address && !isMacrophageUnlocked) {
+                        // Wave 1 complete - unlock Macrophage
                         await BlockchainService.mintMacrophageSBT(walletState.address);
                         isMacrophageUnlocked = true;
                         setMacrophageUnlocked(true);
@@ -1023,9 +1046,78 @@ function GameCanvas() {
                             celebrationMsg.scale = Math.min(t * 2, 1);
                         });
                     }
+
+                    // Check if there are more waves
+                    if (currentWaveIndex < GAME_CONFIG.waves.length - 1) {
+                        // More waves to go!
+                        k.wait(3, () => {
+                            currentWaveIndex++;
+                            startNextWavePreparation();
+                        });
+                    } else {
+                        // All waves complete!
+                        k.add([
+                            k.text("🏆 ALL WAVES COMPLETE! 🏆", { size: 36 }),
+                            k.pos(k.width() / 2, k.height() / 2 + 80),
+                            k.anchor("center"),
+                            k.color(255, 215, 0),
+                            k.z(250)
+                        ]);
+                    }
                 }
 
-                spawnWave();
+                // Start preparation phase for next wave
+                function startNextWavePreparation() {
+                    // Clear victory messages
+                    k.destroyAll("victory-msg");
+                    k.destroyAll("health-msg");
+
+                    gameActive = true; // Reactivate game for tower placement
+                    const nextWave = GAME_CONFIG.waves[currentWaveIndex];
+
+                    // Update wave number display
+                    if (waveNumberText) {
+                        waveNumberText.text = `Wave ${nextWave.waveNumber}`;
+                    }
+
+                    // Show preparation message
+                    const prepMsg = k.add([
+                        k.text(`Prepare for Wave ${nextWave.waveNumber}!`, { size: 32 }),
+                        k.pos(k.width() / 2, k.height() / 2 - 50),
+                        k.anchor("center"),
+                        k.color(255, 200, 100),
+                        k.z(250),
+                        "prep-msg"
+                    ]);
+
+                    // Countdown timer
+                    let timeRemaining = nextWave.preparationTime;
+                    preparationCountdown = k.add([
+                        k.text(`${timeRemaining}s`, { size: 48 }),
+                        k.pos(k.width() / 2, k.height() / 2),
+                        k.anchor("center"),
+                        k.color(255, 255, 255),
+                        k.z(250),
+                        "countdown"
+                    ]);
+
+                    const countdownInterval = k.loop(1, () => {
+                        timeRemaining--;
+                        if (preparationCountdown && preparationCountdown.exists()) {
+                            preparationCountdown.text = `${timeRemaining}s`;
+                        }
+
+                        if (timeRemaining <= 0) {
+                            countdownInterval.cancel();
+                            k.destroy(prepMsg);
+                            if (preparationCountdown) k.destroy(preparationCountdown);
+                            spawnWave();
+                        }
+                    });
+                }
+
+                // Start first wave with preparation time
+                startNextWavePreparation();
             });
 
             // Start the game scene immediately

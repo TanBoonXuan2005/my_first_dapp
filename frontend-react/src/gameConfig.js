@@ -40,13 +40,54 @@ const GAME_CONFIG = {
         }
     },
 
-    // Wave Configuration
-    waves: {
-        first: {
-            enemyCount: 5,        // Number of enemies to spawn
-            spawnDelay: 1.5       // Delay between spawns in seconds
+    // Wave Configuration - Progressive Difficulty
+    waves: [
+        // Wave 1 - Tutorial (Macrophage unlock)
+        {
+            waveNumber: 1,
+            enemyCount: 5,
+            spawnDelay: 2.0,        // 2 seconds between spawns
+            enemyHp: 80,
+            enemySpeed: 100,
+            preparationTime: 30      // 30 seconds to prepare
+        },
+        // Wave 2 - Getting Harder
+        {
+            waveNumber: 2,
+            enemyCount: 8,
+            spawnDelay: 1.5,        // Faster spawns
+            enemyHp: 100,           // Tougher enemies
+            enemySpeed: 110,        // Faster movement
+            preparationTime: 30
+        },
+        // Wave 3 - Challenging (Platelet unlock)
+        {
+            waveNumber: 3,
+            enemyCount: 12,
+            spawnDelay: 1.2,
+            enemyHp: 120,
+            enemySpeed: 120,
+            preparationTime: 30
+        },
+        // Wave 4 - Difficult
+        {
+            waveNumber: 4,
+            enemyCount: 15,
+            spawnDelay: 1.0,
+            enemyHp: 150,
+            enemySpeed: 130,
+            preparationTime: 30
+        },
+        // Wave 5 - Boss Wave (Basophil unlock)
+        {
+            waveNumber: 5,
+            enemyCount: 20,
+            spawnDelay: 0.8,
+            enemyHp: 180,
+            enemySpeed: 140,
+            preparationTime: 30
         }
-    }
+    ]
 };
 
 export default GAME_CONFIG;
