@@ -37,7 +37,7 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState) {
             k.destroy(enemy);
             gameState.updateATP(5); // Award ATP
             gameState.totalEnemiesProcessed++;
-            gameState.checkWaveCompletion(); // Check if wave is done
+            gameState.totalEnemiesProcessed++;
             return;
         }
 
@@ -56,7 +56,7 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState) {
             k.destroy(enemy);
             gameState.updateHealth(-10);
             gameState.totalEnemiesProcessed++;
-            gameState.checkWaveCompletion();
+            gameState.totalEnemiesProcessed++;
             return;
         }
 
