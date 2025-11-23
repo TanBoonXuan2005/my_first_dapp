@@ -12,11 +12,24 @@ function GameCanvas() {
         const initGame = async () => {
             const GAME_CONFIG = await import('../gameConfig.js').then(m => m.default || window.GAME_CONFIG);
 
+            // Calculate responsive canvas size
+            const maxWidth = Math.min(window.innerWidth - 40, 1200);
+            const maxHeight = Math.min(window.innerHeight - 100, 800);
+            const aspectRatio = 4 / 3; // 800x600 ratio
+
+            let canvasWidth = maxWidth;
+            let canvasHeight = canvasWidth / aspectRatio;
+
+            if (canvasHeight > maxHeight) {
+                canvasHeight = maxHeight;
+                canvasWidth = canvasHeight * aspectRatio;
+            }
+
             const k = kaboom({
                 canvas: canvasRef.current,
                 background: [20, 20, 30],
-                width: 800,
-                height: 600,
+                width: canvasWidth,
+                height: canvasHeight,
                 scale: 1,
                 global: false,
                 debug: true,
