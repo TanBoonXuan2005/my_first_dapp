@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import kaboom from 'kaboom';
+import GAME_CONFIG from '../gameConfig.js';
 
 function GameCanvas() {
     const canvasRef = useRef(null);
@@ -9,13 +10,11 @@ function GameCanvas() {
         // Don't initialize if already initialized
         if (kRef.current) return;
 
-        const initGame = async () => {
-            const GAME_CONFIG = await import('../gameConfig.js').then(m => m.default || window.GAME_CONFIG);
-
+        const initGame = () => {
             // Calculate responsive canvas size
             const maxWidth = Math.min(window.innerWidth - 40, 1200);
             const maxHeight = Math.min(window.innerHeight - 100, 800);
-            const aspectRatio = 4 / 3; // 800x600 ratio
+            const aspectRatio = 4 / 3;
 
             let canvasWidth = maxWidth;
             let canvasHeight = canvasWidth / aspectRatio;
@@ -36,6 +35,7 @@ function GameCanvas() {
             });
 
             kRef.current = k;
+            window.k = k; // For debugging
 
             // Load Assets
             const v = Date.now();
@@ -61,15 +61,772 @@ function GameCanvas() {
             k.loadSprite("bomb-projectile", `/assets/animation_frames/Basophil/Histamin_Bomb_Projectile.png?v=${v}`);
             k.loadSprite("explosion-effect", `/assets/animation_frames/Basophil/Explosion_Effect.png?v=${v}`);
 
-            // Import and run the game logic
-            // For now, we'll just start a simple scene
+            // Define Paths
+            const path1Points = [
+                k.vec2(0, 150),
+                k.vec2(200, 150),
+                k.vec2(300, 250),
+                k.vec2(500, 250),
+                k.vec2(600, 300),
+                k.vec2(canvasWidth, 300)
+            ];
+
+            const path2Points = [
+                k.vec2(0, 450),
+                k.vec2(200, 450),
+                k.vec2(300, 350),
+                k.vec2(500, 350),
+                k.vec2(600, 300),
+                k.vec2(canvasWidth, 300)
+            ];
+
+            const UI_HEIGHT = 100;
+
+            // Helper functions
+            function distToSegment(p, v, w) {
+                const l2 = v.dist(w) * v.dist(w);
+                if (l2 === 0) return p.dist(v);
+                let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+                t = Math.max(0, Math.min(1, t));
+                const projection = k.vec2(v.x + t * (w.x - v.x), v.y + t * (w.y - v.y));
+                return p.dist(projection);
+            }
+
+            function isOnPath(pos) {
+                const pathWidth = 40;
+                for (let i = 0; i < path1Points.length - 1; i++) {
+                    if (distToSegment(pos, path1Points[i], path1Points[i + 1]) < pathWidth) return true;
+                }
+                for (let i = 0; i < path2Points.length - 1; i++) {
+                    if (distToSegment(pos, path2Points[i], path2Points[i + 1]) < pathWidth) return true;
+                }
+                return false;
+            }
+
+            function showDamageNumber(pos, damage) {
+                const damageText = k.add([
+                    k.text(`-${damage}`, { size: 20 }),
+                    k.pos(pos.add(k.vec2(0, -30))),
+                    k.anchor("center"),
+                    k.color(255, 50, 50),
+                    k.z(150),
+                    k.opacity(1),
+                    "damage-number"
+                ]);
+
+                let elapsed = 0;
+                damageText.onUpdate(() => {
+                    elapsed += k.dt();
+                    damageText.pos.y -= k.dt() * 30;
+                    damageText.opacity = 1 - (elapsed / 0.8);
+                    if (elapsed >= 0.8) k.destroy(damageText);
+                });
+            }
+
+            // Define Game Scene
             k.scene("main", () => {
+                // Draw Paths
+                k.onDraw(() => {
+                    k.drawLines({
+                        pts: path1Points,
+                        width: 60,
+                        color: k.rgb(60, 0, 0),
+                        join: "round",
+                        cap: "round",
+                    });
+                    k.drawLines({
+                        pts: path2Points,
+                        width: 60,
+                        color: k.rgb(60, 0, 0),
+                        join: "round",
+                        cap: "round",
+                    });
+                });
+
+                // UI Background
                 k.add([
-                    k.text("Tower Defense Game Coming Soon", { size: 24 }),
-                    k.pos(k.width() / 2, k.height() / 2),
+                    k.rect(k.width(), UI_HEIGHT),
+                    k.pos(0, 0),
+                    k.color(50, 50, 60),
+                    k.z(100),
+                    "ui-bg"
+                ]);
+
+                k.add([
+                    k.text("SHOP", { size: 24, font: "monospace" }),
+                    k.pos(40, 50),
                     k.anchor("center"),
                     k.color(255, 255, 255),
+                    k.z(101)
                 ]);
+
+                // Shop Items
+                const shopItemBCell = k.add([
+                    k.sprite("b-cell-neutral"),
+                    k.pos(120, 50),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.z(101),
+                    k.area(),
+                    "shop-item-bcell"
+                ]);
+
+                k.add([
+                    k.text("B-Cell", { size: 14 }),
+                    k.pos(120, 85),
+                    k.anchor("center"),
+                    k.color(255, 255, 255),
+                    k.z(101)
+                ]);
+
+                const shopItemMacrophage = k.add([
+                    k.sprite("macrophage-idle-neutral"),
+                    k.pos(200, 50),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.z(101),
+                    k.area(),
+                    "shop-item-macrophage"
+                ]);
+
+                k.add([
+                    k.text("Macrophage", { size: 14 }),
+                    k.pos(200, 85),
+                    k.anchor("center"),
+                    k.color(255, 255, 255),
+                    k.z(101)
+                ]);
+
+                const shopItemPlatelet = k.add([
+                    k.sprite("platelet-idle"),
+                    k.pos(280, 50),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.z(101),
+                    k.area(),
+                    "shop-item-platelet"
+                ]);
+
+                k.add([
+                    k.text("Platelet", { size: 14 }),
+                    k.pos(280, 85),
+                    k.anchor("center"),
+                    k.color(255, 255, 255),
+                    k.z(101)
+                ]);
+
+                const shopItemBasophil = k.add([
+                    k.sprite("basophil-idle"),
+                    k.pos(360, 50),
+                    k.anchor("center"),
+                    k.scale(0.12),
+                    k.z(101),
+                    k.area(),
+                    "shop-item-basophil"
+                ]);
+
+                k.add([
+                    k.text("Basophil", { size: 14 }),
+                    k.pos(360, 85),
+                    k.anchor("center"),
+                    k.color(255, 255, 255),
+                    k.z(101)
+                ]);
+
+                // Drag state
+                let isDragging = false;
+                let dragSprite = null;
+                let rangeIndicator = null;
+                let selectedTowerType = null;
+
+                // Shop click handlers
+                shopItemBCell.onClick(() => {
+                    if (isDragging) return;
+                    isDragging = true;
+                    selectedTowerType = "bcell";
+                    dragSprite = k.add([
+                        k.sprite("b-cell-neutral"),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.scale(0.12),
+                        k.opacity(0.7),
+                        k.z(200),
+                        "drag-ghost"
+                    ]);
+                    rangeIndicator = k.add([
+                        k.circle(GAME_CONFIG.towers.bCell.range),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.opacity(0.2),
+                        k.color(100, 200, 255),
+                        k.outline(2, k.rgb(100, 200, 255)),
+                        k.z(199),
+                        "range-indicator"
+                    ]);
+                });
+
+                shopItemMacrophage.onClick(() => {
+                    if (isDragging) return;
+                    isDragging = true;
+                    selectedTowerType = "macrophage";
+                    dragSprite = k.add([
+                        k.sprite("macrophage-idle-neutral"),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.scale(0.12),
+                        k.opacity(0.7),
+                        k.z(200),
+                        "drag-ghost"
+                    ]);
+                    rangeIndicator = k.add([
+                        k.circle(GAME_CONFIG.towers.macrophage.range),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.opacity(0.2),
+                        k.color(200, 100, 255),
+                        k.outline(2, k.rgb(200, 100, 255)),
+                        k.z(199),
+                        "range-indicator"
+                    ]);
+                });
+
+                shopItemPlatelet.onClick(() => {
+                    if (isDragging) return;
+                    isDragging = true;
+                    selectedTowerType = "platelet";
+                    dragSprite = k.add([
+                        k.sprite("platelet-idle"),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.scale(0.12),
+                        k.opacity(0.7),
+                        k.z(200),
+                        "drag-ghost"
+                    ]);
+                    rangeIndicator = k.add([
+                        k.circle(GAME_CONFIG.towers.platelet.range),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.opacity(0.2),
+                        k.color(100, 255, 100),
+                        k.outline(2, k.rgb(100, 255, 100)),
+                        k.z(199),
+                        "range-indicator"
+                    ]);
+                });
+
+                shopItemBasophil.onClick(() => {
+                    if (isDragging) return;
+                    isDragging = true;
+                    selectedTowerType = "basophil";
+                    dragSprite = k.add([
+                        k.sprite("basophil-idle"),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.scale(0.12),
+                        k.opacity(0.7),
+                        k.z(200),
+                        "drag-ghost"
+                    ]);
+                    rangeIndicator = k.add([
+                        k.circle(GAME_CONFIG.towers.basophil.range),
+                        k.pos(k.mousePos()),
+                        k.anchor("center"),
+                        k.opacity(0.2),
+                        k.color(255, 150, 50),
+                        k.outline(2, k.rgb(255, 150, 50)),
+                        k.z(199),
+                        "range-indicator"
+                    ]);
+                });
+
+                // Handle Dragging
+                k.onUpdate(() => {
+                    if (isDragging && dragSprite) {
+                        dragSprite.pos = k.mousePos();
+                        if (rangeIndicator) rangeIndicator.pos = k.mousePos();
+                        const validPos = k.mousePos().y > UI_HEIGHT && !isOnPath(k.mousePos());
+                        dragSprite.color = validPos ? k.rgb(255, 255, 255) : k.rgb(255, 100, 100);
+                    }
+                });
+
+                // Handle Mouse Release
+                k.onMouseRelease(() => {
+                    if (!isDragging) return;
+                    const dropPos = k.mousePos();
+                    isDragging = false;
+
+                    if (dragSprite) {
+                        k.destroy(dragSprite);
+                        dragSprite = null;
+                    }
+
+                    if (rangeIndicator) {
+                        k.destroy(rangeIndicator);
+                        rangeIndicator = null;
+                    }
+
+                    if (dropPos.y <= UI_HEIGHT || isOnPath(dropPos)) {
+                        k.shake(5);
+                        return;
+                    }
+
+                    if (selectedTowerType === "bcell") placeBCell(dropPos);
+                    else if (selectedTowerType === "macrophage") placeMacrophage(dropPos);
+                    else if (selectedTowerType === "platelet") placePlatelet(dropPos);
+                    else if (selectedTowerType === "basophil") placeBasophil(dropPos);
+
+                    selectedTowerType = null;
+                });
+
+                // Tower placement functions (abbreviated for space - I'll include full versions)
+                function placeBCell(dropPos) {
+                    const tower = k.add([
+                        k.sprite("b-cell-neutral"),
+                        k.pos(dropPos),
+                        k.anchor("center"),
+                        k.scale(0.15),
+                        k.z(50),
+                        "b-cell",
+                        {
+                            timer: 0,
+                            animFrame: 0,
+                            shootTimer: GAME_CONFIG.towers.bCell.attackSpeed,
+                            range: GAME_CONFIG.towers.bCell.range,
+                            attackSpeed: GAME_CONFIG.towers.bCell.attackSpeed,
+                            damage: GAME_CONFIG.towers.bCell.damage
+                        }
+                    ]);
+
+                    const idleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral"];
+
+                    tower.onUpdate(() => {
+                        tower.timer += k.dt();
+                        if (tower.timer > 0.15) {
+                            tower.timer = 0;
+                            tower.animFrame = (tower.animFrame + 1) % idleFrames.length;
+                            tower.use(k.sprite(idleFrames[tower.animFrame]));
+                        }
+
+                        tower.shootTimer += k.dt();
+                        if (tower.shootTimer >= tower.attackSpeed) {
+                            const enemies = k.get("enemy");
+                            let nearestEnemy = null;
+                            let nearestDist = tower.range;
+
+                            for (const enemy of enemies) {
+                                const dist = tower.pos.dist(enemy.pos);
+                                if (dist <= tower.range && dist < nearestDist) {
+                                    nearestEnemy = enemy;
+                                    nearestDist = dist;
+                                }
+                            }
+
+                            if (nearestEnemy) {
+                                tower.shootTimer = 0;
+                                const projectile = k.add([
+                                    k.sprite("y-antibody"),
+                                    k.pos(tower.pos),
+                                    k.anchor("center"),
+                                    k.scale(0.08),
+                                    k.area(),
+                                    k.z(30),
+                                    "projectile",
+                                    {
+                                        speed: GAME_CONFIG.towers.bCell.projectileSpeed,
+                                        target: nearestEnemy,
+                                        damage: tower.damage
+                                    }
+                                ]);
+
+                                projectile.onUpdate(() => {
+                                    if (!projectile.target.exists()) {
+                                        k.destroy(projectile);
+                                        return;
+                                    }
+
+                                    const dir = projectile.target.pos.sub(projectile.pos).unit();
+                                    projectile.move(dir.scale(projectile.speed));
+
+                                    if (projectile.pos.dist(projectile.target.pos) < 20) {
+                                        showDamageNumber(projectile.target.pos, projectile.damage);
+                                        projectile.target.hp -= projectile.damage;
+                                        k.destroy(projectile);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+
+                function placeMacrophage(dropPos) {
+                    const tower = k.add([
+                        k.sprite("macrophage-idle-neutral"),
+                        k.pos(dropPos),
+                        k.anchor("center"),
+                        k.scale(0.15),
+                        k.z(50),
+                        "macrophage",
+                        {
+                            attackTimer: GAME_CONFIG.towers.macrophage.attackSpeed,
+                            idleTimer: 0,
+                            idleFrame: 0,
+                            range: GAME_CONFIG.towers.macrophage.range,
+                            attackSpeed: GAME_CONFIG.towers.macrophage.attackSpeed,
+                            damage: GAME_CONFIG.towers.macrophage.damage,
+                            attackState: "idle"
+                        }
+                    ]);
+
+                    const idleFrames = ["macrophage-idle-neutral", "macrophage-idle-excited"];
+
+                    tower.onUpdate(() => {
+                        if (tower.attackState === "idle") {
+                            tower.idleTimer += k.dt();
+                            if (tower.idleTimer > 0.3) {
+                                tower.idleTimer = 0;
+                                tower.idleFrame = (tower.idleFrame + 1) % idleFrames.length;
+                                tower.use(k.sprite(idleFrames[tower.idleFrame]));
+                            }
+
+                            tower.attackTimer += k.dt();
+                            if (tower.attackTimer >= tower.attackSpeed) {
+                                const enemies = k.get("enemy");
+                                let hasEnemyInRange = false;
+
+                                for (const enemy of enemies) {
+                                    if (tower.pos.dist(enemy.pos) <= tower.range) {
+                                        hasEnemyInRange = true;
+                                        break;
+                                    }
+                                }
+
+                                if (hasEnemyInRange) {
+                                    tower.attackTimer = 0;
+                                    tower.attackState = "prepare";
+                                    tower.use(k.sprite("macrophage-prepare"));
+
+                                    k.wait(0.2, () => {
+                                        if (!tower.exists()) return;
+                                        tower.attackState = "attack";
+                                        tower.use(k.sprite("macrophage-attack"));
+
+                                        const enemies = k.get("enemy");
+                                        for (const enemy of enemies) {
+                                            if (tower.pos.dist(enemy.pos) <= tower.range) {
+                                                showDamageNumber(enemy.pos, tower.damage);
+                                                enemy.hp -= tower.damage;
+                                            }
+                                        }
+
+                                        k.wait(0.3, () => {
+                                            if (!tower.exists()) return;
+                                            tower.attackState = "idle";
+                                            tower.use(k.sprite(idleFrames[tower.idleFrame]));
+                                        });
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+
+                function placePlatelet(dropPos) {
+                    const tower = k.add([
+                        k.sprite("platelet-idle"),
+                        k.pos(dropPos),
+                        k.anchor("center"),
+                        k.scale(0.15),
+                        k.z(50),
+                        "platelet",
+                        {
+                            attackTimer: GAME_CONFIG.towers.platelet.attackSpeed,
+                            idleTimer: 0,
+                            idleFrame: 0,
+                            range: GAME_CONFIG.towers.platelet.range,
+                            attackSpeed: GAME_CONFIG.towers.platelet.attackSpeed,
+                            damage: GAME_CONFIG.towers.platelet.damage,
+                            attackState: "idle"
+                        }
+                    ]);
+
+                    const idleFrames = ["platelet-idle", "platelet-idle2"];
+
+                    tower.onUpdate(() => {
+                        if (tower.attackState === "idle") {
+                            tower.idleTimer += k.dt();
+                            if (tower.idleTimer > 0.3) {
+                                tower.idleTimer = 0;
+                                tower.idleFrame = (tower.idleFrame + 1) % idleFrames.length;
+                                tower.use(k.sprite(idleFrames[tower.idleFrame]));
+                            }
+
+                            tower.attackTimer += k.dt();
+                            if (tower.attackTimer >= tower.attackSpeed) {
+                                const enemies = k.get("enemy");
+                                let nearestEnemy = null;
+                                let nearestDist = tower.range;
+
+                                for (const enemy of enemies) {
+                                    const dist = tower.pos.dist(enemy.pos);
+                                    if (dist <= tower.range && dist < nearestDist) {
+                                        nearestEnemy = enemy;
+                                        nearestDist = dist;
+                                    }
+                                }
+
+                                if (nearestEnemy) {
+                                    tower.attackTimer = 0;
+                                    tower.attackState = "prepare";
+                                    tower.use(k.sprite("platelet-prepare"));
+                                    const targetPos = nearestEnemy.pos.clone();
+
+                                    k.wait(0.2, () => {
+                                        if (!tower.exists()) return;
+                                        tower.attackState = "throw";
+                                        tower.use(k.sprite("platelet-throw"));
+
+                                        const projectile = k.add([
+                                            k.sprite("fibrin-projectile"),
+                                            k.pos(tower.pos),
+                                            k.anchor("center"),
+                                            k.scale(0.1),
+                                            k.z(30),
+                                            "fibrin-projectile",
+                                            {
+                                                speed: GAME_CONFIG.towers.platelet.projectileSpeed,
+                                                targetPos: targetPos,
+                                                damage: tower.damage,
+                                                hasLanded: false
+                                            }
+                                        ]);
+
+                                        projectile.onUpdate(() => {
+                                            if (projectile.hasLanded) return;
+                                            const dir = projectile.targetPos.sub(projectile.pos);
+                                            const dist = dir.len();
+
+                                            if (dist < 15) {
+                                                projectile.hasLanded = true;
+                                                const landPos = projectile.pos.clone();
+                                                k.destroy(projectile);
+
+                                                const enemies = k.get("enemy");
+                                                for (const enemy of enemies) {
+                                                    if (enemy.pos.dist(landPos) < 30) {
+                                                        showDamageNumber(enemy.pos, tower.damage);
+                                                        enemy.hp -= tower.damage;
+                                                    }
+                                                }
+
+                                                const net = k.add([
+                                                    k.sprite("fibrin-expanded"),
+                                                    k.pos(landPos),
+                                                    k.anchor("center"),
+                                                    k.scale(0.15),
+                                                    k.opacity(0.6),
+                                                    k.z(5),
+                                                    k.area(),
+                                                    "fibrin-net",
+                                                    {
+                                                        slowEffect: GAME_CONFIG.towers.platelet.slowEffect,
+                                                        duration: GAME_CONFIG.towers.platelet.netDuration,
+                                                        elapsed: 0
+                                                    }
+                                                ]);
+
+                                                net.onUpdate(() => {
+                                                    net.elapsed += k.dt();
+                                                    if (net.elapsed >= net.duration) k.destroy(net);
+                                                });
+                                            } else {
+                                                projectile.move(dir.unit().scale(projectile.speed));
+                                            }
+                                        });
+
+                                        k.wait(0.3, () => {
+                                            if (!tower.exists()) return;
+                                            tower.attackState = "idle";
+                                            tower.use(k.sprite(idleFrames[tower.idleFrame]));
+                                        });
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+
+                function placeBasophil(dropPos) {
+                    const tower = k.add([
+                        k.sprite("basophil-idle"),
+                        k.pos(dropPos),
+                        k.anchor("center"),
+                        k.scale(0.15),
+                        k.z(50),
+                        "basophil",
+                        {
+                            attackTimer: GAME_CONFIG.towers.basophil.attackSpeed,
+                            idleTimer: 0,
+                            idleFrame: 0,
+                            range: GAME_CONFIG.towers.basophil.range,
+                            attackSpeed: GAME_CONFIG.towers.basophil.attackSpeed,
+                            damage: GAME_CONFIG.towers.basophil.damage,
+                            attackState: "idle"
+                        }
+                    ]);
+
+                    const idleFrames = ["basophil-idle", "basophil-idle2"];
+
+                    tower.onUpdate(() => {
+                        if (tower.attackState === "idle") {
+                            tower.idleTimer += k.dt();
+                            if (tower.idleTimer > 0.3) {
+                                tower.idleTimer = 0;
+                                tower.idleFrame = (tower.idleFrame + 1) % idleFrames.length;
+                                tower.use(k.sprite(idleFrames[tower.idleFrame]));
+                            }
+
+                            tower.attackTimer += k.dt();
+                            if (tower.attackTimer >= tower.attackSpeed) {
+                                const enemies = k.get("enemy");
+                                let nearestEnemy = null;
+                                let nearestDist = tower.range;
+
+                                for (const enemy of enemies) {
+                                    const dist = tower.pos.dist(enemy.pos);
+                                    if (dist <= tower.range && dist < nearestDist) {
+                                        nearestEnemy = enemy;
+                                        nearestDist = dist;
+                                    }
+                                }
+
+                                if (nearestEnemy) {
+                                    tower.attackTimer = 0;
+                                    tower.attackState = "throw";
+                                    tower.use(k.sprite("basophil-throw"));
+                                    const targetPos = nearestEnemy.pos.clone();
+
+                                    const projectile = k.add([
+                                        k.sprite("bomb-projectile"),
+                                        k.pos(tower.pos),
+                                        k.anchor("center"),
+                                        k.scale(0.1),
+                                        k.z(30),
+                                        {
+                                            speed: GAME_CONFIG.towers.basophil.projectileSpeed,
+                                            targetPos: targetPos,
+                                            hasExploded: false
+                                        }
+                                    ]);
+
+                                    projectile.onUpdate(() => {
+                                        if (projectile.hasExploded) return;
+                                        const dir = projectile.targetPos.sub(projectile.pos);
+                                        const dist = dir.len();
+
+                                        if (dist < 15) {
+                                            projectile.hasExploded = true;
+                                            const explosionPos = projectile.pos.clone();
+                                            k.destroy(projectile);
+
+                                            const explosion = k.add([
+                                                k.sprite("explosion-effect"),
+                                                k.pos(explosionPos),
+                                                k.anchor("center"),
+                                                k.scale(0.2),
+                                                k.z(40)
+                                            ]);
+
+                                            const enemies = k.get("enemy");
+                                            for (const enemy of enemies) {
+                                                if (enemy.pos.dist(explosionPos) <= GAME_CONFIG.towers.basophil.explosionRadius) {
+                                                    showDamageNumber(enemy.pos, tower.damage);
+                                                    enemy.hp -= tower.damage;
+                                                }
+                                            }
+
+                                            k.wait(0.3, () => {
+                                                if (explosion.exists()) k.destroy(explosion);
+                                            });
+                                        } else {
+                                            projectile.move(dir.unit().scale(projectile.speed));
+                                        }
+                                    });
+
+                                    k.wait(0.3, () => {
+                                        if (!tower.exists()) return;
+                                        tower.attackState = "idle";
+                                        tower.use(k.sprite(idleFrames[tower.idleFrame]));
+                                    });
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Enemy spawning
+                function spawnEnemy(pathPoints) {
+                    const enemy = k.add([
+                        k.sprite("flu-virus"),
+                        k.pos(pathPoints[0]),
+                        k.anchor("center"),
+                        k.scale(0.12),
+                        k.area(),
+                        k.z(10),
+                        "enemy",
+                        {
+                            speed: GAME_CONFIG.enemies.fluVirus.speed,
+                            currentPointIndex: 0,
+                            path: pathPoints,
+                            hp: GAME_CONFIG.enemies.fluVirus.hp,
+                            maxHp: GAME_CONFIG.enemies.fluVirus.hp
+                        }
+                    ]);
+
+                    enemy.onUpdate(() => {
+                        if (enemy.hp <= 0) {
+                            enemy.use(k.sprite("flu-virus-death"));
+                            enemy.speed = 0;
+                            enemy.unuse("enemy");
+                            enemy.use("dead-enemy");
+                            k.wait(1, () => k.destroy(enemy));
+                            return;
+                        }
+
+                        if (enemy.currentPointIndex >= enemy.path.length - 1) {
+                            k.destroy(enemy);
+                            return;
+                        }
+
+                        const nets = k.get("fibrin-net");
+                        let slowMultiplier = 1.0;
+                        for (const net of nets) {
+                            if (enemy.pos.dist(net.pos) < 50) {
+                                slowMultiplier = 1.0 - net.slowEffect;
+                                break;
+                            }
+                        }
+
+                        const target = enemy.path[enemy.currentPointIndex + 1];
+                        const dir = target.sub(enemy.pos).unit();
+                        const effectiveSpeed = enemy.speed * slowMultiplier;
+                        enemy.move(dir.scale(effectiveSpeed));
+
+                        if (enemy.pos.dist(target) < 5) {
+                            enemy.currentPointIndex++;
+                        }
+                    });
+                }
+
+                async function spawnWave() {
+                    for (let i = 0; i < GAME_CONFIG.waves.first.enemyCount; i++) {
+                        const path = i % 2 === 0 ? path1Points : path2Points;
+                        spawnEnemy(path);
+                        await k.wait(GAME_CONFIG.waves.first.spawnDelay);
+                    }
+                }
+
+                spawnWave();
             });
 
             k.go("main");
@@ -77,11 +834,8 @@ function GameCanvas() {
 
         initGame();
 
-        // Cleanup
         return () => {
             if (kRef.current) {
-                // Kaboom doesn't have a built-in destroy method
-                // but we can clear the canvas
                 kRef.current = null;
             }
         };
@@ -95,7 +849,8 @@ function GameCanvas() {
             justifyContent: 'center',
             width: '100%',
             minHeight: '100vh',
-            background: '#111'
+            background: '#111',
+            padding: '1rem'
         }}>
             <canvas
                 ref={canvasRef}
@@ -105,7 +860,8 @@ function GameCanvas() {
                     border: '2px solid #6ea8fe',
                     borderRadius: '8px',
                     cursor: 'crosshair',
-                    boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)'
+                    boxShadow: '0 0 20px rgba(0, 0, 0, 0.5)',
+                    maxWidth: '100%'
                 }}
             />
         </div>
