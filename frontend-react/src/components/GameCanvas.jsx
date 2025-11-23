@@ -875,8 +875,8 @@ function GameCanvas() {
                             enemy.unuse("enemy");
                             enemy.use("dead-enemy");
 
-                            // Increment kill counter
-                            totalEnemiesKilled++;
+                            // Enemy killed - increment processed counter
+                            totalEnemiesProcessed++;
                             checkWaveCompletion();
 
                             k.wait(1, () => k.destroy(enemy));
@@ -887,7 +887,7 @@ function GameCanvas() {
                         // Enemy reached the end - damage player
                         if (enemy.currentPointIndex >= enemy.path.length - 1) {
                             updateHealth(-10);
-                            totalEnemiesKilled++; // Count as "dealt with"
+                            totalEnemiesProcessed++; // Enemy escaped - count as processed
                             checkWaveCompletion();
                             k.destroy(enemy);
                             return;
@@ -915,7 +915,7 @@ function GameCanvas() {
 
                 // Wave management
                 let totalEnemiesSpawned = 0;
-                let totalEnemiesKilled = 0;
+                let totalEnemiesProcessed = 0; // Killed OR escaped
                 let wave1Completed = false;
 
                 async function spawnWave() {
@@ -929,14 +929,18 @@ function GameCanvas() {
                     }
                 }
 
-                // Check wave completion
+                // Check wave completion - only when ALL enemies are gone
                 function checkWaveCompletion() {
-                    if (!wave1Completed && totalEnemiesKilled >= totalEnemiesSpawned && totalEnemiesSpawned > 0 && gameActive) {
-                        wave1Completed = true;
+                    if (!wave1Completed && totalEnemiesProcessed >= totalEnemiesSpawned && totalEnemiesSpawned > 0 && gameActive) {
+                        // Double-check no enemies remain on the map
+                        const remainingEnemies = k.get("enemy");
+                        if (remainingEnemies.length === 0) {
+                            wave1Completed = true;
 
-                        // Check if player won (has health remaining)
-                        if (playerHealth > 0) {
-                            onWaveVictory();
+                            // Check if player won (has health remaining)
+                            if (playerHealth > 0) {
+                                onWaveVictory();
+                            }
                         }
                     }
                 }
