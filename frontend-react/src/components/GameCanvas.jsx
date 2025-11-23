@@ -889,7 +889,12 @@ function GameCanvas() {
 
                             // Enemy killed - increment processed counter
                             totalEnemiesProcessed++;
-                            checkWaveCompletion();
+                            console.log(`[Enemy] Killed. Total processed: ${totalEnemiesProcessed}/${totalEnemiesSpawned}`);
+
+                            // Wait a bit for cleanup, then check wave completion
+                            k.wait(1.2, () => {
+                                checkWaveCompletion();
+                            });
 
                             k.wait(1, () => k.destroy(enemy));
                             return;
@@ -900,8 +905,14 @@ function GameCanvas() {
                         if (enemy.currentPointIndex >= enemy.path.length - 1) {
                             updateHealth(-10);
                             totalEnemiesProcessed++; // Enemy escaped - count as processed
-                            checkWaveCompletion();
+                            console.log(`[Enemy] Escaped. Total processed: ${totalEnemiesProcessed}/${totalEnemiesSpawned}`);
+
                             k.destroy(enemy);
+
+                            // Wait a bit for cleanup, then check wave completion
+                            k.wait(0.5, () => {
+                                checkWaveCompletion();
+                            });
                             return;
                         }
 
