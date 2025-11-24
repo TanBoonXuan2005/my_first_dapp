@@ -9,15 +9,28 @@ import { GameState } from '../game/gameState.js';
 import { setupShop } from '../game/shop.js';
 import { setupInput } from '../game/interaction.js';
 import { spawnWave, startNextWavePreparation, checkWaveCompletion, onWaveVictory } from '../game/waveManager.js';
+import BlockchainService from '../services/BlockchainService.js';
 
 function GameCanvas() {
-    const [macrophageUnlocked, setMacrophageUnlocked] = useState(false);
+    const [randomSeed, setRandomSeed] = useState(null);
     const canvasRef = useRef(null);
     const kRef = useRef(null);
 
     useEffect(() => {
-        // Don't initialize if already initialized
-        if (kRef.current) return;
+        // Fetch Blockchain Data
+        const fetchData = async () => {
+            const walletState = JSON.parse(sessionStorage.getItem('walletState'));
+            if (walletState?.address) {
+                const seed = await BlockchainService.getRandomness();
+                setRandomSeed(seed);
+            }
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        // Don't initialize if already initialized or missing seed
+        if (kRef.current || randomSeed === null) return;
 
         const initGame = () => {
             // Safety delay to ensure previous context is cleaned up
@@ -83,6 +96,20 @@ function GameCanvas() {
                         // Initialize Game State
                         const gameState = new GameState(k, uiElements);
 
+                        // Use randomness seed for something (e.g., initial money bonus)
+                        if (randomSeed > 0.8) {
+                            gameState.money += 50; // Lucky bonus!
+                            k.add([
+                                k.text("LUCKY BONUS! +$50", { size: 32, font: "monogram" }),
+                                k.pos(canvasWidth / 2, canvasHeight / 2),
+                                k.anchor("center"),
+                                k.color(255, 215, 0),
+                                k.lifespan(3),
+                                k.fixed(),
+                                k.z(200)
+                            ]);
+                        }
+
                         // Setup Input (Drag & Drop)
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
@@ -132,7 +159,7 @@ function GameCanvas() {
                 window.k = null;
             }
         };
-    }, []);
+    }, [randomSeed]); // Re-run if seed changes
 
     return (
         <div className="game-canvas-container">
