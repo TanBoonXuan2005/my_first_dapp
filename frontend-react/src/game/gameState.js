@@ -6,11 +6,7 @@ import { showGameOver } from './ui.js';
  * Acts as the central source of truth for game data and handles UI updates for these values.
  */
 export class GameState {
-    /**
-     * Creates a new GameState instance.
-     * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
-     * @param {Object} uiElements - Object containing references to UI text elements (healthText, atpText, etc.).
-     */
+
     /**
      * Creates a new GameState instance.
      * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
@@ -142,7 +138,7 @@ export class GameState {
         ]);
 
         restartBtn.onClick(() => {
-            window.location.reload();
+            this.k.go("main");
         });
 
         restartBtn.onHover(() => {
@@ -258,7 +254,7 @@ export class GameState {
         ]);
 
         restartBtn.onClick(() => {
-            window.location.reload();
+            this.k.go("main");
         });
 
         restartBtn.onHover(() => {
