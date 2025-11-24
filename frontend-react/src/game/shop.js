@@ -3,11 +3,24 @@ import { TOWER_COST } from './constants.js';
 import GAME_CONFIG from '../gameConfig.js';
 import BlockchainService from '../services/BlockchainService.js';
 
+/**
+ * Sets up the in-game shop UI, creating clickable icons for each tower type.
+ * Handles the interaction between clicking a shop item and initiating the drag process.
+ *
+ * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
+ * @param {import("./gameState.js").GameState} gameState - The game state manager.
+ * @param {Function} onDragStart - The function to call when a shop item is clicked (from setupInput).
+ */
+
+const SPRITE_VERTICAL_POS = 65;
+const TEXT_VERTICAL_POS = 100;
+const COST_VERTICAL_POS = 120;
+
 export function setupShop(k, gameState, onDragStart) {
     // B-Cell
     const shopItemBCell = k.add([
         k.sprite("b-cell-neutral"),
-        k.pos(120, 50),
+        k.pos(120, SPRITE_VERTICAL_POS),
         k.anchor("center"),
         k.scale(0.06),
         k.z(101),
@@ -17,7 +30,7 @@ export function setupShop(k, gameState, onDragStart) {
 
     k.add([
         k.text("B-Cell", { size: 14 }),
-        k.pos(120, 85),
+        k.pos(120, TEXT_VERTICAL_POS),
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(101)
@@ -25,7 +38,7 @@ export function setupShop(k, gameState, onDragStart) {
 
     k.add([
         k.text(`Cost: ${TOWER_COST.bcell}`, { size: 12 }),
-        k.pos(120, 105),
+        k.pos(120, COST_VERTICAL_POS),
         k.anchor("center"),
         k.color(200, 200, 0),
         k.z(101)
@@ -35,41 +48,13 @@ export function setupShop(k, gameState, onDragStart) {
         onDragStart("bcell", "b-cell-neutral", GAME_CONFIG.towers.bCell.range, k.rgb(100, 200, 255));
     });
 
-    // Platelet
-    const shopItemPlatelet = k.add([
-        k.sprite("platelet-idle"),
-        k.pos(280, 50),
-        k.anchor("center"),
-        k.scale(0.06),
-        k.z(101),
-        k.area(),
-        "shop-item-platelet"
-    ]);
-
-    k.add([
-        k.text("Platelet", { size: 14 }),
-        k.pos(280, 85),
-        k.anchor("center"),
-        k.color(255, 255, 255),
-        k.z(101)
-    ]);
-
-    k.add([
-        k.text(`Cost: ${TOWER_COST.platelet}`, { size: 12 }),
-        k.pos(280, 105),
-        k.anchor("center"),
-        k.color(200, 200, 0),
-        k.z(101)
-    ]);
-
-    shopItemPlatelet.onClick(() => {
-        onDragStart("platelet", "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100));
-    });
+    // Platelet (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4);
 
     // Basophil
     const shopItemBasophil = k.add([
         k.sprite("basophil-idle"),
-        k.pos(360, 50),
+        k.pos(360, SPRITE_VERTICAL_POS),
         k.anchor("center"),
         k.scale(0.06),
         k.z(101),
@@ -79,7 +64,7 @@ export function setupShop(k, gameState, onDragStart) {
 
     k.add([
         k.text("Basophil", { size: 14 }),
-        k.pos(360, 85),
+        k.pos(360, TEXT_VERTICAL_POS),
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(101)
@@ -87,7 +72,7 @@ export function setupShop(k, gameState, onDragStart) {
 
     k.add([
         k.text(`Cost: ${TOWER_COST.basophil}`, { size: 12 }),
-        k.pos(360, 105),
+        k.pos(360, COST_VERTICAL_POS),
         k.anchor("center"),
         k.color(200, 200, 0),
         k.z(101)
@@ -98,59 +83,79 @@ export function setupShop(k, gameState, onDragStart) {
     });
 
     // Macrophage (Unlockable)
-    checkMacrophageUnlock(k, onDragStart);
+    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2);
 }
 
-function checkMacrophageUnlock(k, onDragStart) {
+/**
+ * Checks if a tower is unlocked via BlockchainService.
+ */
+function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave) {
     const walletState = JSON.parse(sessionStorage.getItem('walletState'));
-    let isMacrophageUnlocked = false;
 
+    // Create item immediately
+    createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave);
+
+    // Update state asynchronously
     if (walletState && walletState.address) {
-        BlockchainService.checkMacrophageUnlock(walletState.address).then(unlocked => {
-            isMacrophageUnlocked = unlocked;
+        BlockchainService.checkUnlockSBT(walletState.address, type).then(unlocked => {
             if (unlocked) {
-                createMacrophageShopItem(k, onDragStart, true);
-            } else {
-                createMacrophageShopItem(k, onDragStart, false);
+                gameState.unlockedTowers[type] = true;
+                updateTowerVisuals(k, type, true);
             }
         });
-    } else {
-        createMacrophageShopItem(k, onDragStart, false);
     }
 }
 
-function createMacrophageShopItem(k, onDragStart, isUnlocked) {
-    const shopItemMacrophage = k.add([
-        k.sprite("macrophage-idle-neutral"),
-        k.pos(200, 50),
+function createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave) {
+    // Position based on type (hardcoded for now)
+    let xPos = 200;
+    if (type === 'platelet') xPos = 280;
+    if (type === 'macrophage') xPos = 200; // Wait, original positions were: BCell 120, Platelet 280, Basophil 360, Macrophage 200? 
+    // Let's fix positions: BCell(120), Macrophage(200), Platelet(280), Basophil(360)
+    // Actually, let's keep original layout but just lock them.
+    // Original: BCell(120), Platelet(280), Basophil(360), Macrophage(200) -> This order is weird.
+    // Let's assume: BCell(120), Macrophage(200), Platelet(280), Basophil(360).
+
+    if (type === 'macrophage') xPos = 200;
+    if (type === 'platelet') xPos = 280;
+
+    const shopItem = k.add([
+        k.sprite(sprite),
+        k.pos(xPos, SPRITE_VERTICAL_POS),
         k.anchor("center"),
         k.scale(0.06),
         k.z(101),
         k.area(),
-        "shop-item-macrophage"
+        `shop-item-${type}`
     ]);
 
+    // Initial visual state based on current gameState (likely false initially, updated soon after)
+    if (!gameState.unlockedTowers[type]) {
+        shopItem.color = k.rgb(100, 100, 100);
+    }
+
     k.add([
-        k.text("Macrophage", { size: 14 }),
-        k.pos(200, 85),
+        k.text(type.charAt(0).toUpperCase() + type.slice(1), { size: 14 }),
+        k.pos(xPos, TEXT_VERTICAL_POS),
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(101)
     ]);
 
     k.add([
-        k.text(`Cost: ${TOWER_COST.macrophage}`, { size: 12 }),
-        k.pos(200, 105),
+        k.text(`Cost: ${TOWER_COST[type]}`, { size: 12 }),
+        k.pos(xPos, COST_VERTICAL_POS),
         k.anchor("center"),
         k.color(200, 200, 0),
         k.z(101)
     ]);
 
-    shopItemMacrophage.onClick(() => {
-        if (!isUnlocked) {
+    shopItem.onClick(() => {
+        // Check dynamic state
+        if (!gameState.unlockedTowers[type]) {
             k.shake(8);
             const lockMsg = k.add([
-                k.text("Complete Wave 1 to unlock!", { size: 18 }),
+                k.text(`Complete Wave ${unlockWave} to unlock!`, { size: 18 }),
                 k.pos(k.width() / 2, 120),
                 k.anchor("center"),
                 k.color(255, 100, 100),
@@ -160,6 +165,18 @@ function createMacrophageShopItem(k, onDragStart, isUnlocked) {
             k.wait(2, () => k.destroy(lockMsg));
             return;
         }
-        onDragStart("macrophage", "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255));
+        onDragStart(type, sprite, range, color);
     });
+}
+
+export function updateTowerVisuals(k, type, isUnlocked) {
+    const items = k.get(`shop-item-${type}`);
+    if (items.length > 0) {
+        const item = items[0];
+        if (isUnlocked) {
+            item.color = k.rgb(255, 255, 255); // Reset to normal color
+        } else {
+            item.color = k.rgb(100, 100, 100); // Gray out
+        }
+    }
 }

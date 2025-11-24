@@ -93,23 +93,52 @@ export function checkWaveCompletion(k, gameState, onWaveVictory) {
     }
 }
 
+import { updateTowerVisuals } from './shop.js';
+
 export async function onWaveVictory(k, gameState, startNextWavePreparationCallback) {
     console.log(`🎉 Wave ${gameState.currentWaveIndex + 1} Victory!`);
     gameState.gameActive = false; // Pause game
 
     showVictoryMessage(k, gameState.currentWaveIndex + 1, gameState.playerHealth);
 
-    // Check for Macrophage Unlock (Wave 1 completion)
-    if (gameState.currentWaveIndex === 0) {
-        const walletState = JSON.parse(sessionStorage.getItem('walletState'));
-        if (walletState && walletState.address) {
-            const unlocked = await BlockchainService.checkMacrophageUnlock(walletState.address);
+    // Check for Unlocks
+    const walletState = JSON.parse(sessionStorage.getItem('walletState'));
+    if (walletState && walletState.address) {
+        // Wave 2 Victory -> Unlock Macrophage
+        if (gameState.currentWaveIndex + 1 === 2) {
+            const unlocked = await BlockchainService.checkUnlockSBT(walletState.address, 'macrophage');
             if (!unlocked) {
                 console.log("Minting Macrophage SBT...");
-                const success = await BlockchainService.mintMacrophageSBT(walletState.address);
+                const success = await BlockchainService.mintUnlockSBT(walletState.address, 'macrophage');
                 if (success) {
+                    // Update Game State Immediately
+                    gameState.unlockedTowers.macrophage = true;
+                    updateTowerVisuals(k, 'macrophage', true);
+
                     k.add([
                         k.text("Macrophage Unlocked!", { size: 32 }),
+                        k.pos(k.width() / 2, k.height() / 2 + 50),
+                        k.anchor("center"),
+                        k.color(255, 215, 0),
+                        k.z(250)
+                    ]);
+                }
+            }
+        }
+
+        // Wave 4 Victory -> Unlock Platelet
+        if (gameState.currentWaveIndex + 1 === 4) {
+            const unlocked = await BlockchainService.checkUnlockSBT(walletState.address, 'platelet');
+            if (!unlocked) {
+                console.log("Minting Platelet SBT...");
+                const success = await BlockchainService.mintUnlockSBT(walletState.address, 'platelet');
+                if (success) {
+                    // Update Game State Immediately
+                    gameState.unlockedTowers.platelet = true;
+                    updateTowerVisuals(k, 'platelet', true);
+
+                    k.add([
+                        k.text("Platelet Unlocked!", { size: 32 }),
                         k.pos(k.width() / 2, k.height() / 2 + 50),
                         k.anchor("center"),
                         k.color(255, 215, 0),
