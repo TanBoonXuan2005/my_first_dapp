@@ -45,7 +45,7 @@ const GAME_CONFIG = {
         // Wave 1 - Tutorial (Macrophage unlock)
         {
             waveNumber: 1,
-            enemyCount: 5,
+            enemyCount: 15,
             spawnDelay: 2.0,        // 2 seconds between spawns
             enemyHp: 80,
             enemySpeed: 100,
