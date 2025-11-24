@@ -46,26 +46,22 @@ export class GameState {
     }
 
     togglePause() {
-        if (this.isPaused) return; // Already paused, menu is open. 
-        // Actually, if we want "Resume" to be the only way back, we just open it.
-        // If we want toggle behavior, we can check.
+        if (this.isPaused) return; // Already paused, prevent multiple menus
 
         this.isPaused = true;
-        this.k.timeScale = 0; // Pause game time
 
         import('./ui.js').then(({ showPauseMenu }) => {
             showPauseMenu(
                 this.k,
                 () => { // onResume
                     this.isPaused = false;
-                    this.k.timeScale = 1;
                 },
                 () => { // onRestart
-                    this.k.timeScale = 1; // Reset time scale before restarting
+                    this.isPaused = false;
                     this.k.go("main");
                 },
                 () => { // onHome
-                    this.k.timeScale = 1;
+                    this.isPaused = false;
                     this.navigate('/');
                 }
             );

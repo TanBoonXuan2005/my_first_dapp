@@ -22,8 +22,31 @@ export async function spawnWave(k, gameState, getPaths) {
         if (!gameState.gameActive) break; // Stop spawning if game over
         const path = i % 2 === 0 ? path1Points : path2Points;
         spawnEnemy(k, path, waveConfig, gameState);
-        await k.wait(waveConfig.spawnDelay);
+
+        // Pause-aware wait
+        await pauseAwareWait(k, gameState, waveConfig.spawnDelay);
     }
+}
+
+// Helper function for pause-aware waiting
+function pauseAwareWait(k, gameState, duration) {
+    return new Promise((resolve) => {
+        let elapsed = 0;
+        const waiter = k.add([
+            k.pos(0, 0),
+            { elapsed: 0 }
+        ]);
+
+        waiter.onUpdate(() => {
+            if (gameState.isPaused) return; // Don't count time when paused
+
+            waiter.elapsed += k.dt();
+            if (waiter.elapsed >= duration) {
+                k.destroy(waiter);
+                resolve();
+            }
+        });
+    });
 }
 
 export function startNextWavePreparation(k, gameState, spawnWaveCallback) {
@@ -53,20 +76,27 @@ export function startNextWavePreparation(k, gameState, spawnWaveCallback) {
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(250),
-        "countdown"
+        "countdown",
+        { elapsed: 0 }
     ]);
 
-    const countdownInterval = k.loop(1, () => {
-        timeRemaining--;
-        if (preparationCountdown && preparationCountdown.exists()) {
-            preparationCountdown.text = `${timeRemaining}s`;
-        }
+    // Use onUpdate instead of k.loop to respect pause state
+    preparationCountdown.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
 
-        if (timeRemaining <= 0) {
-            countdownInterval.cancel();
-            k.destroy(prepMsg);
-            if (preparationCountdown) k.destroy(preparationCountdown);
-            spawnWaveCallback();
+        preparationCountdown.elapsed += k.dt();
+        if (preparationCountdown.elapsed >= 1) {
+            preparationCountdown.elapsed = 0;
+            timeRemaining--;
+            if (preparationCountdown.exists()) {
+                preparationCountdown.text = `${timeRemaining}s`;
+            }
+
+            if (timeRemaining <= 0) {
+                k.destroy(prepMsg);
+                if (preparationCountdown) k.destroy(preparationCountdown);
+                spawnWaveCallback();
+            }
         }
     });
 }
@@ -150,9 +180,10 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
         }
     }
 
-    // Celebration effect
+    // Celebration effect (pause-aware)
     for (let i = 0; i < 10; i++) {
-        k.wait(i * 0.1, () => {
+        (async () => {
+            await pauseAwareWait(k, gameState, i * 0.1);
             k.add([
                 k.circle(10),
                 k.pos(k.rand(0, k.width()), 0),
@@ -161,14 +192,14 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
                 k.move(k.DOWN, k.rand(100, 300)),
                 k.z(200)
             ]);
-        });
+        })();
     }
 
     // Check if all waves completed (victory condition)
     const totalWaves = GAME_CONFIG.waves.length;
     if (gameState.currentWaveIndex + 1 >= totalWaves) {
         console.log("🎉 All waves completed!");
-        k.wait(3, () => {
+        pauseAwareWait(k, gameState, 3).then(() => {
             gameState.gameVictory();
         });
         return;
@@ -178,8 +209,8 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
     gameState.currentWaveIndex++;
     console.log(`[Wave] Progressing to wave ${gameState.currentWaveIndex + 1}`);
 
-    // Continue to next wave preparation
-    k.wait(3, () => {
+    // Continue to next wave preparation (pause-aware)
+    pauseAwareWait(k, gameState, 3).then(() => {
         startNextWavePreparationCallback();
     });
 }

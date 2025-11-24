@@ -106,7 +106,7 @@ export function showVictoryMessage(k, waveNumber, playerHealth) {
     ]);
 }
 
-export function showDamageNumber(k, pos, damage) {
+export function showDamageNumber(k, pos, damage, gameState) {
     const damageText = k.add([
         k.text(`-${damage}`, { size: 20 }),
         k.pos(pos.add(k.vec2(0, -30))),
@@ -119,6 +119,7 @@ export function showDamageNumber(k, pos, damage) {
 
     let elapsed = 0;
     damageText.onUpdate(() => {
+        if (gameState && gameState.isPaused) return; // Don't update when paused
         elapsed += k.dt();
         damageText.pos.y -= k.dt() * 30;
         damageText.opacity = 1 - (elapsed / 0.8);
