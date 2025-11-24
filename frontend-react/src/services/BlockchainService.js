@@ -51,26 +51,59 @@ const BlockchainService = {
     },
 
     // SBT System - Mock implementation (upgrade to real blockchain later)
-    // Macrophage Tower Unlock SBT
-    checkMacrophageUnlock: async (walletAddress) => {
-        // Check localStorage for Macrophage SBT
-        const key = `sbt_macrophage_${walletAddress}`;
+
+    // Generic check for any unlock type
+    checkUnlockSBT: async (walletAddress, unlockType) => {
+        const key = `sbt_${unlockType}_${walletAddress}`;
         const hasUnlock = localStorage.getItem(key) === 'true';
-        console.log(`[SBT] Checking Macrophage unlock for ${walletAddress}: ${hasUnlock}`);
+        console.log(`[SBT] Checking ${unlockType} unlock for ${walletAddress}: ${hasUnlock}`);
         return hasUnlock;
     },
 
-    mintMacrophageSBT: async (walletAddress) => {
-        // Mint Macrophage SBT (mock - stores in localStorage)
-        const key = `sbt_macrophage_${walletAddress}`;
+    // Generic mint for any unlock type
+    mintUnlockSBT: async (walletAddress, unlockType) => {
+        const key = `sbt_${unlockType}_${walletAddress}`;
         localStorage.setItem(key, 'true');
-        console.log(`[SBT] ✅ Minted Macrophage SBT for ${walletAddress}`);
+        console.log(`[SBT] ✅ Minted ${unlockType} SBT for ${walletAddress}`);
         return true;
+    },
+
+    // Legacy wrapper for Macrophage (to keep existing calls working or refactor them)
+    checkMacrophageUnlock: async (walletAddress) => {
+        return BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
+    },
+
+    mintMacrophageSBT: async (walletAddress) => {
+        return BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
     },
 
     // Placeholder for future randomness
     getRandomness: async () => {
-        return Math.random(); // Not yet implemented with one::random
+        // Simulate fetching randomness from chain (one::random)
+        // In reality, this would be an async call to the chain
+        const randomValue = Math.random();
+        console.log(`[Randomness] Fetched from chain: ${randomValue}`);
+        return randomValue;
+    },
+
+    // Dev Tools
+    resetSBTs: async (walletAddress) => {
+        const types = ['macrophage', 'platelet'];
+        types.forEach(type => {
+            localStorage.removeItem(`sbt_${type}_${walletAddress}`);
+        });
+        console.log(`[Dev] Reset SBTs for ${walletAddress}`);
+        return true;
+    },
+
+    getOwnedSBTs: async (walletAddress) => {
+        const types = ['macrophage', 'platelet'];
+        const owned = [];
+        for (const type of types) {
+            const has = await BlockchainService.checkUnlockSBT(walletAddress, type);
+            if (has) owned.push(type);
+        }
+        return owned;
     }
 };
 
