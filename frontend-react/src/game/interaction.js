@@ -2,6 +2,15 @@
 import { TOWER_COST, UI_HEIGHT, isPlacementFree, isOnPath } from './constants.js';
 import { placeBCell, placeMacrophage, placePlatelet, placeBasophil } from './towers.js';
 
+/**
+ * Sets up the input handling for the game, specifically for dragging and dropping towers.
+ * Manages the state of the currently dragged item, validates placement, and deducts costs.
+ *
+ * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
+ * @param {import("./gameState.js").GameState} gameState - The game state manager.
+ * @param {Function} getPaths - Function that returns the current path points { path1Points, path2Points }.
+ * @returns {Function} startDrag - A function that can be called to initiate a drag operation (used by shop items).
+ */
 export function setupInput(k, gameState, getPaths) {
     let isDragging = false;
     let dragSprite = null;
@@ -72,7 +81,15 @@ export function setupInput(k, gameState, getPaths) {
         selectedTowerType = null;
     });
 
-    // Return a function to start dragging (called by shop items)
+    /**
+     * Initiates the dragging process for a specific tower type.
+     * This function is returned by setupInput and is meant to be passed to the shop.
+     *
+     * @param {string} type - The type of tower (e.g., "bcell", "macrophage").
+     * @param {string} spriteName - The sprite name to use for the drag ghost.
+     * @param {number} range - The range of the tower to visualize during drag.
+     * @param {import("kaboom").Color} color - The color for the range indicator.
+     */
     return function startDrag(type, spriteName, range, color) {
         if (isDragging) return;
         isDragging = true;

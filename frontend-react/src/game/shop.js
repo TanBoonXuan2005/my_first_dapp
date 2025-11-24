@@ -132,6 +132,7 @@ function createShopItem(k, gameState, onDragStart, type, sprite, range, color, u
     // Initial visual state based on current gameState (likely false initially, updated soon after)
     if (!gameState.unlockedTowers[type]) {
         shopItem.color = k.rgb(100, 100, 100);
+        shopItem.opacity = 0.5;
     }
 
     k.add([
@@ -170,13 +171,22 @@ function createShopItem(k, gameState, onDragStart, type, sprite, range, color, u
 }
 
 export function updateTowerVisuals(k, type, isUnlocked) {
+    console.log(`[Shop] Updating ${type} visuals, unlocked: ${isUnlocked}`);
     const items = k.get(`shop-item-${type}`);
+    console.log(`[Shop] Found ${items.length} items with tag shop-item-${type}`);
     if (items.length > 0) {
         const item = items[0];
         if (isUnlocked) {
-            item.color = k.rgb(255, 255, 255); // Reset to normal color
+            // Restore original sprite appearance
+            item.color = k.rgb(255, 255, 255);
+            item.opacity = 1;
+            console.log(`[Shop] ${type} unlocked - color set to white`);
         } else {
-            item.color = k.rgb(100, 100, 100); // Gray out
+            item.color = k.rgb(100, 100, 100);
+            item.opacity = 0.5;
+            console.log(`[Shop] ${type} locked - color set to gray`);
         }
     }
 }
+
+export default setupShop;

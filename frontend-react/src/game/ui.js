@@ -40,7 +40,7 @@ export function setupGameUI(k, UI_HEIGHT) {
     // Wave Number Display
     const waveNumberText = k.add([
         k.text("Wave 1", { size: 24 }),
-        k.pos(k.width() / 2, 50),
+        k.pos(k.width() / 2, 30),
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(101),

@@ -76,10 +76,224 @@ export class GameState {
     }
 
     /**
-     * Ends the game, setting the active state to false and displaying the Game Over screen.
+     * Handles game over scenario
      */
     gameOver() {
+        console.log("💀 Game Over");
         this.gameActive = false;
-        showGameOver(this.k);
+
+        // Show Game Over UI
+        this.k.add([
+            this.k.rect(this.k.width(), this.k.height()),
+            this.k.color(0, 0, 0),
+            this.k.opacity(0.8),
+            this.k.fixed(),
+            this.k.z(300),
+            "game-over-overlay"
+        ]);
+
+        this.k.add([
+            this.k.text("GAME OVER", { size: 48, font: "monogram" }),
+            this.k.pos(this.k.width() / 2, this.k.height() / 2 - 80),
+            this.k.anchor("center"),
+            this.k.color(255, 50, 50),
+            this.k.fixed(),
+            this.k.z(301),
+            "game-over-text"
+        ]);
+
+        this.k.add([
+            this.k.text(`Waves Completed: ${this.currentWaveIndex}`, { size: 24, font: "monogram" }),
+            this.k.pos(this.k.width() / 2, this.k.height() / 2 - 20),
+            this.k.anchor("center"),
+            this.k.color(255, 255, 255),
+            this.k.fixed(),
+            this.k.z(301),
+            "game-over-stats"
+        ]);
+
+        // Restart Button
+        const restartBtn = this.k.add([
+            this.k.rect(200, 50, { radius: 8 }),
+            this.k.pos(this.k.width() / 2 - 110, this.k.height() / 2 + 40),
+            this.k.anchor("center"),
+            this.k.color(70, 130, 180),
+            this.k.area(),
+            this.k.fixed(),
+            this.k.z(301),
+            "restart-btn"
+        ]);
+
+        this.k.add([
+            this.k.text("RESTART", { size: 20, font: "monogram" }),
+            this.k.pos(this.k.width() / 2 - 110, this.k.height() / 2 + 40),
+            this.k.anchor("center"),
+            this.k.color(255, 255, 255),
+            this.k.fixed(),
+            this.k.z(302),
+            "restart-btn-text"
+        ]);
+
+        restartBtn.onClick(() => {
+            window.location.reload();
+        });
+
+        restartBtn.onHover(() => {
+            restartBtn.color = this.k.rgb(100, 160, 210);
+        });
+
+        restartBtn.onHoverEnd(() => {
+            restartBtn.color = this.k.rgb(70, 130, 180);
+        });
+
+        // Home Button
+        const homeBtn = this.k.add([
+            this.k.rect(200, 50, { radius: 8 }),
+            this.k.pos(this.k.width() / 2 + 110, this.k.height() / 2 + 40),
+            this.k.anchor("center"),
+            this.k.color(100, 100, 100),
+            this.k.area(),
+            this.k.fixed(),
+            this.k.z(301),
+            "home-btn"
+        ]);
+
+        this.k.add([
+            this.k.text("HOME", { size: 20, font: "monogram" }),
+            this.k.pos(this.k.width() / 2 + 110, this.k.height() / 2 + 40),
+            this.k.anchor("center"),
+            this.k.color(255, 255, 255),
+            this.k.fixed(),
+            this.k.z(302),
+            "home-btn-text"
+        ]);
+
+        homeBtn.onClick(() => {
+            window.location.href = "/";
+        });
+
+        homeBtn.onHover(() => {
+            homeBtn.color = this.k.rgb(130, 130, 130);
+        });
+
+        homeBtn.onHoverEnd(() => {
+            homeBtn.color = this.k.rgb(100, 100, 100);
+        });
+    }
+
+    /**
+     * Handles game victory (all waves completed)
+     */
+    gameVictory() {
+        console.log("🎊 Victory! All waves completed!");
+        this.gameActive = false;
+
+        // Show Victory UI
+        this.k.add([
+            this.k.rect(this.k.width(), this.k.height()),
+            this.k.color(0, 0, 0),
+            this.k.opacity(0.8),
+            this.k.fixed(),
+            this.k.z(300),
+            "victory-overlay"
+        ]);
+
+        this.k.add([
+            this.k.text("VICTORY!", { size: 64, font: "monogram" }),
+            this.k.pos(this.k.width() / 2, this.k.height() / 2 - 100),
+            this.k.anchor("center"),
+            this.k.color(255, 215, 0),
+            this.k.fixed(),
+            this.k.z(301),
+            "victory-text"
+        ]);
+
+        this.k.add([
+            this.k.text("All Waves Completed!", { size: 28, font: "monogram" }),
+            this.k.pos(this.k.width() / 2, this.k.height() / 2 - 40),
+            this.k.anchor("center"),
+            this.k.color(255, 255, 255),
+            this.k.fixed(),
+            this.k.z(301),
+            "victory-subtitle"
+        ]);
+
+        this.k.add([
+            this.k.text(`Final Health: ${this.playerHealth}`, { size: 20, font: "monogram" }),
+            this.k.pos(this.k.width() / 2, this.k.height() / 2),
+            this.k.anchor("center"),
+            this.k.color(100, 255, 100),
+            this.k.fixed(),
+            this.k.z(301),
+            "victory-stats"
+        ]);
+
+        // Restart Button
+        const restartBtn = this.k.add([
+            this.k.rect(200, 50, { radius: 8 }),
+            this.k.pos(this.k.width() / 2 - 110, this.k.height() / 2 + 60),
+            this.k.anchor("center"),
+            this.k.color(70, 180, 130),
+            this.k.area(),
+            this.k.fixed(),
+            this.k.z(301),
+            "restart-btn"
+        ]);
+
+        this.k.add([
+            this.k.text("PLAY AGAIN", { size: 20, font: "monogram" }),
+            this.k.pos(this.k.width() / 2 - 110, this.k.height() / 2 + 60),
+            this.k.anchor("center"),
+            this.k.color(255, 255, 255),
+            this.k.fixed(),
+            this.k.z(302),
+            "restart-btn-text"
+        ]);
+
+        restartBtn.onClick(() => {
+            window.location.reload();
+        });
+
+        restartBtn.onHover(() => {
+            restartBtn.color = this.k.rgb(100, 210, 160);
+        });
+
+        restartBtn.onHoverEnd(() => {
+            restartBtn.color = this.k.rgb(70, 180, 130);
+        });
+
+        // Home Button
+        const homeBtn = this.k.add([
+            this.k.rect(200, 50, { radius: 8 }),
+            this.k.pos(this.k.width() / 2 + 110, this.k.height() / 2 + 60),
+            this.k.anchor("center"),
+            this.k.color(100, 100, 100),
+            this.k.area(),
+            this.k.fixed(),
+            this.k.z(301),
+            "home-btn"
+        ]);
+
+        this.k.add([
+            this.k.text("HOME", { size: 20, font: "monogram" }),
+            this.k.pos(this.k.width() / 2 + 110, this.k.height() / 2 + 60),
+            this.k.anchor("center"),
+            this.k.color(255, 255, 255),
+            this.k.fixed(),
+            this.k.z(302),
+            "home-btn-text"
+        ]);
+
+        homeBtn.onClick(() => {
+            window.location.href = "/";
+        });
+
+        homeBtn.onHover(() => {
+            homeBtn.color = this.k.rgb(130, 130, 130);
+        });
+
+        homeBtn.onHoverEnd(() => {
+            homeBtn.color = this.k.rgb(100, 100, 100);
+        });
     }
 }

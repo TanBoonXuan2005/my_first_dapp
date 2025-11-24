@@ -6,15 +6,15 @@ export const TOWER_COST = {
     basophil: 25,
 };
 
-export const UI_HEIGHT = 100;
+export const UI_HEIGHT = 135;
 
 export function getPaths(k, canvasWidth) {
     const path1Points = [
-        k.vec2(0, 150),
-        k.vec2(200, 150),
-        k.vec2(300, 250),
-        k.vec2(500, 250),
-        k.vec2(600, 300),
+        k.vec2(0, 165),
+        k.vec2(200, 165),
+        k.vec2(300, 265),
+        k.vec2(500, 265),
+        k.vec2(600, 315),
         k.vec2(canvasWidth, 300)
     ];
 

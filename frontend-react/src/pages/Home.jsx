@@ -1,22 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import WalletConnect from '../components/WalletConnect';
+import WalletFlow from '../components/WalletFlow';
 
 function Home() {
-    const [isConnected, setIsConnected] = useState(false);
-    const navigate = useNavigate();
-
-    const handleWalletConnect = (walletData) => {
-        setIsConnected(true);
-        // Store wallet data in sessionStorage for the game page
-        sessionStorage.setItem('walletState', JSON.stringify(walletData));
-    };
-
-    const handlePlayGame = () => {
-        if (isConnected) {
-            navigate('/game');
-        }
-    };
+    // WalletFlow handles navigation and state now
 
     return (
         <main>
@@ -30,18 +15,10 @@ function Home() {
                 <div className="hero-content">
                     <h2>Defend the Body!</h2>
                     <p>Deploy your immune cells to fight off the viral invasion.</p>
-                    <button
-                        id="play-btn"
-                        className="primary-btn"
-                        onClick={handlePlayGame}
-                        disabled={!isConnected}
-                    >
-                        PLAY GAME
-                    </button>
+
+                    <WalletFlow />
                 </div>
             </section>
-
-            <WalletConnect onConnect={handleWalletConnect} />
 
             <footer>
                 <p>&copy; 2025 One Chain Wallet</p>

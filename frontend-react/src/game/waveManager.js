@@ -150,39 +150,31 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
     }
 
     // Celebration effect
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
         k.wait(i * 0.1, () => {
-            const confetti = k.add([
-                k.rect(10, 10),
-                k.pos(k.rand(0, k.width()), k.rand(0, k.height())),
-                k.color(k.rand(0, 255), k.rand(0, 255), k.rand(0, 255)),
-                k.z(200),
-                k.move(k.vec2(0, 100), k.rand(50, 150)),
-                k.rotate(k.rand(0, 360)),
-                "confetti"
+            k.add([
+                k.circle(10),
+                k.pos(k.rand(0, k.width()), 0),
+                k.color(k.rand(100, 255), k.rand(100, 255), k.rand(100, 255)),
+                k.lifespan(2),
+                k.move(k.DOWN, k.rand(100, 300)),
+                k.z(200)
             ]);
-            confetti.onUpdate(() => {
-                confetti.angle += 2;
-                if (confetti.pos.y > k.height()) k.destroy(confetti);
-            });
         });
     }
 
-    // Check if there are more waves
-    if (gameState.currentWaveIndex < GAME_CONFIG.waves.length - 1) {
-        // More waves to go!
+    // Check if all waves completed (victory condition)
+    const totalWaves = GAME_CONFIG.waves.length;
+    if (gameState.currentWaveIndex + 1 >= totalWaves) {
+        console.log("🎉 All waves completed!");
         k.wait(3, () => {
-            gameState.currentWaveIndex++;
-            startNextWavePreparationCallback();
+            gameState.gameVictory();
         });
-    } else {
-        // All waves complete!
-        k.add([
-            k.text("🏆 ALL WAVES COMPLETE! 🏆", { size: 36 }),
-            k.pos(k.width() / 2, k.height() / 2 + 80),
-            k.anchor("center"),
-            k.color(255, 215, 0),
-            k.z(250)
-        ]);
+        return;
     }
+
+    // Continue to next wave preparation
+    k.wait(3, () => {
+        startNextWavePreparationCallback();
+    });
 }
