@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
+import { useCurrentAccount } from '@onelabs/dapp-kit';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
 import { UI_HEIGHT, getPaths } from '../game/constants.js';
@@ -15,18 +16,18 @@ function GameCanvas() {
     const [randomSeed, setRandomSeed] = useState(null);
     const canvasRef = useRef(null);
     const kRef = useRef(null);
+    const account = useCurrentAccount();
 
     useEffect(() => {
         // Fetch Blockchain Data
         const fetchData = async () => {
-            const walletState = JSON.parse(sessionStorage.getItem('walletState'));
-            if (walletState?.address) {
+            if (account?.address) {
                 const seed = await BlockchainService.getRandomness();
                 setRandomSeed(seed);
             }
         };
         fetchData();
-    }, []);
+    }, [account]);
 
     useEffect(() => {
         // Don't initialize if already initialized or missing seed
@@ -114,15 +115,15 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        setupShop(k, gameState, startDrag);
+                        setupShop(k, gameState, startDrag, account?.address);
 
                         // Wave Management Callbacks
-                        const handleWaveVictory = () => {
+                        const handleWaveVictory = (walletAddress) => {
                             onWaveVictory(k, gameState, () => {
                                 startNextWavePreparation(k, gameState, () => {
                                     spawnWave(k, gameState, () => ({ path1Points, path2Points }));
                                 });
-                            });
+                            }, walletAddress);
                         };
 
                         // Start First Wave
@@ -132,7 +133,7 @@ function GameCanvas() {
 
                         // Game Loop for Wave Checking
                         k.onUpdate(() => {
-                            checkWaveCompletion(k, gameState, handleWaveVictory);
+                            checkWaveCompletion(k, gameState, handleWaveVictory, account?.address);
                         });
                     });
 

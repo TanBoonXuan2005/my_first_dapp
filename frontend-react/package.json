@@ -10,6 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mysten/dapp-kit": "^0.19.9",
+    "@mysten/sui.js": "^0.54.1",
+    "@onelabs/dapp-kit": "^0.15.5",
+    "@onelabs/sui": "^1.26.2",
+    "@tanstack/react-query": "^5.90.10",
+    "ethers": "^6.15.0",
     "kaboom": "^3000.1.17",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

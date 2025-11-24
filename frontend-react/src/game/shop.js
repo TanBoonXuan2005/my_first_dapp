@@ -16,7 +16,7 @@ const SPRITE_VERTICAL_POS = 65;
 const TEXT_VERTICAL_POS = 100;
 const COST_VERTICAL_POS = 120;
 
-export function setupShop(k, gameState, onDragStart) {
+export function setupShop(k, gameState, onDragStart, walletAddress) {
     // B-Cell
     const shopItemBCell = k.add([
         k.sprite("b-cell-neutral"),
@@ -49,7 +49,7 @@ export function setupShop(k, gameState, onDragStart) {
     });
 
     // Platelet (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4);
+    checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4, walletAddress);
 
     // Basophil
     const shopItemBasophil = k.add([
@@ -83,21 +83,20 @@ export function setupShop(k, gameState, onDragStart) {
     });
 
     // Macrophage (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2);
+    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress);
 }
 
 /**
  * Checks if a tower is unlocked via BlockchainService.
  */
-function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave) {
-    const walletState = JSON.parse(sessionStorage.getItem('walletState'));
+function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress) {
 
     // Create item immediately
     createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave);
 
     // Update state asynchronously
-    if (walletState && walletState.address) {
-        BlockchainService.checkUnlockSBT(walletState.address, type).then(unlocked => {
+    if (walletAddress) {
+        BlockchainService.checkUnlockSBT(walletAddress, type).then(unlocked => {
             if (unlocked) {
                 gameState.unlockedTowers[type] = true;
                 updateTowerVisuals(k, type, true);

@@ -1,17 +1,18 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCurrentAccount } from '@onelabs/dapp-kit';
 import GameCanvas from '../components/GameCanvas';
 
 function Game() {
     const navigate = useNavigate();
+    const account = useCurrentAccount();
 
     useEffect(() => {
         // Check if wallet is connected
-        const walletState = JSON.parse(sessionStorage.getItem('walletState'));
-        if (!walletState || !walletState.isConnected) {
+        if (!account) {
             navigate('/');
         }
-    }, [navigate]);
+    }, [account, navigate]);
 
     return <GameCanvas />;
 }
