@@ -120,6 +120,7 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
                         k.pos(k.width() / 2, k.height() / 2 + 50),
                         k.anchor("center"),
                         k.color(255, 215, 0),
+                        k.lifespan(3),
                         k.z(250)
                     ]);
                 }
@@ -142,6 +143,7 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
                         k.pos(k.width() / 2, k.height() / 2 + 50),
                         k.anchor("center"),
                         k.color(255, 215, 0),
+                        k.lifespan(3),
                         k.z(250)
                     ]);
                 }
@@ -172,6 +174,10 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
         });
         return;
     }
+
+    // Increment wave index for next wave
+    gameState.currentWaveIndex++;
+    console.log(`[Wave] Progressing to wave ${gameState.currentWaveIndex + 1}`);
 
     // Continue to next wave preparation
     k.wait(3, () => {
