@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useNavigate } from 'react-router-dom';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
 import { UI_HEIGHT, getPaths } from '../game/constants.js';
@@ -17,6 +18,7 @@ function GameCanvas() {
     const canvasRef = useRef(null);
     const kRef = useRef(null);
     const account = useCurrentAccount();
+    const navigate = useNavigate();
 
     useEffect(() => {
         // Fetch Blockchain Data
@@ -95,7 +97,15 @@ function GameCanvas() {
                         const uiElements = setupGameUI(k, UI_HEIGHT);
 
                         // Initialize Game State
-                        const gameState = new GameState(k, uiElements);
+                        const gameState = new GameState(k, uiElements, (path) => {
+                            // Cleanup Kaboom before navigating
+                            try {
+                                k.quit();
+                            } catch (e) {
+                                console.warn("Cleanup error:", e);
+                            }
+                            navigate(path);
+                        });
 
                         // Use randomness seed for something (e.g., initial money bonus)
                         if (randomSeed > 0.8) {

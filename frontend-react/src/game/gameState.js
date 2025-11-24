@@ -11,9 +11,16 @@ export class GameState {
      * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
      * @param {Object} uiElements - Object containing references to UI text elements (healthText, atpText, etc.).
      */
-    constructor(k, uiElements) {
+    /**
+     * Creates a new GameState instance.
+     * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
+     * @param {Object} uiElements - Object containing references to UI text elements (healthText, atpText, etc.).
+     * @param {Function} navigate - React Router navigate function.
+     */
+    constructor(k, uiElements, navigate) {
         this.k = k;
         this.ui = uiElements;
+        this.navigate = navigate;
         this.playerHealth = 100;
         this.playerATP = 50;
         this.gameActive = true;
@@ -169,7 +176,7 @@ export class GameState {
         ]);
 
         homeBtn.onClick(() => {
-            window.location.href = "/";
+            this.navigate('/');
         });
 
         homeBtn.onHover(() => {
@@ -285,7 +292,7 @@ export class GameState {
         ]);
 
         homeBtn.onClick(() => {
-            window.location.href = "/";
+            this.navigate('/');
         });
 
         homeBtn.onHover(() => {
