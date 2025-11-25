@@ -66,7 +66,7 @@ module my_first_package::game_core {
         let values_p = vector[
             string::utf8(b"Platelet"),
             string::utf8(b"A healing unit unlocked at Wave 4."),
-            string::utf8(b"https://api.dicebear.com/7.x/icons/svg?seed=Platelet"), // Placeholder image
+            string::utf8(b"https://raw.githubusercontent.com/TanBoonXuan2005/my_first_dapp/main/frontend-react/public/assets/animation_frames/Platelet/Platelet_Idle.png"),
         ];
         let mut display_p = display::new_with_fields<Platelet>(
             &publisher, keys_p, values_p, ctx
