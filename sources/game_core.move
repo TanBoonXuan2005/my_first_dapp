@@ -1,9 +1,11 @@
 module my_first_package::game_core {
-    use one::object::{Self, UID};
-    use one::transfer;
-    use one::tx_context::{Self, TxContext};
-    use one::coin::{Self, TreasuryCap};
-    use one::option;
+    use sui::object::{Self, UID};
+    use sui::transfer;
+    use sui::tx_context::{Self, TxContext};
+    use sui::package;
+    use sui::display;
+    use std::string::{Self, String};
+    use std::option;
 
     // --- Soulbound Token (SBT) ---
 
@@ -19,7 +21,7 @@ module my_first_package::game_core {
     const EALREADY_HAS_SBT: u64 = 1;
 
     // Mint an Unlock SBT for the sender.
-    public entry fun mint_unlock_sbt(unlock_type: vector<u8>, ctx: &mut TxContext) {
+    entry fun mint_unlock_sbt(unlock_type: vector<u8>, ctx: &mut TxContext) {
         let sbt = UnlockSBT {
             id: object::new(ctx),
             unlock_type: unlock_type,
@@ -29,36 +31,55 @@ module my_first_package::game_core {
     }
 
     // --- USDT Simulation ---
+    // Moved to usdt.move to avoid OTW conflict with package::claim
 
-    // One-time witness for the coin
-    public struct USDT has drop {}
+    // One-time witness for the package
+    public struct GAME_CORE has drop {}
 
-    fun init(witness: USDT, ctx: &mut TxContext) {
-        let (treasury, metadata) = coin::create_currency(
-            witness, 
-            6, 
-            b"USDT", 
-            b"Tether USD", 
-            b"Simulated USDT for GameFi", 
-            option::none(), 
-            ctx
+    fun init(witness: GAME_CORE, ctx: &mut TxContext) {
+        // Claim the Publisher object for the package
+        let publisher = package::claim(witness, ctx);
+
+        // --- Macrophage Display ---
+        let keys = vector[
+            string::utf8(b"name"),
+            string::utf8(b"description"),
+            string::utf8(b"image_url"),
+        ];
+        let values = vector[
+            string::utf8(b"Macrophage"),
+            string::utf8(b"A powerful defense unit unlocked at Wave 2."),
+            string::utf8(b"https://raw.githubusercontent.com/TanBoonXuan2005/my_first_dapp/main/frontend-react/public/assets/animation_frames/Macrophage/Macrophage_Idle(Excited).png"),
+        ];
+        let mut display = display::new_with_fields<Macrophage>(
+            &publisher, keys, values, ctx
         );
-        transfer::public_freeze_object(metadata);
-        transfer::public_transfer(treasury, tx_context::sender(ctx));
-    }
+        display::update_version(&mut display);
+        transfer::public_transfer(display, tx_context::sender(ctx));
 
-    public entry fun mint_usdt(
-        treasury_cap: &mut TreasuryCap<USDT>, 
-        amount: u64, 
-        recipient: address, 
-        ctx: &mut TxContext
-    ) {
-        coin::mint_and_transfer(treasury_cap, amount, recipient, ctx);
+        // --- Platelet Display ---
+        let keys_p = vector[
+            string::utf8(b"name"),
+            string::utf8(b"description"),
+            string::utf8(b"image_url"),
+        ];
+        let values_p = vector[
+            string::utf8(b"Platelet"),
+            string::utf8(b"A healing unit unlocked at Wave 4."),
+            string::utf8(b"https://api.dicebear.com/7.x/icons/svg?seed=Platelet"), // Placeholder image
+        ];
+        let mut display_p = display::new_with_fields<Platelet>(
+            &publisher, keys_p, values_p, ctx
+        );
+        display::update_version(&mut display_p);
+        transfer::public_transfer(display_p, tx_context::sender(ctx));
+
+        transfer::public_transfer(publisher, tx_context::sender(ctx));
     }
 
     // --- Randomness (Mock) ---
     
-    // In a real OneChain environment, we would use `one::random`.
+    // In a real Sui environment, we would use `sui::random`.
     // For now, we simulate a function that would return a random value.
     // This function is just a placeholder for the logic.
     public fun get_random_outcome(ctx: &TxContext): u64 {
@@ -66,5 +87,51 @@ module my_first_package::game_core {
         // Here we just return a dummy value.
         let epoch = tx_context::epoch(ctx);
         epoch % 100 // Return 0-99
+    }
+
+    // --- Game Asset SBTs ---
+
+    /// Macrophage: Unlocked at Wave 2
+    /// Removed 'store' ability to make it a true Soulbound Token (SBT)
+    public struct Macrophage has key {
+        id: UID,
+        power: u64,
+    }
+
+    /// Platelet: Unlocked at Wave 4
+    /// Removed 'store' ability to make it a true Soulbound Token (SBT)
+    public struct Platelet has key {
+        id: UID,
+        healing_factor: u64,
+    }
+
+    /// Mint a Macrophage SBT to the sender
+    entry fun mint_macrophage(ctx: &mut TxContext) {
+        let macrophage = Macrophage {
+            id: object::new(ctx),
+            power: 100,
+        };
+        transfer::transfer(macrophage, tx_context::sender(ctx));
+    }
+
+    /// Mint a Platelet SBT to the sender
+    entry fun mint_platelet(ctx: &mut TxContext) {
+        let platelet = Platelet {
+            id: object::new(ctx),
+            healing_factor: 50,
+        };
+        transfer::transfer(platelet, tx_context::sender(ctx));
+    }
+
+    /// Burn a Macrophage SBT (since it cannot be transferred)
+    entry fun burn_macrophage(macrophage: Macrophage) {
+        let Macrophage { id, power: _ } = macrophage;
+        object::delete(id);
+    }
+
+    /// Burn a Platelet SBT (since it cannot be transferred)
+    entry fun burn_platelet(platelet: Platelet) {
+        let Platelet { id, healing_factor: _ } = platelet;
+        object::delete(id);
     }
 }
