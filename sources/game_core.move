@@ -90,6 +90,22 @@ module my_first_package::game_core {
     }
 
     // --- Game Asset SBTs ---
+    //
+    // GUIDE: HOW TO ADD A NEW SBT
+    // 1. Define a new struct with `has key` (NO `store`).
+    //    Example: public struct NewItem has key { id: UID, ... }
+    //
+    // 2. In `init` function, create a `Display` object for it.
+    //    - Define keys: ["name", "description", "image_url"]
+    //    - Define values: ["Item Name", "Description", "URL"]
+    //    - Call `display::new_with_fields` and `display::update_version`.
+    //    - Transfer display to sender.
+    //
+    // 3. Create a mint function `entry fun mint_new_item(ctx: &mut TxContext)`.
+    //    - Create the object and `transfer::transfer` it to the sender.
+    //
+    // 4. Create a burn function `entry fun burn_new_item(item: NewItem)`.
+    //    - Destructure the struct and call `object::delete(id)`.
 
     /// Macrophage: Unlocked at Wave 2
     /// Removed 'store' ability to make it a true Soulbound Token (SBT)
