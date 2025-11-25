@@ -53,6 +53,12 @@ function GameCanvas() {
                     canvasWidth = canvasHeight * aspectRatio;
                 }
 
+                // Check if canvas element is ready
+                if (!canvasRef.current) {
+                    console.warn('Canvas element not ready yet');
+                    return;
+                }
+
                 try {
                     const k = kaboom({
                         canvas: canvasRef.current,
@@ -143,6 +149,7 @@ function GameCanvas() {
 
                         // Game Loop for Wave Checking
                         k.onUpdate(() => {
+                            if (gameState.isPaused) return; // Don't update when paused
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address);
                         });
                     });
@@ -173,8 +180,10 @@ function GameCanvas() {
     }, [randomSeed]); // Re-run if seed changes
 
     return (
-        <div className="game-canvas-container">
-            <canvas ref={canvasRef} id="game-canvas"></canvas>
+        <div className="game-canvas-container flex-center gradient-bg" style={{ minHeight: '100vh', paddingTop: '70px' }}>
+            <div className="canvas-wrapper glass-strong p-1" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+                <canvas ref={canvasRef} id="game-canvas" style={{ display: 'block', borderRadius: '12px' }}></canvas>
+            </div>
         </div>
     );
 }
