@@ -16,7 +16,7 @@ const SPRITE_VERTICAL_POS = 65;
 const TEXT_VERTICAL_POS = 100;
 const COST_VERTICAL_POS = 120;
 
-export function setupShop(k, gameState, onDragStart, walletAddress) {
+export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}) {
     // B-Cell
     const shopItemBCell = k.add([
         k.sprite("b-cell-neutral"),
@@ -49,7 +49,7 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
     });
 
     // Platelet (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4, walletAddress);
+    checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4, walletAddress, sbtStats);
 
     // Basophil
     const shopItemBasophil = k.add([
@@ -83,7 +83,7 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
     });
 
     // Macrophage (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress);
+    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress, sbtStats);
 
     // NK Cell (Unlockable)
     checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 9, walletAddress);
@@ -92,10 +92,10 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
 /**
  * Checks if a tower is unlocked via BlockchainService.
  */
-function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress) {
+function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress, sbtStats) {
 
     // Create item immediately
-    createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave);
+    createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats);
 
     // Update state asynchronously
     if (walletAddress) {
@@ -108,7 +108,7 @@ function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color,
     }
 }
 
-function createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave) {
+function createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats) {
     // Position based on type (hardcoded for now)
     let xPos = 200;
     if (type === 'platelet') xPos = 280;
@@ -169,7 +169,7 @@ function createShopItem(k, gameState, onDragStart, type, sprite, range, color, u
             k.wait(2, () => k.destroy(lockMsg));
             return;
         }
-        onDragStart(type, sprite, range, color);
+        onDragStart(type, sprite, range, color, sbtStats[type]);
     });
 }
 

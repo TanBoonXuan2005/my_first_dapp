@@ -103,6 +103,45 @@ const BlockchainService = {
             if (has) owned.push(type);
         }
         return owned;
+    },
+
+    getSBTStats: async (client, walletAddress) => {
+        if (!client || !walletAddress) return {};
+
+        try {
+            const macrophageType = `${PACKAGE_ID}::game_core::Macrophage`;
+            const plateletType = `${PACKAGE_ID}::game_core::Platelet`;
+
+            const { data } = await client.getOwnedObjects({
+                owner: walletAddress,
+                filter: {
+                    MatchAny: [
+                        { StructType: macrophageType },
+                        { StructType: plateletType }
+                    ]
+                },
+                options: {
+                    showContent: true
+                }
+            });
+
+            const stats = {};
+
+            data.forEach(obj => {
+                const content = obj.data?.content;
+                if (content?.type === macrophageType) {
+                    stats.macrophage = content.fields;
+                } else if (content?.type === plateletType) {
+                    stats.platelet = content.fields;
+                }
+            });
+
+            console.log("[Blockchain] Fetched SBT Stats:", stats);
+            return stats;
+        } catch (error) {
+            console.error("[Blockchain] Error fetching SBT stats:", error);
+            return {};
+        }
     }
 };
 

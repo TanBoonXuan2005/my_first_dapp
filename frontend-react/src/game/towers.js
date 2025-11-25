@@ -85,7 +85,12 @@ export function placeBCell(k, dropPos, gameState) {
     });
 }
 
-export function placeMacrophage(k, dropPos, gameState) {
+export function placeMacrophage(k, dropPos, gameState, stats = null) {
+    // Use stats from SBT if available, otherwise fallback to config
+    const range = stats?.range || GAME_CONFIG.towers.macrophage.range;
+    const attackSpeed = stats?.attackSpeed ? stats.attackSpeed / 1000 : GAME_CONFIG.towers.macrophage.attackSpeed; // Convert ms to s
+    const damage = stats?.damage || GAME_CONFIG.towers.macrophage.damage;
+
     const tower = k.add([
         k.sprite("macrophage-idle-neutral"),
         k.pos(dropPos),
@@ -94,12 +99,12 @@ export function placeMacrophage(k, dropPos, gameState) {
         k.z(50),
         "macrophage",
         {
-            attackTimer: GAME_CONFIG.towers.macrophage.attackSpeed,
+            attackTimer: attackSpeed,
             idleTimer: 0,
             idleFrame: 0,
-            range: GAME_CONFIG.towers.macrophage.range,
-            attackSpeed: GAME_CONFIG.towers.macrophage.attackSpeed,
-            damage: GAME_CONFIG.towers.macrophage.damage,
+            range: range,
+            attackSpeed: attackSpeed,
+            damage: damage,
             attackState: "idle"
         }
     ]);
@@ -158,7 +163,12 @@ export function placeMacrophage(k, dropPos, gameState) {
     });
 }
 
-export function placePlatelet(k, dropPos, gameState) {
+export function placePlatelet(k, dropPos, gameState, stats = null) {
+    // Use stats from SBT if available, otherwise fallback to config
+    const range = stats?.range || GAME_CONFIG.towers.platelet.range;
+    const attackSpeed = stats?.attackSpeed ? stats.attackSpeed / 1000 : GAME_CONFIG.towers.platelet.attackSpeed; // Convert ms to s
+    const damage = stats?.damage || GAME_CONFIG.towers.platelet.damage;
+
     const tower = k.add([
         k.sprite("platelet-idle"),
         k.pos(dropPos),
@@ -167,12 +177,12 @@ export function placePlatelet(k, dropPos, gameState) {
         k.z(50),
         "platelet",
         {
-            attackTimer: GAME_CONFIG.towers.platelet.attackSpeed,
+            attackTimer: attackSpeed,
             idleTimer: 0,
             idleFrame: 0,
-            range: GAME_CONFIG.towers.platelet.range,
-            attackSpeed: GAME_CONFIG.towers.platelet.attackSpeed,
-            damage: GAME_CONFIG.towers.platelet.damage,
+            range: range,
+            attackSpeed: attackSpeed,
+            damage: damage,
             attackState: "idle"
         }
     ]);

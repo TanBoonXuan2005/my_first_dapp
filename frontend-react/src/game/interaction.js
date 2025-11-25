@@ -18,6 +18,7 @@ export function setupInput(k, gameState, getPaths) {
     let dragSprite = null;
     let rangeIndicator = null;
     let selectedTowerType = null;
+    let selectedTowerStats = null;
 
     const { path1Points, path2Points } = getPaths();
 
@@ -79,12 +80,13 @@ export function setupInput(k, gameState, getPaths) {
 
         // Place tower
         if (selectedTowerType === "bcell") placeBCell(k, dropPos, gameState);
-        else if (selectedTowerType === "macrophage") placeMacrophage(k, dropPos, gameState);
-        else if (selectedTowerType === "platelet") placePlatelet(k, dropPos, gameState);
+        else if (selectedTowerType === "macrophage") placeMacrophage(k, dropPos, gameState, selectedTowerStats);
+        else if (selectedTowerType === "platelet") placePlatelet(k, dropPos, gameState, selectedTowerStats);
         else if (selectedTowerType === "basophil") placeBasophil(k, dropPos, gameState);
         else if (selectedTowerType === "nkCell") placeNKCell(k, dropPos, gameState);
 
         selectedTowerType = null;
+        selectedTowerStats = null;
     });
 
     /**
@@ -96,11 +98,12 @@ export function setupInput(k, gameState, getPaths) {
      * @param {number} range - The range of the tower to visualize during drag.
      * @param {import("kaboom").Color} color - The color for the range indicator.
      */
-    return function startDrag(type, spriteName, range, color) {
+    return function startDrag(type, spriteName, range, color, stats = null) {
         if (gameState.isPaused) return; // Don't start drag when paused
         if (isDragging) return;
         isDragging = true;
         selectedTowerType = type;
+        selectedTowerStats = stats;
 
         dragSprite = k.add([
             k.sprite(spriteName),

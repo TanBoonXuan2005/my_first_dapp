@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@onelabs/dapp-kit';
 import { useNavigate } from 'react-router-dom';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
@@ -15,9 +15,11 @@ import BlockchainService from '../services/BlockchainService.js';
 
 function GameCanvas() {
     const [randomSeed, setRandomSeed] = useState(null);
+    const [sbtStats, setSbtStats] = useState({});
     const canvasRef = useRef(null);
     const kRef = useRef(null);
     const account = useCurrentAccount();
+    const client = useSuiClient();
     const { mutate: signAndExecute } = useSignAndExecuteTransaction();
     const navigate = useNavigate();
 
@@ -27,6 +29,8 @@ function GameCanvas() {
             if (account?.address) {
                 const seed = await BlockchainService.getRandomness();
                 setRandomSeed(seed);
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setSbtStats(stats);
             }
         };
         fetchData();
@@ -126,7 +130,7 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        setupShop(k, gameState, startDrag, account?.address);
+                        setupShop(k, gameState, startDrag, account?.address, sbtStats);
 
                         // Wave Management Callbacks
                         const handleWaveVictory = (walletAddress, signAndExecute) => {
