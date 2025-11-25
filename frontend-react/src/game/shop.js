@@ -51,36 +51,8 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
     // Platelet (Unlockable)
     checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4, walletAddress, sbtStats);
 
-    // Basophil
-    const shopItemBasophil = k.add([
-        k.sprite("basophil-idle"),
-        k.pos(360, SPRITE_VERTICAL_POS),
-        k.anchor("center"),
-        k.scale(0.06),
-        k.z(101),
-        k.area(),
-        "shop-item-basophil"
-    ]);
-
-    k.add([
-        k.text("Basophil", { size: 14 }),
-        k.pos(360, TEXT_VERTICAL_POS),
-        k.anchor("center"),
-        k.color(255, 255, 255),
-        k.z(101)
-    ]);
-
-    k.add([
-        k.text(`Cost: ${TOWER_COST.basophil}`, { size: 12 }),
-        k.pos(360, COST_VERTICAL_POS),
-        k.anchor("center"),
-        k.color(200, 200, 0),
-        k.z(101)
-    ]);
-
-    shopItemBasophil.onClick(() => {
-        onDragStart("basophil", "basophil-idle", GAME_CONFIG.towers.basophil.range, k.rgb(255, 150, 50));
-    });
+    // Basophil (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'basophil', "basophil-idle", GAME_CONFIG.towers.basophil.range, k.rgb(255, 150, 50), 3, walletAddress, sbtStats);
 
     // Macrophage (Unlockable)
     checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress, sbtStats);
@@ -120,6 +92,7 @@ function createShopItem(k, gameState, onDragStart, type, sprite, range, color, u
 
     if (type === 'macrophage') xPos = 200;
     if (type === 'platelet') xPos = 280;
+    if (type === 'basophil') xPos = 360;
     if (type === 'nkCell') xPos = 440;
 
     const shopItem = k.add([

@@ -151,6 +151,22 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
             }
         }
 
+        // Wave 3 Victory -> Unlock Basophil
+        if (gameState.currentWaveIndex + 1 === 3) {
+            const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'basophil');
+            if (!unlocked) {
+                console.log("Minting Basophil SBT...");
+                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'basophil', signAndExecute);
+                if (success) {
+                    // Update Game State Immediately
+                    gameState.unlockedTowers.basophil = true;
+                    // Update visuals
+                    updateTowerVisuals(k, 'basophil', true);
+                    console.log("✅ Basophil unlocked!");
+                }
+            }
+        }
+
         // Wave 4 Victory -> Unlock Platelet
         if (gameState.currentWaveIndex + 1 === 6) {
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'platelet');

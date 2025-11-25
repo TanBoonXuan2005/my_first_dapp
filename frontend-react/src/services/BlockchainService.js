@@ -76,6 +76,10 @@ const BlockchainService = {
         return BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
     },
 
+    mintBasophilSBT: async (walletAddress) => {
+        return BlockchainService.mintUnlockSBT(walletAddress, 'basophil');
+    },
+
     // Placeholder for future randomness
     getRandomness: async () => {
         const randomValue = Math.random();
@@ -86,7 +90,7 @@ const BlockchainService = {
     // Dev Tools
     resetSBTs: async (walletAddress) => {
         if (!walletAddress) return;
-        const types = ['macrophage', 'platelet', 'nkCell'];
+        const types = ['macrophage', 'platelet', 'basophil', 'nkCell'];
         types.forEach(type => {
             localStorage.removeItem(`sbt_${type}_${walletAddress}`);
         });
@@ -96,7 +100,7 @@ const BlockchainService = {
 
     getOwnedSBTs: async (walletAddress) => {
         if (!walletAddress) return [];
-        const types = ['macrophage', 'platelet', 'nkCell'];
+        const types = ['macrophage', 'platelet', 'basophil', 'nkCell'];
         const owned = [];
         for (const type of types) {
             const has = await BlockchainService.checkUnlockSBT(walletAddress, type);
@@ -111,13 +115,15 @@ const BlockchainService = {
         try {
             const macrophageType = `${PACKAGE_ID}::game_core::Macrophage`;
             const plateletType = `${PACKAGE_ID}::game_core::Platelet`;
+            const basophilType = `${PACKAGE_ID}::game_core::Basophil`;
 
             const { data } = await client.getOwnedObjects({
                 owner: walletAddress,
                 filter: {
                     MatchAny: [
                         { StructType: macrophageType },
-                        { StructType: plateletType }
+                        { StructType: plateletType },
+                        { StructType: basophilType }
                     ]
                 },
                 options: {
@@ -133,6 +139,8 @@ const BlockchainService = {
                     stats.macrophage = content.fields;
                 } else if (content?.type === plateletType) {
                     stats.platelet = content.fields;
+                } else if (content?.type === basophilType) {
+                    stats.basophil = content.fields;
                 }
             });
 

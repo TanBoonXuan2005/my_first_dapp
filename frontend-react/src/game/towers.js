@@ -292,7 +292,12 @@ export function placePlatelet(k, dropPos, gameState, stats = null) {
     });
 }
 
-export function placeBasophil(k, dropPos, gameState) {
+export function placeBasophil(k, dropPos, gameState, stats = null) {
+    // Use stats from SBT if available, otherwise fallback to config
+    const range = stats?.range || GAME_CONFIG.towers.basophil.range;
+    const attackSpeed = stats?.attackSpeed ? stats.attackSpeed / 1000 : GAME_CONFIG.towers.basophil.attackSpeed; // Convert ms to s
+    const damage = stats?.damage || GAME_CONFIG.towers.basophil.damage;
+
     const tower = k.add([
         k.sprite("basophil-idle"),
         k.pos(dropPos),
@@ -301,12 +306,12 @@ export function placeBasophil(k, dropPos, gameState) {
         k.z(50),
         "basophil",
         {
-            attackTimer: GAME_CONFIG.towers.basophil.attackSpeed,
+            attackTimer: attackSpeed,
             idleTimer: 0,
             idleFrame: 0,
-            range: GAME_CONFIG.towers.basophil.range,
-            attackSpeed: GAME_CONFIG.towers.basophil.attackSpeed,
-            damage: GAME_CONFIG.towers.basophil.damage,
+            range: range,
+            attackSpeed: attackSpeed,
+            damage: damage,
             attackState: "idle"
         }
     ]);

@@ -178,8 +178,30 @@ function GameCanvas() {
     }, [randomSeed]); // Re-run if seed changes
 
     return (
-        <div className="game-canvas-container">
+        <div className="game-canvas-container" style={{ position: 'relative' }}>
             <canvas ref={canvasRef} id="game-canvas"></canvas>
+            <button
+                onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                }}
+                style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    padding: '8px 16px',
+                    backgroundColor: '#ff4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold'
+                }}
+            >
+                RESET CACHE
+            </button>
         </div>
     );
 }

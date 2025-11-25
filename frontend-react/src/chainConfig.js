@@ -1,3 +1,3 @@
 // After deploying with 'one client publish', paste your Package ID here
-export const PACKAGE_ID = "0x5a2ce3be4d7b380fbd9c35ef6e08c7b19b8ff94296d6af9d3ff7e57eedc01fc2";
+export const PACKAGE_ID = "0xf7e48a26b53dc5f3fc86eceb8f367eec12423395cee2e63ab08165e7e0f89c43";
 export const MODULE_NAME = "game_core";

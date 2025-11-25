@@ -82,7 +82,7 @@ export function setupInput(k, gameState, getPaths) {
         if (selectedTowerType === "bcell") placeBCell(k, dropPos, gameState);
         else if (selectedTowerType === "macrophage") placeMacrophage(k, dropPos, gameState, selectedTowerStats);
         else if (selectedTowerType === "platelet") placePlatelet(k, dropPos, gameState, selectedTowerStats);
-        else if (selectedTowerType === "basophil") placeBasophil(k, dropPos, gameState);
+        else if (selectedTowerType === "basophil") placeBasophil(k, dropPos, gameState, selectedTowerStats);
         else if (selectedTowerType === "nkCell") placeNKCell(k, dropPos, gameState);
 
         selectedTowerType = null;

@@ -72,7 +72,25 @@ module my_first_package::game_core {
             &publisher, keys_p, values_p, ctx
         );
         display::update_version(&mut display_p);
+        display::update_version(&mut display_p);
         transfer::public_transfer(display_p, tx_context::sender(ctx));
+
+        // --- Basophil Display ---
+        let keys_b = vector[
+            string::utf8(b"name"),
+            string::utf8(b"description"),
+            string::utf8(b"image_url"),
+        ];
+        let values_b = vector[
+            string::utf8(b"Basophil"),
+            string::utf8(b"A heavy bomber unit unlocked at Wave 3."),
+            string::utf8(b"https://raw.githubusercontent.com/TanBoonXuan2005/my_first_dapp/main/frontend-react/public/assets/animation_frames/Basophil/Basophil_Idle.png"),
+        ];
+        let mut display_b = display::new_with_fields<Basophil>(
+            &publisher, keys_b, values_b, ctx
+        );
+        display::update_version(&mut display_b);
+        transfer::public_transfer(display_b, tx_context::sender(ctx));
 
         transfer::public_transfer(publisher, tx_context::sender(ctx));
     }
@@ -129,6 +147,16 @@ module my_first_package::game_core {
         damage_type: u8, // 0: Single, 1: Area
     }
 
+    /// Basophil: Unlocked at Wave 3
+    public struct Basophil has key {
+        id: UID,
+        level: u64,
+        attack_speed: u64, // in ms
+        damage: u64,
+        range: u64,
+        damage_type: u8, // 0: Single, 1: Area
+    }
+
     /// Mint a Macrophage SBT to the sender
     entry fun mint_macrophage(ctx: &mut TxContext) {
         let macrophage = Macrophage {
@@ -155,6 +183,19 @@ module my_first_package::game_core {
         transfer::transfer(platelet, tx_context::sender(ctx));
     }
 
+    /// Mint a Basophil SBT to the sender
+    entry fun mint_basophil(ctx: &mut TxContext) {
+        let basophil = Basophil {
+            id: object::new(ctx),
+            level: 1,
+            attack_speed: 2500, // 2.5s
+            damage: 25,
+            range: 200,
+            damage_type: 1, // Area
+        };
+        transfer::transfer(basophil, tx_context::sender(ctx));
+    }
+
     /// Burn a Macrophage SBT (since it cannot be transferred)
     entry fun burn_macrophage(macrophage: Macrophage) {
         let Macrophage { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = macrophage;
@@ -164,6 +205,12 @@ module my_first_package::game_core {
     /// Burn a Platelet SBT (since it cannot be transferred)
     entry fun burn_platelet(platelet: Platelet) {
         let Platelet { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = platelet;
+        object::delete(id);
+    }
+
+    /// Burn a Basophil SBT
+    entry fun burn_basophil(basophil: Basophil) {
+        let Basophil { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = basophil;
         object::delete(id);
     }
 }
