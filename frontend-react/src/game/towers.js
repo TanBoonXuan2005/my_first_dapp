@@ -85,7 +85,12 @@ export function placeBCell(k, dropPos, gameState) {
     });
 }
 
-export function placeMacrophage(k, dropPos, gameState) {
+export function placeMacrophage(k, dropPos, gameState, stats = null) {
+    // Use stats from SBT if available, otherwise fallback to config
+    const range = stats?.range || GAME_CONFIG.towers.macrophage.range;
+    const attackSpeed = stats?.attackSpeed ? stats.attackSpeed / 1000 : GAME_CONFIG.towers.macrophage.attackSpeed; // Convert ms to s
+    const damage = stats?.damage || GAME_CONFIG.towers.macrophage.damage;
+
     const tower = k.add([
         k.sprite("macrophage-idle-neutral"),
         k.pos(dropPos),
@@ -94,12 +99,12 @@ export function placeMacrophage(k, dropPos, gameState) {
         k.z(50),
         "macrophage",
         {
-            attackTimer: GAME_CONFIG.towers.macrophage.attackSpeed,
+            attackTimer: attackSpeed,
             idleTimer: 0,
             idleFrame: 0,
-            range: GAME_CONFIG.towers.macrophage.range,
-            attackSpeed: GAME_CONFIG.towers.macrophage.attackSpeed,
-            damage: GAME_CONFIG.towers.macrophage.damage,
+            range: range,
+            attackSpeed: attackSpeed,
+            damage: damage,
             attackState: "idle"
         }
     ]);
@@ -158,7 +163,12 @@ export function placeMacrophage(k, dropPos, gameState) {
     });
 }
 
-export function placePlatelet(k, dropPos, gameState) {
+export function placePlatelet(k, dropPos, gameState, stats = null) {
+    // Use stats from SBT if available, otherwise fallback to config
+    const range = stats?.range || GAME_CONFIG.towers.platelet.range;
+    const attackSpeed = stats?.attackSpeed ? stats.attackSpeed / 1000 : GAME_CONFIG.towers.platelet.attackSpeed; // Convert ms to s
+    const damage = stats?.damage || GAME_CONFIG.towers.platelet.damage;
+
     const tower = k.add([
         k.sprite("platelet-idle"),
         k.pos(dropPos),
@@ -167,12 +177,12 @@ export function placePlatelet(k, dropPos, gameState) {
         k.z(50),
         "platelet",
         {
-            attackTimer: GAME_CONFIG.towers.platelet.attackSpeed,
+            attackTimer: attackSpeed,
             idleTimer: 0,
             idleFrame: 0,
-            range: GAME_CONFIG.towers.platelet.range,
-            attackSpeed: GAME_CONFIG.towers.platelet.attackSpeed,
-            damage: GAME_CONFIG.towers.platelet.damage,
+            range: range,
+            attackSpeed: attackSpeed,
+            damage: damage,
             attackState: "idle"
         }
     ]);
@@ -282,7 +292,12 @@ export function placePlatelet(k, dropPos, gameState) {
     });
 }
 
-export function placeBasophil(k, dropPos, gameState) {
+export function placeBasophil(k, dropPos, gameState, stats = null) {
+    // Use stats from SBT if available, otherwise fallback to config
+    const range = stats?.range || GAME_CONFIG.towers.basophil.range;
+    const attackSpeed = stats?.attackSpeed ? stats.attackSpeed / 1000 : GAME_CONFIG.towers.basophil.attackSpeed; // Convert ms to s
+    const damage = stats?.damage || GAME_CONFIG.towers.basophil.damage;
+
     const tower = k.add([
         k.sprite("basophil-idle"),
         k.pos(dropPos),
@@ -291,12 +306,12 @@ export function placeBasophil(k, dropPos, gameState) {
         k.z(50),
         "basophil",
         {
-            attackTimer: GAME_CONFIG.towers.basophil.attackSpeed,
+            attackTimer: attackSpeed,
             idleTimer: 0,
             idleFrame: 0,
-            range: GAME_CONFIG.towers.basophil.range,
-            attackSpeed: GAME_CONFIG.towers.basophil.attackSpeed,
-            damage: GAME_CONFIG.towers.basophil.damage,
+            range: range,
+            attackSpeed: attackSpeed,
+            damage: damage,
             attackState: "idle"
         }
     ]);
@@ -397,6 +412,102 @@ export function placeBasophil(k, dropPos, gameState) {
                         });
                     });
                 }
+            }
+        }
+    });
+}
+
+export function placeNKCell(k, dropPos, gameState) {
+    const tower = k.add([
+        k.sprite("nk-cell-aim-down"),
+        k.pos(dropPos),
+        k.anchor("center"),
+        k.scale(0.075),
+        k.z(50),
+        "nk-cell",
+        {
+            shootTimer: GAME_CONFIG.towers.nkCell.attackSpeed,
+            range: GAME_CONFIG.towers.nkCell.range,
+            attackSpeed: GAME_CONFIG.towers.nkCell.attackSpeed,
+            damage: GAME_CONFIG.towers.nkCell.damage,
+            currentDir: "down"
+        }
+    ]);
+
+    tower.onUpdate(() => {
+        tower.shootTimer += k.dt();
+
+        // Find nearest enemy
+        const enemies = k.get("enemy");
+        let nearestEnemy = null;
+        let nearestDist = tower.range;
+
+        for (const enemy of enemies) {
+            const dist = tower.pos.dist(enemy.pos);
+            if (dist <= tower.range && dist < nearestDist) {
+                nearestEnemy = enemy;
+                nearestDist = dist;
+            }
+        }
+
+        if (nearestEnemy) {
+            // Update direction based on enemy position
+            const dx = nearestEnemy.pos.x - tower.pos.x;
+            const dy = nearestEnemy.pos.y - tower.pos.y;
+
+            let newSprite = "nk-cell-aim-down";
+            let flipX = false;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // Horizontal aim
+                newSprite = "nk-cell-aim-side";
+                if (dx < 0) flipX = true; // Face left
+            } else {
+                // Vertical aim
+                if (dy < 0) newSprite = "nk-cell-aim-up";
+                else newSprite = "nk-cell-aim-down";
+            }
+
+            tower.use(k.sprite(newSprite));
+            tower.flipX = flipX;
+
+            // Shoot
+            if (tower.shootTimer >= tower.attackSpeed) {
+                tower.shootTimer = 0;
+
+                // Use side-1 or up-1 for shooting frame if available, otherwise just shoot
+                // For simplicity, we just spawn projectile
+
+                const projectile = k.add([
+                    k.sprite("y-antibody"), // Reusing antibody for now
+                    k.pos(tower.pos),
+                    k.anchor("center"),
+                    k.scale(0.04),
+                    k.area(),
+                    k.z(30),
+                    "projectile",
+                    {
+                        speed: GAME_CONFIG.towers.nkCell.projectileSpeed,
+                        target: nearestEnemy,
+                        damage: tower.damage
+                    }
+                ]);
+
+                projectile.onUpdate(() => {
+                    if (!projectile.target.exists()) {
+                        k.destroy(projectile);
+                        return;
+                    }
+
+                    const dir = projectile.target.pos.sub(projectile.pos).unit();
+                    projectile.move(dir.scale(projectile.speed));
+
+                    if (projectile.pos.dist(projectile.target.pos) < 20) {
+                        showDamageNumber(k, projectile.target.pos, projectile.damage);
+                        projectile.target.hp -= projectile.damage;
+                        k.destroy(projectile);
+                    }
+                });
             }
         }
     });

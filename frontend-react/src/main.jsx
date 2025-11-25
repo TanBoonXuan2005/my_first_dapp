@@ -8,6 +8,7 @@ import App from './App.jsx'
 
 const queryClient = new QueryClient();
 const networks = {
+  devnet: { url: 'https://fullnode.devnet.sui.io:443' },
   testnet: { url: 'https://rpc-testnet.onelabs.cc' },
   mainnet: { url: 'https://rpc.onelabs.cc' },
 };
@@ -15,7 +16,7 @@ const networks = {
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networks} defaultNetwork="testnet">
+      <SuiClientProvider networks={networks} defaultNetwork="devnet">
         <WalletProvider>
           <App />
         </WalletProvider>

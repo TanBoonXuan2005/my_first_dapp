@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@onelabs/dapp-kit';
 import { useNavigate } from 'react-router-dom';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
@@ -15,9 +15,12 @@ import BlockchainService from '../services/BlockchainService.js';
 
 function GameCanvas() {
     const [randomSeed, setRandomSeed] = useState(null);
+    const [sbtStats, setSbtStats] = useState({});
     const canvasRef = useRef(null);
     const kRef = useRef(null);
     const account = useCurrentAccount();
+    const client = useSuiClient();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -26,6 +29,8 @@ function GameCanvas() {
             if (account?.address) {
                 const seed = await BlockchainService.getRandomness();
                 setRandomSeed(seed);
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setSbtStats(stats);
             }
         };
         fetchData();
@@ -131,15 +136,15 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        setupShop(k, gameState, startDrag, account?.address);
+                        setupShop(k, gameState, startDrag, account?.address, sbtStats);
 
                         // Wave Management Callbacks
-                        const handleWaveVictory = (walletAddress) => {
+                        const handleWaveVictory = (walletAddress, signAndExecute) => {
                             onWaveVictory(k, gameState, () => {
                                 startNextWavePreparation(k, gameState, () => {
                                     spawnWave(k, gameState, () => ({ path1Points, path2Points }));
                                 });
-                            }, walletAddress);
+                            }, walletAddress, signAndExecute);
                         };
 
                         // Start First Wave
@@ -149,8 +154,12 @@ function GameCanvas() {
 
                         // Game Loop for Wave Checking
                         k.onUpdate(() => {
+<<<<<<< HEAD
                             if (gameState.isPaused) return; // Don't update when paused
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address);
+=======
+                            checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
+>>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
                         });
                     });
 
@@ -180,10 +189,37 @@ function GameCanvas() {
     }, [randomSeed]); // Re-run if seed changes
 
     return (
+<<<<<<< HEAD
         <div className="game-canvas-container flex-center gradient-bg" style={{ minHeight: '100vh', paddingTop: '70px' }}>
             <div className="canvas-wrapper glass-strong p-1" style={{ borderRadius: '16px', overflow: 'hidden' }}>
                 <canvas ref={canvasRef} id="game-canvas" style={{ display: 'block', borderRadius: '12px' }}></canvas>
             </div>
+=======
+        <div className="game-canvas-container" style={{ position: 'relative' }}>
+            <canvas ref={canvasRef} id="game-canvas"></canvas>
+            <button
+                onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                }}
+                style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    padding: '8px 16px',
+                    backgroundColor: '#ff4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold'
+                }}
+            >
+                RESET CACHE
+            </button>
+>>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
         </div>
     );
 }

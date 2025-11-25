@@ -1,6 +1,7 @@
 // BlockchainService.js
 // Utility service for OneChain interactions using Move SDK
-// Note: Connection state is now managed by @onelabs/dapp-kit hooks in React components
+import { Transaction } from '@onelabs/sui/transactions';
+import { PACKAGE_ID, MODULE_NAME } from '../chainConfig';
 
 const BlockchainService = {
     // Helper to format address
@@ -9,9 +10,8 @@ const BlockchainService = {
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
     },
 
-    // SBT System - Mock implementation for now (using LocalStorage)
-    // In a real Move implementation, this would query a Move Object or Event
-
+    // SBT System - Check still uses localStorage as cache
+    // In production, you'd query the blockchain for owned objects
     checkUnlockSBT: async (walletAddress, unlockType) => {
         if (!walletAddress) return false;
         const key = `sbt_${unlockType}_${walletAddress}`;
@@ -20,12 +20,53 @@ const BlockchainService = {
         return hasUnlock;
     },
 
-    mintUnlockSBT: async (walletAddress, unlockType) => {
-        if (!walletAddress) return false;
-        const key = `sbt_${unlockType}_${walletAddress}`;
-        localStorage.setItem(key, 'true');
-        console.log(`[SBT] ✅ Minted ${unlockType} SBT for ${walletAddress}`);
-        return true;
+    // REAL MINTING - Triggers blockchain transaction
+    mintUnlockSBT: async (walletAddress, unlockType, signAndExecute) => {
+        if (!walletAddress) {
+            console.error("[Blockchain] No wallet address");
+            return false;
+        }
+
+        if (!signAndExecute) {
+            console.warn("[Blockchain] No signAndExecute function provided, using mock");
+            // Fallback to localStorage if no signer
+            localStorage.setItem(`sbt_${unlockType}_${walletAddress}`, 'true');
+            return true;
+        }
+
+        try {
+            const tx = new Transaction();
+            const target = `${PACKAGE_ID}::${MODULE_NAME}::mint_${unlockType}`;
+
+            console.log(`[Blockchain] 🔗 Preparing transaction: ${target}`);
+            tx.setGasBudget(10000000); // Set gas budget to 0.01 SUI to help wallets that fail estimation
+            tx.moveCall({
+                target: target,
+                arguments: []
+            });
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Successfully minted ${unlockType}!`);
+                            console.log(`[Blockchain] Transaction digest: ${result.digest}`);
+                            // Cache locally for faster checks
+                            localStorage.setItem(`sbt_${unlockType}_${walletAddress}`, 'true');
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Mint failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error(`[Blockchain] Error preparing transaction:`, error);
+            return false;
+        }
     },
 
     checkMacrophageUnlock: async (walletAddress) => {
@@ -34,6 +75,10 @@ const BlockchainService = {
 
     mintMacrophageSBT: async (walletAddress) => {
         return BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
+    },
+
+    mintBasophilSBT: async (walletAddress) => {
+        return BlockchainService.mintUnlockSBT(walletAddress, 'basophil');
     },
 
     // Placeholder for future randomness
@@ -46,7 +91,7 @@ const BlockchainService = {
     // Dev Tools
     resetSBTs: async (walletAddress) => {
         if (!walletAddress) return;
-        const types = ['macrophage', 'platelet'];
+        const types = ['macrophage', 'platelet', 'basophil', 'nkCell'];
         types.forEach(type => {
             localStorage.removeItem(`sbt_${type}_${walletAddress}`);
         });
@@ -56,13 +101,56 @@ const BlockchainService = {
 
     getOwnedSBTs: async (walletAddress) => {
         if (!walletAddress) return [];
-        const types = ['macrophage', 'platelet'];
+        const types = ['macrophage', 'platelet', 'basophil', 'nkCell'];
         const owned = [];
         for (const type of types) {
             const has = await BlockchainService.checkUnlockSBT(walletAddress, type);
             if (has) owned.push(type);
         }
         return owned;
+    },
+
+    getSBTStats: async (client, walletAddress) => {
+        if (!client || !walletAddress) return {};
+
+        try {
+            const macrophageType = `${PACKAGE_ID}::game_core::Macrophage`;
+            const plateletType = `${PACKAGE_ID}::game_core::Platelet`;
+            const basophilType = `${PACKAGE_ID}::game_core::Basophil`;
+
+            const { data } = await client.getOwnedObjects({
+                owner: walletAddress,
+                filter: {
+                    MatchAny: [
+                        { StructType: macrophageType },
+                        { StructType: plateletType },
+                        { StructType: basophilType }
+                    ]
+                },
+                options: {
+                    showContent: true
+                }
+            });
+
+            const stats = {};
+
+            data.forEach(obj => {
+                const content = obj.data?.content;
+                if (content?.type === macrophageType) {
+                    stats.macrophage = content.fields;
+                } else if (content?.type === plateletType) {
+                    stats.platelet = content.fields;
+                } else if (content?.type === basophilType) {
+                    stats.basophil = content.fields;
+                }
+            });
+
+            console.log("[Blockchain] Fetched SBT Stats:", stats);
+            return stats;
+        } catch (error) {
+            console.error("[Blockchain] Error fetching SBT stats:", error);
+            return {};
+        }
     }
 };
 

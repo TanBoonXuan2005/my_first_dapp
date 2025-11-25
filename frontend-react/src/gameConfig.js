@@ -29,6 +29,12 @@ const GAME_CONFIG = {
             damage: 25,           // Area damage per bomb
             projectileSpeed: 500, // Bomb projectile speed (pixels/second)
             explosionRadius: 80   // Explosion damage radius in pixels
+        },
+        nkCell: {
+            range: 400,           // Long attack range
+            attackSpeed: 3.0,     // Slow attack speed
+            damage: 100,           // High single target damage
+            projectileSpeed: 600  // Fast projectile
         }
     },
 
@@ -41,53 +47,29 @@ const GAME_CONFIG = {
     },
 
     // Wave Configuration - Progressive Difficulty
-    waves: [
-        // Wave 1 - Tutorial (Macrophage unlock)
-        {
-            waveNumber: 1,
-            enemyCount: 1,
-            spawnDelay: 2.0,        // 2 seconds between spawns
-            enemyHp: 80,
-            enemySpeed: 1000,
-            preparationTime: 3      // 30 seconds to prepare
-        },
-        // Wave 2 - Getting Harder
-        {
-            waveNumber: 2,
-            enemyCount: 1,
-            spawnDelay: 1.5,        // Faster spawns
-            enemyHp: 100,           // Tougher enemies
-            enemySpeed: 1100,        // Faster movement
+    // Procedural Wave Generation
+    getWaveConfig: (waveIndex) => {
+        const waveNumber = waveIndex + 1;
+
+        // Base stats
+        const baseHp = 80;
+        const baseSpeed = 100;
+        const baseCount = 1;
+
+        // Scaling factors
+        const hpMultiplier = Math.pow(1.2, waveIndex); // +20% HP per wave
+        const speedMultiplier = Math.min(2.5, 1 + (waveIndex * 0.05)); // +5% speed, max 2.5x
+
+        // Calculate stats
+        return {
+            waveNumber: waveNumber,
+            enemyCount: Math.floor(baseCount + (waveIndex / 3)), // +1 enemy every 3 waves
+            spawnDelay: Math.max(0.5, 2.0 - (waveIndex * 0.1)), // Faster spawns, min 0.5s
+            enemyHp: Math.floor(baseHp * hpMultiplier),
+            enemySpeed: Math.floor(baseSpeed * speedMultiplier),
             preparationTime: 3
-        },
-        // Wave 3 - Challenging (Platelet unlock)
-        {
-            waveNumber: 3,
-            enemyCount: 1,
-            spawnDelay: 1.2,
-            enemyHp: 120,
-            enemySpeed: 1200,
-            preparationTime: 3
-        },
-        // Wave 4 - Difficult
-        {
-            waveNumber: 4,
-            enemyCount: 1,
-            spawnDelay: 1.0,
-            enemyHp: 150,
-            enemySpeed: 1300,
-            preparationTime: 3
-        },
-        // Wave 5 - Boss Wave (Basophil unlock)
-        {
-            waveNumber: 5,
-            enemyCount: 1,
-            spawnDelay: 0.8,
-            enemyHp: 180,
-            enemySpeed: 140,
-            preparationTime: 2
-        }
-    ]
+        };
+    }
 };
 
 export default GAME_CONFIG;

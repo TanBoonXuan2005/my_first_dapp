@@ -16,6 +16,7 @@ const SPRITE_VERTICAL_POS = 65;
 const TEXT_VERTICAL_POS = 100;
 const COST_VERTICAL_POS = 120;
 
+<<<<<<< HEAD
 export function setupShop(k, gameState, onDragStart, walletAddress) {
     // Shop Background Panel
     const shopBg = k.add([
@@ -25,6 +26,18 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
         k.opacity(0.0), // Transparent, just for grouping if needed
         k.z(100),
         "shop-bg"
+=======
+export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}) {
+    // B-Cell
+    const shopItemBCell = k.add([
+        k.sprite("b-cell-neutral"),
+        k.pos(120, SPRITE_VERTICAL_POS),
+        k.anchor("center"),
+        k.scale(0.06),
+        k.z(101),
+        k.area(),
+        "shop-item-bcell"
+>>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
     ]);
 
     const towers = [
@@ -39,6 +52,7 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
     towers.forEach((tower, index) => {
         const xPos = startX + index * 100;
 
+<<<<<<< HEAD
         // Tower Icon Container
         const container = k.add([
             k.rect(80, 90, { radius: 8 }),
@@ -100,10 +114,40 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
                     k.lifespan(2, { fade: 0.5 })
                 ]);
                 return;
+=======
+    // Platelet (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4, walletAddress, sbtStats);
+
+    // Basophil (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'basophil', "basophil-idle", GAME_CONFIG.towers.basophil.range, k.rgb(255, 150, 50), 3, walletAddress, sbtStats);
+
+    // Macrophage (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress, sbtStats);
+
+    // NK Cell (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 9, walletAddress);
+}
+
+/**
+ * Checks if a tower is unlocked via BlockchainService.
+ */
+function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress, sbtStats) {
+
+    // Create item immediately
+    createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats);
+
+    // Update state asynchronously
+    if (walletAddress) {
+        BlockchainService.checkUnlockSBT(walletAddress, type).then(unlocked => {
+            if (unlocked) {
+                gameState.unlockedTowers[type] = true;
+                updateTowerVisuals(k, type, true);
+>>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
             }
             onDragStart(tower.type, tower.sprite, tower.range, tower.color);
         });
 
+<<<<<<< HEAD
         container.onHover(() => {
             container.color = k.rgb(51, 65, 85);
             container.outline.color = k.rgb(56, 189, 248);
@@ -115,6 +159,22 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
             container.outline.color = k.rgb(71, 85, 105);
             k.setCursor("default");
         });
+=======
+function createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats) {
+    // Position based on type (hardcoded for now)
+    let xPos = 200;
+    if (type === 'platelet') xPos = 280;
+    if (type === 'macrophage') xPos = 200; // Wait, original positions were: BCell 120, Platelet 280, Basophil 360, Macrophage 200? 
+    // Let's fix positions: BCell(120), Macrophage(200), Platelet(280), Basophil(360)
+    // Actually, let's keep original layout but just lock them.
+    // Original: BCell(120), Platelet(280), Basophil(360), Macrophage(200) -> This order is weird.
+    // Let's assume: BCell(120), Macrophage(200), Platelet(280), Basophil(360).
+
+    if (type === 'macrophage') xPos = 200;
+    if (type === 'platelet') xPos = 280;
+    if (type === 'basophil') xPos = 360;
+    if (type === 'nkCell') xPos = 440;
+>>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
 
         // Initial Locked State
         if (tower.unlockWave && !gameState.unlockedTowers[tower.type]) {
@@ -130,6 +190,7 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
                 `lock-icon-${tower.type}`
             ]);
         }
+<<<<<<< HEAD
 
         // Check unlock status if wallet connected
         if (tower.unlockWave && walletAddress) {
@@ -140,6 +201,9 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
                 }
             });
         }
+=======
+        onDragStart(type, sprite, range, color, sbtStats[type]);
+>>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
     });
 }
 
