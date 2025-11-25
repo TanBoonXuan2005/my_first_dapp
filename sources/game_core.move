@@ -111,21 +111,33 @@ module my_first_package::game_core {
     /// Removed 'store' ability to make it a true Soulbound Token (SBT)
     public struct Macrophage has key {
         id: UID,
-        power: u64,
+        level: u64,
+        attack_speed: u64, // in ms (e.g., 2000 for 2.0s)
+        damage: u64,
+        range: u64,
+        damage_type: u8, // 0: Single, 1: Area
     }
 
     /// Platelet: Unlocked at Wave 4
     /// Removed 'store' ability to make it a true Soulbound Token (SBT)
     public struct Platelet has key {
         id: UID,
-        healing_factor: u64,
+        level: u64,
+        attack_speed: u64, // in ms (e.g., 1000 for 1.0s)
+        damage: u64,
+        range: u64,
+        damage_type: u8, // 0: Single, 1: Area
     }
 
     /// Mint a Macrophage SBT to the sender
     entry fun mint_macrophage(ctx: &mut TxContext) {
         let macrophage = Macrophage {
             id: object::new(ctx),
-            power: 100,
+            level: 1,
+            attack_speed: 2000, // 2.0s
+            damage: 50,
+            range: 120,
+            damage_type: 1, // Area
         };
         transfer::transfer(macrophage, tx_context::sender(ctx));
     }
@@ -134,20 +146,24 @@ module my_first_package::game_core {
     entry fun mint_platelet(ctx: &mut TxContext) {
         let platelet = Platelet {
             id: object::new(ctx),
-            healing_factor: 50,
+            level: 1,
+            attack_speed: 1000, // 1.0s
+            damage: 5,
+            range: 180,
+            damage_type: 0, // Single (Net)
         };
         transfer::transfer(platelet, tx_context::sender(ctx));
     }
 
     /// Burn a Macrophage SBT (since it cannot be transferred)
     entry fun burn_macrophage(macrophage: Macrophage) {
-        let Macrophage { id, power: _ } = macrophage;
+        let Macrophage { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = macrophage;
         object::delete(id);
     }
 
     /// Burn a Platelet SBT (since it cannot be transferred)
     entry fun burn_platelet(platelet: Platelet) {
-        let Platelet { id, healing_factor: _ } = platelet;
+        let Platelet { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = platelet;
         object::delete(id);
     }
 }
