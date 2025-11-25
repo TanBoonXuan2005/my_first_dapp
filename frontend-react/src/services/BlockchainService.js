@@ -39,6 +39,7 @@ const BlockchainService = {
             const target = `${PACKAGE_ID}::${MODULE_NAME}::mint_${unlockType}`;
 
             console.log(`[Blockchain] 🔗 Preparing transaction: ${target}`);
+            tx.setGasBudget(10000000); // Set gas budget to 0.01 SUI to help wallets that fail estimation
             tx.moveCall({
                 target: target,
                 arguments: []
