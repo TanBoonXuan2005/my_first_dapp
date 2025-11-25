@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
 import { useNavigate } from 'react-router-dom';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
@@ -18,6 +18,7 @@ function GameCanvas() {
     const canvasRef = useRef(null);
     const kRef = useRef(null);
     const account = useCurrentAccount();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -128,12 +129,12 @@ function GameCanvas() {
                         setupShop(k, gameState, startDrag, account?.address);
 
                         // Wave Management Callbacks
-                        const handleWaveVictory = (walletAddress) => {
+                        const handleWaveVictory = (walletAddress, signAndExecute) => {
                             onWaveVictory(k, gameState, () => {
                                 startNextWavePreparation(k, gameState, () => {
                                     spawnWave(k, gameState, () => ({ path1Points, path2Points }));
                                 });
-                            }, walletAddress);
+                            }, walletAddress, signAndExecute);
                         };
 
                         // Start First Wave
@@ -143,7 +144,7 @@ function GameCanvas() {
 
                         // Game Loop for Wave Checking
                         k.onUpdate(() => {
-                            checkWaveCompletion(k, gameState, handleWaveVictory, account?.address);
+                            checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
                         });
                     });
 

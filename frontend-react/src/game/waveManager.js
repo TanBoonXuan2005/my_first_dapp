@@ -101,7 +101,7 @@ export function startNextWavePreparation(k, gameState, spawnWaveCallback) {
     });
 }
 
-export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress) {
+export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress, signAndExecute) {
     console.log(`[Wave Check] processed: ${gameState.totalEnemiesProcessed}/${gameState.totalEnemiesSpawned}, completed: ${gameState.waveCompleted}, active: ${gameState.gameActive}`);
 
     if (!gameState.waveCompleted && gameState.totalEnemiesProcessed >= gameState.totalEnemiesSpawned && gameState.totalEnemiesSpawned > 0 && gameState.gameActive) {
@@ -115,7 +115,7 @@ export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress) 
             // Check if player won (has health remaining)
             if (gameState.playerHealth > 0) {
                 console.log("[Wave Check] VICTORY!");
-                onWaveVictory(walletAddress);
+                onWaveVictory(walletAddress, signAndExecute);
             } else {
                 console.log("[Wave Check] Lost (health = 0)");
             }
@@ -125,7 +125,7 @@ export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress) 
 
 import { updateTowerVisuals } from './shop.js';
 
-export async function onWaveVictory(k, gameState, startNextWavePreparationCallback, walletAddress) {
+export async function onWaveVictory(k, gameState, startNextWavePreparationCallback, walletAddress, signAndExecute) {
     console.log(`🎉 Wave ${gameState.currentWaveIndex + 1} Victory!`);
     gameState.gameActive = false; // Pause game
 
@@ -138,20 +138,13 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
             if (!unlocked) {
                 console.log("Minting Macrophage SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
+                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'macrophage', signAndExecute);
                 if (success) {
                     // Update Game State Immediately
                     gameState.unlockedTowers.macrophage = true;
+                    // Update visuals
                     updateTowerVisuals(k, 'macrophage', true);
-
-                    k.add([
-                        k.text("Macrophage Unlocked!", { size: 32 }),
-                        k.pos(k.width() / 2, k.height() / 2 + 50),
-                        k.anchor("center"),
-                        k.color(255, 215, 0),
-                        k.lifespan(3),
-                        k.z(250)
-                    ]);
+                    console.log("✅ Macrophage unlocked!");
                 }
             }
         }
@@ -161,20 +154,13 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'platelet');
             if (!unlocked) {
                 console.log("Minting Platelet SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'platelet');
+                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'platelet', signAndExecute);
                 if (success) {
                     // Update Game State Immediately
                     gameState.unlockedTowers.platelet = true;
+                    // Update visuals
                     updateTowerVisuals(k, 'platelet', true);
-
-                    k.add([
-                        k.text("Platelet Unlocked!", { size: 32 }),
-                        k.pos(k.width() / 2, k.height() / 2 + 50),
-                        k.anchor("center"),
-                        k.color(255, 215, 0),
-                        k.lifespan(3),
-                        k.z(250)
-                    ]);
+                    console.log("✅ Platelet unlocked!");
                 }
             }
         }

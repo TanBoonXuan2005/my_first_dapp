@@ -1,6 +1,7 @@
 // BlockchainService.js
 // Utility service for OneChain interactions using Move SDK
-// Note: Connection state is now managed by @onelabs/dapp-kit hooks in React components
+import { Transaction } from '@onelabs/sui/transactions';
+import { PACKAGE_ID, MODULE_NAME } from '../chainConfig';
 
 const BlockchainService = {
     // Helper to format address
@@ -9,9 +10,8 @@ const BlockchainService = {
         return `${address.slice(0, 6)}...${address.slice(-4)}`;
     },
 
-    // SBT System - Mock implementation for now (using LocalStorage)
-    // In a real Move implementation, this would query a Move Object or Event
-
+    // SBT System - Check still uses localStorage as cache
+    // In production, you'd query the blockchain for owned objects
     checkUnlockSBT: async (walletAddress, unlockType) => {
         if (!walletAddress) return false;
         const key = `sbt_${unlockType}_${walletAddress}`;
@@ -20,12 +20,52 @@ const BlockchainService = {
         return hasUnlock;
     },
 
-    mintUnlockSBT: async (walletAddress, unlockType) => {
-        if (!walletAddress) return false;
-        const key = `sbt_${unlockType}_${walletAddress}`;
-        localStorage.setItem(key, 'true');
-        console.log(`[SBT] ✅ Minted ${unlockType} SBT for ${walletAddress}`);
-        return true;
+    // REAL MINTING - Triggers blockchain transaction
+    mintUnlockSBT: async (walletAddress, unlockType, signAndExecute) => {
+        if (!walletAddress) {
+            console.error("[Blockchain] No wallet address");
+            return false;
+        }
+
+        if (!signAndExecute) {
+            console.warn("[Blockchain] No signAndExecute function provided, using mock");
+            // Fallback to localStorage if no signer
+            localStorage.setItem(`sbt_${unlockType}_${walletAddress}`, 'true');
+            return true;
+        }
+
+        try {
+            const tx = new Transaction();
+            const target = `${PACKAGE_ID}::${MODULE_NAME}::mint_${unlockType}`;
+
+            console.log(`[Blockchain] 🔗 Preparing transaction: ${target}`);
+            tx.moveCall({
+                target: target,
+                arguments: []
+            });
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Successfully minted ${unlockType}!`);
+                            console.log(`[Blockchain] Transaction digest: ${result.digest}`);
+                            // Cache locally for faster checks
+                            localStorage.setItem(`sbt_${unlockType}_${walletAddress}`, 'true');
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Mint failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error(`[Blockchain] Error preparing transaction:`, error);
+            return false;
+        }
     },
 
     checkMacrophageUnlock: async (walletAddress) => {
