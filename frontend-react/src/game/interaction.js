@@ -23,6 +23,8 @@ export function setupInput(k, gameState, getPaths) {
 
     // Handle Dragging
     k.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
+
         if (isDragging && dragSprite) {
             dragSprite.pos = k.mousePos();
             if (rangeIndicator) rangeIndicator.pos = k.mousePos();
@@ -35,6 +37,7 @@ export function setupInput(k, gameState, getPaths) {
 
     // Handle Mouse Release
     k.onMouseRelease(() => {
+        if (gameState.isPaused) return; // Don't process input when paused
         if (!isDragging) return;
         const dropPos = k.mousePos();
         isDragging = false;
@@ -94,6 +97,7 @@ export function setupInput(k, gameState, getPaths) {
      * @param {import("kaboom").Color} color - The color for the range indicator.
      */
     return function startDrag(type, spriteName, range, color) {
+        if (gameState.isPaused) return; // Don't start drag when paused
         if (isDragging) return;
         isDragging = true;
         selectedTowerType = type;

@@ -24,8 +24,31 @@ export async function spawnWave(k, gameState, getPaths) {
         if (!gameState.gameActive) break; // Stop spawning if game over
         const path = i % 2 === 0 ? path1Points : path2Points;
         spawnEnemy(k, path, waveConfig, gameState);
-        await k.wait(waveConfig.spawnDelay);
+
+        // Pause-aware wait
+        await pauseAwareWait(k, gameState, waveConfig.spawnDelay);
     }
+}
+
+// Helper function for pause-aware waiting
+function pauseAwareWait(k, gameState, duration) {
+    return new Promise((resolve) => {
+        let elapsed = 0;
+        const waiter = k.add([
+            k.pos(0, 0),
+            { elapsed: 0 }
+        ]);
+
+        waiter.onUpdate(() => {
+            if (gameState.isPaused) return; // Don't count time when paused
+
+            waiter.elapsed += k.dt();
+            if (waiter.elapsed >= duration) {
+                k.destroy(waiter);
+                resolve();
+            }
+        });
+    });
 }
 
 export function startNextWavePreparation(k, gameState, spawnWaveCallback) {
@@ -55,25 +78,32 @@ export function startNextWavePreparation(k, gameState, spawnWaveCallback) {
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(250),
-        "countdown"
+        "countdown",
+        { elapsed: 0 }
     ]);
 
-    const countdownInterval = k.loop(1, () => {
-        timeRemaining--;
-        if (preparationCountdown && preparationCountdown.exists()) {
-            preparationCountdown.text = `${timeRemaining}s`;
-        }
+    // Use onUpdate instead of k.loop to respect pause state
+    preparationCountdown.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
 
-        if (timeRemaining <= 0) {
-            countdownInterval.cancel();
-            k.destroy(prepMsg);
-            if (preparationCountdown) k.destroy(preparationCountdown);
-            spawnWaveCallback();
+        preparationCountdown.elapsed += k.dt();
+        if (preparationCountdown.elapsed >= 1) {
+            preparationCountdown.elapsed = 0;
+            timeRemaining--;
+            if (preparationCountdown.exists()) {
+                preparationCountdown.text = `${timeRemaining}s`;
+            }
+
+            if (timeRemaining <= 0) {
+                k.destroy(prepMsg);
+                if (preparationCountdown) k.destroy(preparationCountdown);
+                spawnWaveCallback();
+            }
         }
     });
 }
 
-export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress) {
+export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress, signAndExecute) {
     console.log(`[Wave Check] processed: ${gameState.totalEnemiesProcessed}/${gameState.totalEnemiesSpawned}, completed: ${gameState.waveCompleted}, active: ${gameState.gameActive}`);
 
     if (!gameState.waveCompleted && gameState.totalEnemiesProcessed >= gameState.totalEnemiesSpawned && gameState.totalEnemiesSpawned > 0 && gameState.gameActive) {
@@ -87,7 +117,7 @@ export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress) 
             // Check if player won (has health remaining)
             if (gameState.playerHealth > 0) {
                 console.log("[Wave Check] VICTORY!");
-                onWaveVictory(walletAddress);
+                onWaveVictory(walletAddress, signAndExecute);
             } else {
                 console.log("[Wave Check] Lost (health = 0)");
             }
@@ -97,7 +127,7 @@ export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress) 
 
 import { updateTowerVisuals } from './shop.js';
 
-export async function onWaveVictory(k, gameState, startNextWavePreparationCallback, walletAddress) {
+export async function onWaveVictory(k, gameState, startNextWavePreparationCallback, walletAddress, signAndExecute) {
     console.log(`🎉 Wave ${gameState.currentWaveIndex + 1} Victory!`);
     gameState.gameActive = false; // Pause game
 
@@ -110,20 +140,13 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
             if (!unlocked) {
                 console.log("Minting Macrophage SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
+                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'macrophage', signAndExecute);
                 if (success) {
                     // Update Game State Immediately
                     gameState.unlockedTowers.macrophage = true;
+                    // Update visuals
                     updateTowerVisuals(k, 'macrophage', true);
-
-                    k.add([
-                        k.text("Macrophage Unlocked!", { size: 32 }),
-                        k.pos(k.width() / 2, k.height() / 2 + 50),
-                        k.anchor("center"),
-                        k.color(255, 215, 0),
-                        k.lifespan(3),
-                        k.z(250)
-                    ]);
+                    console.log("✅ Macrophage unlocked!");
                 }
             }
         }
@@ -133,20 +156,13 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'platelet');
             if (!unlocked) {
                 console.log("Minting Platelet SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'platelet');
+                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'platelet', signAndExecute);
                 if (success) {
                     // Update Game State Immediately
                     gameState.unlockedTowers.platelet = true;
+                    // Update visuals
                     updateTowerVisuals(k, 'platelet', true);
-
-                    k.add([
-                        k.text("Platelet Unlocked!", { size: 32 }),
-                        k.pos(k.width() / 2, k.height() / 2 + 50),
-                        k.anchor("center"),
-                        k.color(255, 215, 0),
-                        k.lifespan(3),
-                        k.z(250)
-                    ]);
+                    console.log("✅ Platelet unlocked!");
                 }
             }
         }
@@ -174,9 +190,10 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
         }
     }
 
-    // Celebration effect
+    // Celebration effect (pause-aware)
     for (let i = 0; i < 10; i++) {
-        k.wait(i * 0.1, () => {
+        (async () => {
+            await pauseAwareWait(k, gameState, i * 0.1);
             k.add([
                 k.circle(10),
                 k.pos(k.rand(0, k.width()), 0),
@@ -185,7 +202,7 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
                 k.move(k.DOWN, k.rand(100, 300)),
                 k.z(200)
             ]);
-        });
+        })();
     }
 
     // Infinite waves - no victory condition based on wave count
@@ -195,8 +212,8 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
     gameState.currentWaveIndex++;
     console.log(`[Wave] Progressing to wave ${gameState.currentWaveIndex + 1}`);
 
-    // Continue to next wave preparation
-    k.wait(3, () => {
+    // Continue to next wave preparation (pause-aware)
+    pauseAwareWait(k, gameState, 3).then(() => {
         startNextWavePreparationCallback();
     });
 }

@@ -18,6 +18,8 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState) {
     ]);
 
     enemy.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
+
         if (enemy.hp <= 0) {
             // Enemy defeated
             // Enemy defeated
@@ -32,6 +34,7 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState) {
             ]);
 
             death.onUpdate(() => {
+                if (gameState.isPaused) return; // Don't update when paused
                 death.timer += k.dt();
                 death.opacity = 1 - (death.timer / 0.5);
                 if (death.timer >= 0.5) k.destroy(death);

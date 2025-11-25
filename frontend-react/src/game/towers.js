@@ -23,6 +23,8 @@ export function placeBCell(k, dropPos, gameState) {
     const idleFrames = ["b-cell-neutral", "b-cell-squash", "b-cell-neutral"];
 
     tower.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
+
         tower.timer += k.dt();
         if (tower.timer > 0.15) {
             tower.timer = 0;
@@ -62,6 +64,8 @@ export function placeBCell(k, dropPos, gameState) {
                 ]);
 
                 projectile.onUpdate(() => {
+                    if (gameState.isPaused) return; // Don't update when paused
+
                     if (!projectile.target.exists()) {
                         k.destroy(projectile);
                         return;
@@ -71,7 +75,7 @@ export function placeBCell(k, dropPos, gameState) {
                     projectile.move(dir.scale(projectile.speed));
 
                     if (projectile.pos.dist(projectile.target.pos) < 20) {
-                        showDamageNumber(k, projectile.target.pos, projectile.damage);
+                        showDamageNumber(k, projectile.target.pos, projectile.damage, gameState);
                         projectile.target.hp -= projectile.damage;
                         k.destroy(projectile);
                     }
@@ -103,6 +107,7 @@ export function placeMacrophage(k, dropPos, gameState) {
     const idleFrames = ["macrophage-idle-neutral", "macrophage-idle-excited"];
 
     tower.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
         if (tower.attackState === "idle") {
             tower.idleTimer += k.dt();
             if (tower.idleTimer > 0.3) {
@@ -136,7 +141,7 @@ export function placeMacrophage(k, dropPos, gameState) {
                         const enemies = k.get("enemy");
                         for (const enemy of enemies) {
                             if (tower.pos.dist(enemy.pos) <= tower.range) {
-                                showDamageNumber(k, enemy.pos, tower.damage);
+                                showDamageNumber(k, enemy.pos, tower.damage, gameState);
                                 enemy.hp -= tower.damage;
                             }
                         }
@@ -175,6 +180,7 @@ export function placePlatelet(k, dropPos, gameState) {
     const idleFrames = ["platelet-idle", "platelet-idle2"];
 
     tower.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
         if (tower.attackState === "idle") {
             tower.idleTimer += k.dt();
             if (tower.idleTimer > 0.3) {
@@ -233,6 +239,7 @@ export function placePlatelet(k, dropPos, gameState) {
                         const dir = finalTargetPos.sub(tower.pos).unit();
 
                         projectile.onUpdate(() => {
+                            if (gameState.isPaused) return; // Don't update when paused
                             if (projectile.pos.dist(projectile.targetPos) < 20) {
                                 k.destroy(projectile);
                                 // Create net trap
@@ -253,6 +260,8 @@ export function placePlatelet(k, dropPos, gameState) {
                                 ]);
 
                                 net.onUpdate(() => {
+                                    if (gameState.isPaused) return; // Don't update when paused
+
                                     net.elapsed += k.dt();
                                     if (net.elapsed >= net.duration) k.destroy(net);
                                 });
@@ -295,6 +304,7 @@ export function placeBasophil(k, dropPos, gameState) {
     const idleFrames = ["basophil-idle", "basophil-idle2"];
 
     tower.onUpdate(() => {
+        if (gameState.isPaused) return; // Don't update when paused
         if (tower.attackState === "idle") {
             tower.idleTimer += k.dt();
             if (tower.idleTimer > 0.3) {
@@ -350,6 +360,7 @@ export function placeBasophil(k, dropPos, gameState) {
                         const dir = finalTargetPos.sub(tower.pos).unit();
 
                         projectile.onUpdate(() => {
+                            if (gameState.isPaused) return; // Don't update when paused
                             if (projectile.pos.dist(projectile.targetPos) < 20) {
                                 k.destroy(projectile);
                                 // Explosion
@@ -366,7 +377,7 @@ export function placeBasophil(k, dropPos, gameState) {
                                 const enemies = k.get("enemy");
                                 for (const enemy of enemies) {
                                     if (enemy.pos.dist(projectile.targetPos) <= projectile.aoeRadius) {
-                                        showDamageNumber(k, enemy.pos, projectile.damage);
+                                        showDamageNumber(k, enemy.pos, projectile.damage, gameState);
                                         enemy.hp -= projectile.damage;
                                     }
                                 }
