@@ -23,4 +23,11 @@ export function loadGameAssets(k) {
     k.loadSprite("basophil-throw", `/assets/animation_frames/Basophil/Basophil_Throw.png?v=${v}`);
     k.loadSprite("bomb-projectile", `/assets/animation_frames/Basophil/Histamin_Bomb_Projectile.png?v=${v}`);
     k.loadSprite("explosion-effect", `/assets/animation_frames/Basophil/Explosion_Effect.png?v=${v}`);
+
+    // NK Cell
+    k.loadSprite("nk-cell-aim-down", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Down.png?v=${v}`);
+    k.loadSprite("nk-cell-aim-side", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png?v=${v}`);
+    k.loadSprite("nk-cell-aim-side-1", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side_1.png?v=${v}`);
+    k.loadSprite("nk-cell-aim-up", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Up.png?v=${v}`);
+    k.loadSprite("nk-cell-aim-up-1", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Up_1.png?v=${v}`);
 }

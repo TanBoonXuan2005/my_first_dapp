@@ -4,6 +4,7 @@ export const TOWER_COST = {
     macrophage: 20,
     platelet: 15,
     basophil: 25,
+    nkCell: 30
 };
 
 export const UI_HEIGHT = 135;
@@ -55,7 +56,7 @@ export function isOnPath(k, pos, path1Points, path2Points) {
 export function isPlacementFree(k, pos, path1Points, path2Points) {
     if (isOnPath(k, pos, path1Points, path2Points)) return false;
     // Check overlap with existing towers
-    const towerTags = ["b-cell", "macrophage", "platelet", "basophil"];
+    const towerTags = ["b-cell", "macrophage", "platelet", "basophil", "nk-cell"];
     for (const tag of towerTags) {
         const towers = k.get(tag);
         for (const t of towers) {

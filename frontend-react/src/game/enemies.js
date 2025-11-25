@@ -38,7 +38,7 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState) {
             });
 
             k.destroy(enemy);
-            gameState.updateATP(5); // Award ATP
+            gameState.updateATP(10); // Award ATP
             gameState.totalEnemiesProcessed++;
             gameState.totalEnemiesProcessed++;
             return;

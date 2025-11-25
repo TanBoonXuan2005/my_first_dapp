@@ -1,6 +1,8 @@
 
 import { TOWER_COST, UI_HEIGHT, isPlacementFree, isOnPath } from './constants.js';
-import { placeBCell, placeMacrophage, placePlatelet, placeBasophil } from './towers.js';
+import { placeBCell, placeMacrophage, placePlatelet, placeBasophil, placeNKCell } from './towers.js';
+
+
 
 /**
  * Sets up the input handling for the game, specifically for dragging and dropping towers.
@@ -77,6 +79,7 @@ export function setupInput(k, gameState, getPaths) {
         else if (selectedTowerType === "macrophage") placeMacrophage(k, dropPos, gameState);
         else if (selectedTowerType === "platelet") placePlatelet(k, dropPos, gameState);
         else if (selectedTowerType === "basophil") placeBasophil(k, dropPos, gameState);
+        else if (selectedTowerType === "nkCell") placeNKCell(k, dropPos, gameState);
 
         selectedTowerType = null;
     });

@@ -46,7 +46,7 @@ const BlockchainService = {
     // Dev Tools
     resetSBTs: async (walletAddress) => {
         if (!walletAddress) return;
-        const types = ['macrophage', 'platelet'];
+        const types = ['macrophage', 'platelet', 'nkCell'];
         types.forEach(type => {
             localStorage.removeItem(`sbt_${type}_${walletAddress}`);
         });
@@ -56,7 +56,7 @@ const BlockchainService = {
 
     getOwnedSBTs: async (walletAddress) => {
         if (!walletAddress) return [];
-        const types = ['macrophage', 'platelet'];
+        const types = ['macrophage', 'platelet', 'nkCell'];
         const owned = [];
         for (const type of types) {
             const has = await BlockchainService.checkUnlockSBT(walletAddress, type);

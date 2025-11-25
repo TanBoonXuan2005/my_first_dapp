@@ -84,6 +84,9 @@ export function setupShop(k, gameState, onDragStart, walletAddress) {
 
     // Macrophage (Unlockable)
     checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress);
+
+    // NK Cell (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 9, walletAddress);
 }
 
 /**
@@ -117,6 +120,7 @@ function createShopItem(k, gameState, onDragStart, type, sprite, range, color, u
 
     if (type === 'macrophage') xPos = 200;
     if (type === 'platelet') xPos = 280;
+    if (type === 'nkCell') xPos = 440;
 
     const shopItem = k.add([
         k.sprite(sprite),
