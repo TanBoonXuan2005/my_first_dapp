@@ -12,7 +12,7 @@ import BlockchainService from '../services/BlockchainService.js';
  * @param {string} walletAddress - The connected wallet address.
  * @param {Object} sbtStats - Stats from Soulbound Tokens.
  */
-export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}) {
+export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}, onMagicCardClick) {
     // Shop Background Panel
     k.add([
         k.rect(k.width(), 100),
@@ -40,20 +40,20 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
 
     // --- Magic Cards ---
     // Heal
-    checkMagicCardUnlock(k, gameState, 'heal', "magic-heal", k.rgb(0, 255, 0), walletAddress);
+    checkMagicCardUnlock(k, gameState, 'heal', "magic-heal", k.rgb(0, 255, 0), walletAddress, onMagicCardClick);
     // Nuke
-    checkMagicCardUnlock(k, gameState, 'nuke', "magic-nuke", k.rgb(255, 0, 0), walletAddress);
+    checkMagicCardUnlock(k, gameState, 'nuke', "magic-nuke", k.rgb(255, 0, 0), walletAddress, onMagicCardClick);
     // Freeze
-    checkMagicCardUnlock(k, gameState, 'freeze', "magic-freeze", k.rgb(0, 255, 255), walletAddress);
+    checkMagicCardUnlock(k, gameState, 'freeze', "magic-freeze", k.rgb(0, 255, 255), walletAddress, onMagicCardClick);
     // Poison
-    checkMagicCardUnlock(k, gameState, 'poison', "magic-poison", k.rgb(128, 0, 128), walletAddress);
+    checkMagicCardUnlock(k, gameState, 'poison', "magic-poison", k.rgb(128, 0, 128), walletAddress, onMagicCardClick);
 }
 
 /**
  * Checks if a magic card is unlocked via BlockchainService.
  */
-function checkMagicCardUnlock(k, gameState, type, sprite, color, walletAddress) {
-    createMagicCardShopItem(k, gameState, type, sprite, color);
+function checkMagicCardUnlock(k, gameState, type, sprite, color, walletAddress, onMagicCardClick) {
+    createMagicCardShopItem(k, gameState, type, sprite, color, onMagicCardClick);
 
     if (walletAddress) {
         BlockchainService.checkMagicCard(walletAddress, type).then(owned => {
@@ -65,7 +65,7 @@ function checkMagicCardUnlock(k, gameState, type, sprite, color, walletAddress) 
     }
 }
 
-function createMagicCardShopItem(k, gameState, type, sprite, color) {
+function createMagicCardShopItem(k, gameState, type, sprite, color, onMagicCardClick) {
     // Position logic for Magic Cards (Row 2)
     let xPos = 120;
     if (type === 'nuke') xPos = 200;
@@ -91,27 +91,38 @@ function createMagicCardShopItem(k, gameState, type, sprite, color) {
         k.sprite(sprite),
         k.pos(xPos, yPos - 10),
         k.anchor("center"),
-        k.scale(0.05),
+        k.scale(0.1),
         k.z(102),
         `shop-item-magic-${type}`
     ]);
 
     // Name
-    const name = type.charAt(0).toUpperCase() + type.slice(1);
+    const nameMap = {
+        'heal': 'Healing Pulse',
+        'nuke': 'Cytokine Storm',
+        'freeze': 'Cryo Stasis',
+        'poison': 'Viral Toxin'
+    };
+    const name = nameMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
+    
     k.add([
-        k.text(name, { size: 12 }),
+        k.text(name, { size: 10, width: 65, align: 'center' }), // Smaller text to fit
         k.pos(xPos, yPos + 25),
         k.anchor("center"),
         k.color(226, 232, 240),
         k.z(102)
     ]);
 
-    // Interaction (Minting/Buying)
+    // Interaction (Minting/Buying or Using)
     container.onClick(() => {
-        // Here we would trigger the minting process if not owned
-        // For now, just log it or show info
-        console.log(`Clicked magic card: ${type}`);
-        // In a real implementation, this would open a modal to mint the SBT
+        if (gameState.magicCards[type].owned) {
+            if (onMagicCardClick) {
+                onMagicCardClick(type);
+            }
+        } else {
+            console.log(`Clicked locked magic card: ${type}`);
+            // In a real implementation, this would open a modal to mint the SBT
+        }
     });
 
     // Hover
@@ -132,6 +143,9 @@ function createMagicCardShopItem(k, gameState, type, sprite, color) {
         spriteObj.color = k.rgb(100, 100, 100);
         spriteObj.opacity = 0.5;
         
+        // Ensure sprite is visible behind lock
+        // The sprite is already added at z(102), lock is at z(105)
+        
         k.add([
             k.text("🔒", { size: 24 }),
             k.pos(xPos, yPos - 10),
@@ -140,6 +154,16 @@ function createMagicCardShopItem(k, gameState, type, sprite, color) {
             `lock-icon-magic-${type}`
         ]);
     }
+
+    // Cooldown Overlay (Hidden by default)
+    k.add([
+        k.text("", { size: 20, font: "monospace" }),
+        k.pos(xPos, yPos),
+        k.anchor("center"),
+        k.color(255, 255, 255),
+        k.z(110),
+        `cooldown-text-magic-${type}`
+    ]);
 }
 
 function updateMagicCardVisuals(k, type, isOwned) {
@@ -153,6 +177,20 @@ function updateMagicCardVisuals(k, type, isOwned) {
             const lockIcons = k.get(`lock-icon-magic-${type}`);
             lockIcons.forEach(icon => k.destroy(icon));
         }
+    }
+}
+
+export function updateMagicCardCooldownVisuals(k, type, cooldownTimer) {
+    const texts = k.get(`cooldown-text-magic-${type}`);
+    const containers = k.get(`shop-item-magic-${type}-container`);
+    
+    if (texts.length > 0) {
+        texts[0].text = cooldownTimer > 0 ? Math.ceil(cooldownTimer) : "";
+    }
+    
+    if (containers.length > 0) {
+        // Dim the container if on cooldown
+        containers[0].opacity = cooldownTimer > 0 ? 0.5 : 1;
     }
 }
 function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress, sbtStats) {

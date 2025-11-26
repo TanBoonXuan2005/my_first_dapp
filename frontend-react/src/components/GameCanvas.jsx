@@ -8,7 +8,7 @@ import { UI_HEIGHT, getPaths } from '../game/constants.js';
 import { loadGameAssets } from '../game/assets.js';
 import { setupGameUI, showDamageNumber } from '../game/ui.js';
 import { GameState } from '../game/gameState.js';
-import { setupShop } from '../game/shop.js';
+import { setupShop, updateMagicCardCooldownVisuals } from '../game/shop.js';
 import { setupInput } from '../game/interaction.js';
 import { spawnWave, startNextWavePreparation, checkWaveCompletion, onWaveVictory } from '../game/waveManager.js';
 import BlockchainService from '../services/BlockchainService.js';
@@ -129,21 +129,6 @@ function GameCanvas() {
                                 // In a real app, we'd check blockchain/local storage here
                                 // For now, we rely on the shop unlock state or force enable for testing if needed
                                 // But let's respect the gameState.magicCards state which is updated by the shop
-                                
-                                // Also check if we should force enable for dev/testing (optional)
-                                // const forceEnable = true; 
-                                
-                                // Sync UI with GameState
-                                if (gameState.magicCards[type].owned) {
-                                    uiElements.magicBtns[type].btn.opacity = 1;
-                                    
-                                    uiElements.magicBtns[type].btn.onClick(() => {
-                                        if (gameState.magicCards[type].cooldownTimer <= 0) {
-                                            activateMagicCard(k, gameState, type);
-                                            gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
-                                        }
-                                    });
-                                }
                             });
 
                             // Helper to activate magic card effects
@@ -235,7 +220,12 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        setupShop(k, gameState, startDrag, account?.address, sbtStats);
+                        setupShop(k, gameState, startDrag, account?.address, sbtStats, (type) => {
+                            if (gameState.magicCards[type].cooldownTimer <= 0) {
+                                activateMagicCard(k, gameState, type);
+                                gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
+                            }
+                        });
 
                         // Wave Management Callbacks
                         const handleWaveVictory = (walletAddress, signAndExecute) => {
@@ -260,16 +250,18 @@ function GameCanvas() {
                             gameState.updateCooldowns(k.dt());
                             
                             // Update UI for cooldowns
-                            if (gameState.magicCards.heal.owned) {
-                                const t = gameState.magicCards.heal.cooldownTimer;
-                                uiElements.magicBtns.heal.cdText.text = t > 0 ? Math.ceil(t) : "";
-                                uiElements.magicBtns.heal.btn.opacity = t > 0 ? 0.5 : 1;
-                            }
-                            if (gameState.magicCards.nuke.owned) {
-                                const t = gameState.magicCards.nuke.cooldownTimer;
-                                uiElements.magicBtns.nuke.cdText.text = t > 0 ? Math.ceil(t) : "";
-                                uiElements.magicBtns.nuke.btn.opacity = t > 0 ? 0.5 : 1;
-                            }
+                            const magicTypes = ['heal', 'nuke', 'freeze', 'poison'];
+                            magicTypes.forEach(type => {
+                                if (gameState.magicCards[type].owned) {
+                                    const t = gameState.magicCards[type].cooldownTimer;
+                                    // Import this dynamically or ensure it's available
+                                    // Since we can't easily import inside the loop without refactoring imports, 
+                                    // we'll assume updateMagicCardCooldownVisuals is available or we need to import it at top level.
+                                    // Wait, I need to import it at the top of the file first.
+                                    // For now, let's use the imported function.
+                                    updateMagicCardCooldownVisuals(k, type, t);
+                                }
+                            });
                         });
                     });
 

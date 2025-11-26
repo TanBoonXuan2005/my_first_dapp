@@ -102,46 +102,7 @@ export function setupGameUI(k, UI_HEIGHT) {
         k.z(102)
     ]);
 
-    // Magic Card Buttons
-    const magicBtns = {};
-    const magicConfig = [
-        { type: 'heal', label: 'HEAL', color: k.rgb(0, 255, 0), y: 100 },
-        { type: 'nuke', label: 'NUKE', color: k.rgb(255, 0, 0), y: 150 },
-        { type: 'freeze', label: 'FREEZE', color: k.rgb(0, 255, 255), y: 200 },
-        { type: 'poison', label: 'POISON', color: k.rgb(128, 0, 128), y: 250 }
-    ];
 
-    magicConfig.forEach(cfg => {
-        const btn = k.add([
-            k.rect(80, 30, { radius: 4 }),
-            k.pos(k.width() - 50, cfg.y),
-            k.anchor("center"),
-            k.color(cfg.color),
-            k.area(),
-            k.z(101),
-            k.opacity(0.5), // Disabled by default
-            `magic-btn-${cfg.type}`
-        ]);
-
-        k.add([
-            k.text(cfg.label, { size: 14 }),
-            k.pos(k.width() - 50, cfg.y),
-            k.anchor("center"),
-            k.color(0, 0, 0),
-            k.z(102)
-        ]);
-        
-        // Cooldown overlay
-        const cdText = k.add([
-            k.text("", { size: 14 }),
-            k.pos(k.width() - 50, cfg.y),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-            k.z(103)
-        ]);
-
-        magicBtns[cfg.type] = { btn, cdText };
-    });
 
     // Menu Button Hover Effects
     menuBtn.onHover(() => {
@@ -153,7 +114,7 @@ export function setupGameUI(k, UI_HEIGHT) {
         k.setCursor("default");
     });
 
-    return { healthText, atpText, waveNumberText, menuBtn, magicBtns };
+    return { healthText, atpText, waveNumberText, menuBtn };
 }
 
 export function showGameOver(k) {
