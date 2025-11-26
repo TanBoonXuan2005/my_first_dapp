@@ -291,13 +291,6 @@ function GameCanvas() {
                         k.onUpdate(() => {
                             if (gameState.isPaused) return; // Don't update when paused
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                            
-=======
-
->>>>>>> 9c5407b87188ab29a296a5ff31806290230f4081
                             // Update Magic Card Cooldowns
                             gameState.updateCooldowns(k.dt());
 
@@ -314,7 +307,6 @@ function GameCanvas() {
                                     updateMagicCardCooldownVisuals(k, type, t);
                                 }
                             });
->>>>>>> d8b9ca84b5ce86d10d88fc68635368ba645d596d
                         });
                     });
 
