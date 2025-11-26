@@ -73,6 +73,10 @@ const BlockchainService = {
         return BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
     },
 
+    checkMagicCard: async (walletAddress, type) => {
+        return BlockchainService.checkUnlockSBT(walletAddress, type);
+    },
+
     // Placeholder for future randomness
     getRandomness: async () => {
         const randomValue = Math.random();

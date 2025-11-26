@@ -58,6 +58,52 @@ function Store() {
         }
     ];
 
+    const [ownedMagicCards, setOwnedMagicCards] = useState({
+        heal: false,
+        nuke: false,
+        freeze: false,
+        poison: false
+    });
+
+    const magicCards = [
+        {
+            id: 'heal',
+            name: 'Healing Pulse',
+            description: 'Restores 50 HP to your base instantly.',
+            image: '/assets/animation_frames/Heal/Heal.png',
+            cooldown: 60,
+            price: 0,
+            unlocked: ownedMagicCards.heal
+        },
+        {
+            id: 'nuke',
+            name: 'Cytokine Storm',
+            description: 'Deals 500 damage to ALL enemies on screen.',
+            image: '/assets/animation_frames/Nuke/Nuke.png',
+            cooldown: 120,
+            price: 0,
+            unlocked: ownedMagicCards.nuke
+        },
+        {
+            id: 'freeze',
+            name: 'Cryo Stasis',
+            description: 'Freezes all enemies for 5 seconds.',
+            image: '/assets/animation_frames/Freeze/Freeze.png',
+            cooldown: 90,
+            price: 0,
+            unlocked: ownedMagicCards.freeze
+        },
+        {
+            id: 'poison',
+            name: 'Viral Toxin',
+            description: 'Deals 50 damage per second for 10 seconds.',
+            image: '/assets/animation_frames/Poison/Poison.png',
+            cooldown: 60,
+            price: 0,
+            unlocked: ownedMagicCards.poison
+        }
+    ];
+
     const handlePurchase = (tower) => {
         if (!account) {
             alert('Please connect your wallet first!');
@@ -159,6 +205,70 @@ function Store() {
                                         >
                                             <span className="price-tag">{tower.price} ATP</span>
                                             <span className="action-text">Purchase</span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="store-header fade-in" style={{ marginTop: '60px' }}>
+                    <h2>Magic Cards</h2>
+                    <p>Powerful one-time use abilities to turn the tide of battle.</p>
+                </div>
+
+                <div className="towers-grid">
+                    {magicCards.map((card, index) => (
+                        <div
+                            key={card.id}
+                            className={`tower-card glass ${card.unlocked ? 'owned' : ''}`}
+                            style={{ animationDelay: `${index * 0.1}s` }}
+                        >
+                            <div className="card-content">
+                                {card.unlocked && (
+                                    <div className="owned-badge">
+                                        <span className="check-icon">✓</span> Owned
+                                    </div>
+                                )}
+
+                                <div className="tower-visual">
+                                    <div className="visual-glow" style={{ background: `radial-gradient(circle, ${card.unlocked ? 'rgba(56, 189, 248, 0.2)' : 'rgba(148, 163, 184, 0.1)'} 0%, transparent 70%)` }}></div>
+                                    <img
+                                        src={card.image}
+                                        alt={card.name}
+                                        className="tower-image"
+                                        style={{ transform: 'scale(0.8)' }}
+                                    />
+                                </div>
+
+                                <div className="tower-info">
+                                    <h3 className="tower-name">{card.name}</h3>
+                                    <p className="tower-description">{card.description}</p>
+
+                                    <div className="tower-stats">
+                                        <div className="stat-item">
+                                            <span className="stat-label">Cooldown</span>
+                                            <div className="stat-bar-container">
+                                                <div className="stat-bar" style={{ width: `${(120 - card.cooldown) / 120 * 100}%`, background: '#a855f7' }}></div>
+                                            </div>
+                                            <span className="stat-value">{card.cooldown}s</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="card-actions">
+                                    {card.unlocked ? (
+                                        <button className="btn btn-secondary full-width" disabled>
+                                            In Inventory
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="btn btn-primary full-width"
+                                            onClick={() => handlePurchase(card)}
+                                        >
+                                            <span className="price-tag">Free</span>
+                                            <span className="action-text">Claim</span>
                                         </button>
                                     )}
                                 </div>
