@@ -2,39 +2,39 @@
 
 [move]
 version = 3
-manifest_digest = "F15EB0D0D9BF3B472D0DA8961E2AD6DF9E85280DC2D83FD53E58268F232DBEE3"
+manifest_digest = "7B13393EFCDEA3F676A91C0CF272EE4B32FD018DA39833B6CA7F974C61D69656"
 deps_digest = "F8BBB0CCB2491CA29A3DF03D6F92277A4F3574266507ACD77214D37ECA3F3082"
 dependencies = [
-  { id = "Sui", name = "Sui" },
+  { id = "One", name = "One" },
 ]
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/devnet", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/one-chain-labs/onechain.git", rev = "a41ee41c3ce60d583870c9e2633716f9b57cccdb", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
-id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "framework/devnet", subdir = "crates/sui-framework/packages/sui-framework" }
+id = "One"
+source = { git = "https://github.com/one-chain-labs/onechain.git", rev = "a41ee41c3ce60d583870c9e2633716f9b57cccdb", subdir = "crates/sui-framework/packages/one-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
 ]
 
 [move.toolchain-version]
-compiler-version = "1.61.1"
+compiler-version = "1.0.1"
 edition = "2024.beta"
-flavor = "sui"
+flavor = "one"
 
 [env]
 
-[env.testnet]
-chain-id = "1bd5c965"
-original-published-id = "0xf59712291dd6180831f1c2711ca2d5ffe1350ad566b371b936f56b46e9f47799"
-latest-published-id = "0xf59712291dd6180831f1c2711ca2d5ffe1350ad566b371b936f56b46e9f47799"
-published-version = "1"
-
 [env.devnet]
 chain-id = "833db4e1"
-original-published-id = "0x50a2906280246c201b0d04b5c84378392118dca1c5fde4c802a288f814389cd6"
-latest-published-id = "0x50a2906280246c201b0d04b5c84378392118dca1c5fde4c802a288f814389cd6"
+original-published-id = "0xcf844f015cb24bc48d1c6835f69e75a9d0ea3ece60514ef8459e3bdca0720a6b"
+latest-published-id = "0xcf844f015cb24bc48d1c6835f69e75a9d0ea3ece60514ef8459e3bdca0720a6b"
+published-version = "1"
+
+[env.testnet]
+chain-id = "1bd5c965"
+original-published-id = "0xbe1e2535357e3bb232d2fc52e94e7440fead960177c41e653901afe4e0b99eaa"
+latest-published-id = "0xbe1e2535357e3bb232d2fc52e94e7440fead960177c41e653901afe4e0b99eaa"
 published-version = "1"

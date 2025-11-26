@@ -1,8 +1,8 @@
 module my_first_package::usdt {
-    use sui::coin::{Self, TreasuryCap};
+    use one::coin::{Self, TreasuryCap};
     use std::option;
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
+    use one::transfer;
+    use one::tx_context::{Self, TxContext};
 
     public struct USDT has drop {}
 

@@ -29,7 +29,7 @@ function GameCanvas() {
             if (account?.address) {
                 const seed = await BlockchainService.getRandomness();
                 setRandomSeed(seed);
-                
+
                 // Fetch SBT stats for towers
                 const stats = await BlockchainService.getSBTStats(client, account.address);
                 setSbtStats(stats);
@@ -169,84 +169,84 @@ function GameCanvas() {
                             navigate(path);
                         });
 
-                            // Load Magic Card Ownership
-                            const magicTypes = ['heal', 'nuke', 'freeze', 'poison'];
-                            magicTypes.forEach(type => {
-                                // In a real app, we'd check blockchain/local storage here
-                                // For now, we rely on the shop unlock state or force enable for testing if needed
-                                // But let's respect the gameState.magicCards state which is updated by the shop
-                            });
+                        // Load Magic Card Ownership
+                        const magicTypes = ['heal', 'nuke', 'freeze', 'poison'];
+                        magicTypes.forEach(type => {
+                            // In a real app, we'd check blockchain/local storage here
+                            // For now, we rely on the shop unlock state or force enable for testing if needed
+                            // But let's respect the gameState.magicCards state which is updated by the shop
+                        });
 
-                            // Helper to activate magic card effects
-                            function activateMagicCard(k, gameState, type) {
-                                if (type === 'heal') {
-                                    gameState.updateHealth(50);
-                                    k.shake(5);
-                                    showMagicEffectText(k, "HEAL!", k.rgb(0, 255, 0));
-                                } else if (type === 'nuke') {
-                                    k.get("enemy").forEach(e => {
-                                        e.hp -= 500;
-                                        showDamageNumber(k, e.pos, 500, gameState);
-                                    });
-                                    k.shake(20);
-                                    showMagicEffectText(k, "NUKE!", k.rgb(255, 0, 0));
-                                } else if (type === 'freeze') {
-                                    k.get("enemy").forEach(e => {
-                                        e.isFrozen = true;
-                                        e.color = k.rgb(0, 255, 255); // Blue tint
-                                        // Store original speed if not already stored
-                                        if (!e.originalSpeed) e.originalSpeed = e.speed;
-                                        e.speed = 0;
-                                        
-                                        // Unfreeze after 5 seconds
-                                        k.wait(5, () => {
-                                            if (e.exists()) {
-                                                e.isFrozen = false;
-                                                e.color = k.rgb(255, 255, 255);
-                                                e.speed = e.originalSpeed;
-                                            }
-                                        });
-                                    });
-                                    showMagicEffectText(k, "FREEZE!", k.rgb(0, 255, 255));
-                                } else if (type === 'poison') {
-                                    k.get("enemy").forEach(e => {
-                                        e.isPoisoned = true;
-                                        e.color = k.rgb(128, 0, 128); // Purple tint
-                                        
-                                        // Apply DoT
-                                        const poisonInterval = k.loop(1, () => {
-                                            if (!e.exists()) {
-                                                poisonInterval.cancel();
-                                                return;
-                                            }
-                                            e.hp -= 50;
-                                            showDamageNumber(k, e.pos, 50, gameState);
-                                        });
+                        // Helper to activate magic card effects
+                        function activateMagicCard(k, gameState, type) {
+                            if (type === 'heal') {
+                                gameState.updateHealth(50);
+                                k.shake(5);
+                                showMagicEffectText(k, "HEAL!", k.rgb(0, 255, 0));
+                            } else if (type === 'nuke') {
+                                k.get("enemy").forEach(e => {
+                                    e.hp -= 500;
+                                    showDamageNumber(k, e.pos, 500, gameState);
+                                });
+                                k.shake(20);
+                                showMagicEffectText(k, "NUKE!", k.rgb(255, 0, 0));
+                            } else if (type === 'freeze') {
+                                k.get("enemy").forEach(e => {
+                                    e.isFrozen = true;
+                                    e.color = k.rgb(0, 255, 255); // Blue tint
+                                    // Store original speed if not already stored
+                                    if (!e.originalSpeed) e.originalSpeed = e.speed;
+                                    e.speed = 0;
 
-                                        // End poison after 10 seconds
-                                        k.wait(10, () => {
+                                    // Unfreeze after 5 seconds
+                                    k.wait(5, () => {
+                                        if (e.exists()) {
+                                            e.isFrozen = false;
+                                            e.color = k.rgb(255, 255, 255);
+                                            e.speed = e.originalSpeed;
+                                        }
+                                    });
+                                });
+                                showMagicEffectText(k, "FREEZE!", k.rgb(0, 255, 255));
+                            } else if (type === 'poison') {
+                                k.get("enemy").forEach(e => {
+                                    e.isPoisoned = true;
+                                    e.color = k.rgb(128, 0, 128); // Purple tint
+
+                                    // Apply DoT
+                                    const poisonInterval = k.loop(1, () => {
+                                        if (!e.exists()) {
                                             poisonInterval.cancel();
-                                            if (e.exists()) {
-                                                e.isPoisoned = false;
-                                                e.color = k.rgb(255, 255, 255);
-                                            }
-                                        });
+                                            return;
+                                        }
+                                        e.hp -= 50;
+                                        showDamageNumber(k, e.pos, 50, gameState);
                                     });
-                                    showMagicEffectText(k, "POISON!", k.rgb(128, 0, 128));
-                                }
-                            }
 
-                            function showMagicEffectText(k, text, color) {
-                                k.add([
-                                    k.text(text, { size: 48 }),
-                                    k.pos(k.width()/2, k.height()/2),
-                                    k.anchor("center"),
-                                    k.color(color),
-                                    k.lifespan(1),
-                                    k.fixed(),
-                                    k.z(200)
-                                ]);
+                                    // End poison after 10 seconds
+                                    k.wait(10, () => {
+                                        poisonInterval.cancel();
+                                        if (e.exists()) {
+                                            e.isPoisoned = false;
+                                            e.color = k.rgb(255, 255, 255);
+                                        }
+                                    });
+                                });
+                                showMagicEffectText(k, "POISON!", k.rgb(128, 0, 128));
                             }
+                        }
+
+                        function showMagicEffectText(k, text, color) {
+                            k.add([
+                                k.text(text, { size: 48 }),
+                                k.pos(k.width() / 2, k.height() / 2),
+                                k.anchor("center"),
+                                k.color(color),
+                                k.lifespan(1),
+                                k.fixed(),
+                                k.z(200)
+                            ]);
+                        }
 
                         // Use randomness seed for something (e.g., initial money bonus)
                         if (randomSeed > 0.8) {
@@ -292,11 +292,15 @@ function GameCanvas() {
                             if (gameState.isPaused) return; // Don't update when paused
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
                             
+=======
+
+>>>>>>> 9c5407b87188ab29a296a5ff31806290230f4081
                             // Update Magic Card Cooldowns
                             gameState.updateCooldowns(k.dt());
-                            
+
                             // Update UI for cooldowns
                             const magicTypes = ['heal', 'nuke', 'freeze', 'poison'];
                             magicTypes.forEach(type => {
@@ -340,10 +344,60 @@ function GameCanvas() {
     }, [randomSeed]); // Re-run if seed changes
 
     return (
-        <div className="game-canvas-container flex-center gradient-bg" style={{ minHeight: '100vh', paddingTop: '70px' }}>
+        <div className="game-canvas-container flex-center gradient-bg" style={{ minHeight: '100vh', paddingTop: '70px', position: 'relative' }}>
             <div className="canvas-wrapper glass-strong p-1" style={{ borderRadius: '16px', overflow: 'hidden' }}>
                 <canvas ref={canvasRef} id="game-canvas" style={{ display: 'block', borderRadius: '12px' }}></canvas>
             </div>
+            <button
+                onClick={() => {
+                    localStorage.clear();
+                    window.location.reload();
+                }}
+                style={{
+                    position: 'absolute',
+                    top: '80px', // Adjusted for padding
+                    right: '10px',
+                    padding: '8px 16px',
+                    backgroundColor: '#ff4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold'
+                }}
+            >
+                RESET CACHE
+            </button>
+            <button
+                onClick={async () => {
+                    if (!account?.address) {
+                        alert("Please connect wallet first");
+                        return;
+                    }
+                    console.log("Testing Mint...");
+                    const success = await BlockchainService.mintMacrophageSBT(account.address, signAndExecute);
+                    if (success) alert("Mint Success!");
+                    else alert("Mint Failed - Check Console");
+                }}
+                style={{
+                    position: 'absolute',
+                    top: '120px', // Adjusted for padding
+                    right: '10px',
+                    padding: '8px 16px',
+                    backgroundColor: '#4444ff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold'
+                }}
+            >
+                TEST MINT
+            </button>
         </div>
     );
 }
