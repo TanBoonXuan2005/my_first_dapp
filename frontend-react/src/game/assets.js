@@ -30,4 +30,10 @@ export function loadGameAssets(k) {
     k.loadSprite("nk-cell-aim-side-1", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side_1.png?v=${v}`);
     k.loadSprite("nk-cell-aim-up", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Up.png?v=${v}`);
     k.loadSprite("nk-cell-aim-up-1", `/assets/animation_frames/NK-Cell/NK-Cell_Aim_Up_1.png?v=${v}`);
+
+    // Magic Cards
+    k.loadSprite("magic-heal", `/assets/animation_frames/Heal/Heal.png?v=${v}`);
+    k.loadSprite("magic-nuke", `/assets/animation_frames/Nuke/Nuke.png?v=${v}`);
+    k.loadSprite("magic-freeze", `/assets/animation_frames/Freeze/Freeze.png?v=${v}`);
+    k.loadSprite("magic-poison", `/assets/animation_frames/Poison/Poison.png?v=${v}`);
 }

@@ -37,6 +37,38 @@ const GAME_CONFIG = {
             projectileSpeed: 600  // Fast projectile
         }
     },
+    
+    // Magic Cards (Active Abilities)
+    magicCards: {
+        heal: {
+            name: "Healing Pulse",
+            description: "Restores 50 HP to your base.",
+            cooldown: 60, // Seconds
+            cost: 0, // Free to use once owned (SBT)
+            color: "#00ff00"
+        },
+        nuke: {
+            name: "Cytokine Storm",
+            description: "Deals 500 damage to ALL enemies.",
+            cooldown: 120, // Seconds
+            cost: 0,
+            color: "#ff0000"
+        },
+        freeze: {
+            name: "Cryo Stasis",
+            description: "Freezes all enemies for 5 seconds.",
+            cooldown: 90,
+            cost: 0,
+            color: "#00ffff"
+        },
+        poison: {
+            name: "Viral Toxin",
+            description: "Deals 50 damage per second for 10 seconds.",
+            cooldown: 60,
+            cost: 0,
+            color: "#800080"
+        }
+    },
 
     // Enemy Stats
     enemies: {

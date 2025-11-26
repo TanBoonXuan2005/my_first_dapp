@@ -73,12 +73,8 @@ const BlockchainService = {
         return BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
     },
 
-    mintMacrophageSBT: async (walletAddress) => {
-        return BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
-    },
-
-    mintBasophilSBT: async (walletAddress) => {
-        return BlockchainService.mintUnlockSBT(walletAddress, 'basophil');
+    checkMagicCard: async (walletAddress, type) => {
+        return BlockchainService.checkUnlockSBT(walletAddress, type);
     },
 
     // Placeholder for future randomness

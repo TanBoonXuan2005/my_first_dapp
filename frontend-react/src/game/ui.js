@@ -102,6 +102,9 @@ export function setupGameUI(k, UI_HEIGHT) {
     menuBtn.add([k.rect(20, 2), k.pos(0, 0), k.anchor("center"), k.color(iconColor)]);
     menuBtn.add([k.rect(20, 2), k.pos(0, 6), k.anchor("center"), k.color(iconColor)]);
 
+
+
+    // Menu Button Hover Effects
     menuBtn.onHover(() => {
         menuBtn.color = k.rgb(51, 65, 85);
         menuBtn.outline.color = k.rgb(56, 189, 248);
