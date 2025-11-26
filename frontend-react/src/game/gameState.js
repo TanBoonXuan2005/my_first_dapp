@@ -36,7 +36,9 @@ export class GameState {
         // Magic Cards State
         this.magicCards = {
             heal: { owned: false, cooldownTimer: 0 },
-            nuke: { owned: false, cooldownTimer: 0 }
+            nuke: { owned: false, cooldownTimer: 0 },
+            freeze: { owned: false, cooldownTimer: 0 },
+            poison: { owned: false, cooldownTimer: 0 }
         };
 
         this.isPaused = false;

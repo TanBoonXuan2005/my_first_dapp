@@ -123,61 +123,99 @@ function GameCanvas() {
                             navigate(path);
                         });
 
-                        // Load Magic Card Ownership (Force Enabled for Testing)
-                        // if (account?.address) {
-                            // BlockchainService.checkMagicCard(account.address, 'heal').then(owned => {
-                                const ownedHeal = true; // Force enable
-                                gameState.magicCards.heal.owned = ownedHeal;
-                                if (ownedHeal) {
-                                    uiElements.magicBtns.heal.btn.opacity = 1;
-                                    uiElements.magicBtns.heal.btn.onClick(() => {
-                                        if (gameState.magicCards.heal.cooldownTimer <= 0) {
-                                            gameState.updateHealth(50);
-                                            gameState.magicCards.heal.cooldownTimer = GAME_CONFIG.magicCards.heal.cooldown;
-                                            k.shake(5);
-                                            k.add([
-                                                k.text("HEAL!", { size: 32 }),
-                                                k.pos(k.width()/2, k.height()/2),
-                                                k.anchor("center"),
-                                                k.color(0, 255, 0),
-                                                k.lifespan(1),
-                                                k.fixed(),
-                                                k.z(200)
-                                            ]);
+                            // Load Magic Card Ownership
+                            const magicTypes = ['heal', 'nuke', 'freeze', 'poison'];
+                            magicTypes.forEach(type => {
+                                // In a real app, we'd check blockchain/local storage here
+                                // For now, we rely on the shop unlock state or force enable for testing if needed
+                                // But let's respect the gameState.magicCards state which is updated by the shop
+                                
+                                // Also check if we should force enable for dev/testing (optional)
+                                // const forceEnable = true; 
+                                
+                                // Sync UI with GameState
+                                if (gameState.magicCards[type].owned) {
+                                    uiElements.magicBtns[type].btn.opacity = 1;
+                                    
+                                    uiElements.magicBtns[type].btn.onClick(() => {
+                                        if (gameState.magicCards[type].cooldownTimer <= 0) {
+                                            activateMagicCard(k, gameState, type);
+                                            gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
                                         }
                                     });
                                 }
-                            // });
+                            });
 
-                            // BlockchainService.checkMagicCard(account.address, 'nuke').then(owned => {
-                                const ownedNuke = true; // Force enable
-                                gameState.magicCards.nuke.owned = ownedNuke;
-                                if (ownedNuke) {
-                                    uiElements.magicBtns.nuke.btn.opacity = 1;
-                                    uiElements.magicBtns.nuke.btn.onClick(() => {
-                                        if (gameState.magicCards.nuke.cooldownTimer <= 0) {
-                                            // Damage all enemies
-                                            k.get("enemy").forEach(e => {
-                                                e.hp -= 500;
-                                                // Show damage number
-                                                showDamageNumber(k, e.pos, 500, gameState);
-                                            });
-                                            gameState.magicCards.nuke.cooldownTimer = GAME_CONFIG.magicCards.nuke.cooldown;
-                                            k.shake(20);
-                                            k.add([
-                                                k.text("NUKE!", { size: 48 }),
-                                                k.pos(k.width()/2, k.height()/2),
-                                                k.anchor("center"),
-                                                k.color(255, 0, 0),
-                                                k.lifespan(1),
-                                                k.fixed(),
-                                                k.z(200)
-                                            ]);
-                                        }
+                            // Helper to activate magic card effects
+                            function activateMagicCard(k, gameState, type) {
+                                if (type === 'heal') {
+                                    gameState.updateHealth(50);
+                                    k.shake(5);
+                                    showMagicEffectText(k, "HEAL!", k.rgb(0, 255, 0));
+                                } else if (type === 'nuke') {
+                                    k.get("enemy").forEach(e => {
+                                        e.hp -= 500;
+                                        showDamageNumber(k, e.pos, 500, gameState);
                                     });
+                                    k.shake(20);
+                                    showMagicEffectText(k, "NUKE!", k.rgb(255, 0, 0));
+                                } else if (type === 'freeze') {
+                                    k.get("enemy").forEach(e => {
+                                        e.isFrozen = true;
+                                        e.color = k.rgb(0, 255, 255); // Blue tint
+                                        // Store original speed if not already stored
+                                        if (!e.originalSpeed) e.originalSpeed = e.speed;
+                                        e.speed = 0;
+                                        
+                                        // Unfreeze after 5 seconds
+                                        k.wait(5, () => {
+                                            if (e.exists()) {
+                                                e.isFrozen = false;
+                                                e.color = k.rgb(255, 255, 255);
+                                                e.speed = e.originalSpeed;
+                                            }
+                                        });
+                                    });
+                                    showMagicEffectText(k, "FREEZE!", k.rgb(0, 255, 255));
+                                } else if (type === 'poison') {
+                                    k.get("enemy").forEach(e => {
+                                        e.isPoisoned = true;
+                                        e.color = k.rgb(128, 0, 128); // Purple tint
+                                        
+                                        // Apply DoT
+                                        const poisonInterval = k.loop(1, () => {
+                                            if (!e.exists()) {
+                                                poisonInterval.cancel();
+                                                return;
+                                            }
+                                            e.hp -= 50;
+                                            showDamageNumber(k, e.pos, 50, gameState);
+                                        });
+
+                                        // End poison after 10 seconds
+                                        k.wait(10, () => {
+                                            poisonInterval.cancel();
+                                            if (e.exists()) {
+                                                e.isPoisoned = false;
+                                                e.color = k.rgb(255, 255, 255);
+                                            }
+                                        });
+                                    });
+                                    showMagicEffectText(k, "POISON!", k.rgb(128, 0, 128));
                                 }
-                            // });
-                        // }
+                            }
+
+                            function showMagicEffectText(k, text, color) {
+                                k.add([
+                                    k.text(text, { size: 48 }),
+                                    k.pos(k.width()/2, k.height()/2),
+                                    k.anchor("center"),
+                                    k.color(color),
+                                    k.lifespan(1),
+                                    k.fixed(),
+                                    k.z(200)
+                                ]);
+                            }
 
                         // Use randomness seed for something (e.g., initial money bonus)
                         if (randomSeed > 0.8) {

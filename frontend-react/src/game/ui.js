@@ -106,7 +106,9 @@ export function setupGameUI(k, UI_HEIGHT) {
     const magicBtns = {};
     const magicConfig = [
         { type: 'heal', label: 'HEAL', color: k.rgb(0, 255, 0), y: 100 },
-        { type: 'nuke', label: 'NUKE', color: k.rgb(255, 0, 0), y: 150 }
+        { type: 'nuke', label: 'NUKE', color: k.rgb(255, 0, 0), y: 150 },
+        { type: 'freeze', label: 'FREEZE', color: k.rgb(0, 255, 255), y: 200 },
+        { type: 'poison', label: 'POISON', color: k.rgb(128, 0, 128), y: 250 }
     ];
 
     magicConfig.forEach(cfg => {

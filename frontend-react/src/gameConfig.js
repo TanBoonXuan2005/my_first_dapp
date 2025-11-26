@@ -53,6 +53,20 @@ const GAME_CONFIG = {
             cooldown: 120, // Seconds
             cost: 0,
             color: "#ff0000"
+        },
+        freeze: {
+            name: "Cryo Stasis",
+            description: "Freezes all enemies for 5 seconds.",
+            cooldown: 90,
+            cost: 0,
+            color: "#00ffff"
+        },
+        poison: {
+            name: "Viral Toxin",
+            description: "Deals 50 damage per second for 10 seconds.",
+            cooldown: 60,
+            cost: 0,
+            color: "#800080"
         }
     },
 
