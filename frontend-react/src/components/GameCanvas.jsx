@@ -33,6 +33,9 @@ function GameCanvas() {
                 // Fetch SBT stats for towers
                 const stats = await BlockchainService.getSBTStats(client, account.address);
                 setSbtStats(stats);
+            } else {
+                // Default seed if no wallet connected
+                setRandomSeed(Math.random());
             }
         };
         fetchData();

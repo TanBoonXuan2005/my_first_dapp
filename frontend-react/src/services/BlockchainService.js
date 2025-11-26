@@ -71,6 +71,12 @@ const BlockchainService = {
 
     checkMacrophageUnlock: async (walletAddress) => {
         return BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
+    },
+
+    // Placeholder for future randomness
+    getRandomness: async () => {
+        const randomValue = Math.random();
+        console.log(`[Randomness] Fetched from chain: ${randomValue}`);
         return randomValue;
     },
 
