@@ -76,6 +76,59 @@ const BlockchainService = {
         return BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
     },
 
+    // --- Magic Cards ---
+    checkMagicCard: async (walletAddress, cardType) => {
+        return BlockchainService.checkUnlockSBT(walletAddress, `magic_${cardType}`);
+    },
+
+    mintMagicCard: async (walletAddress, cardType, signAndExecute) => {
+        // We reuse the generic mintUnlockSBT but with a specific prefix/type logic if needed.
+        // However, the contract has a specific `mint_magic_card` function.
+        // So we need a custom implementation here.
+
+        if (!walletAddress) {
+            console.error("[Blockchain] No wallet address");
+            return false;
+        }
+
+        if (!signAndExecute) {
+            console.warn("[Blockchain] No signAndExecute function provided, using mock");
+            localStorage.setItem(`sbt_magic_${cardType}_${walletAddress}`, 'true');
+            return true;
+        }
+
+        try {
+            const tx = new Transaction();
+            const target = `${PACKAGE_ID}::${MODULE_NAME}::mint_magic_card`;
+
+            console.log(`[Blockchain] 🔗 Preparing transaction: ${target} for ${cardType}`);
+            tx.moveCall({
+                target: target,
+                arguments: [tx.pure.string(cardType)] // Pass the card type string
+            });
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Successfully minted Magic Card: ${cardType}!`);
+                            localStorage.setItem(`sbt_magic_${cardType}_${walletAddress}`, 'true');
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Mint failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error(`[Blockchain] Error preparing transaction:`, error);
+            return false;
+        }
+    },
+
     // Placeholder for future randomness
     getRandomness: async () => {
         const randomValue = Math.random();

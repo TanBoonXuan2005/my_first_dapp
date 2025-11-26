@@ -150,4 +150,27 @@ module my_first_package::game_core {
         let Platelet { id, healing_factor: _ } = platelet;
         object::delete(id);
     }
+
+    // --- Magic Cards (SBTs) ---
+
+    /// Magic Card: Grants active abilities in-game
+    public struct MagicCard has key {
+        id: UID,
+        card_type: String, // "heal", "nuke", etc.
+    }
+
+    /// Mint a Magic Card SBT to the sender
+    entry fun mint_magic_card(card_type_bytes: vector<u8>, ctx: &mut TxContext) {
+        let card = MagicCard {
+            id: object::new(ctx),
+            card_type: string::utf8(card_type_bytes),
+        };
+        transfer::transfer(card, tx_context::sender(ctx));
+    }
+
+    /// Burn a Magic Card SBT
+    entry fun burn_magic_card(card: MagicCard) {
+        let MagicCard { id, card_type: _ } = card;
+        object::delete(id);
+    }
 }

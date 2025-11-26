@@ -6,7 +6,7 @@ import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
 import { UI_HEIGHT, getPaths } from '../game/constants.js';
 import { loadGameAssets } from '../game/assets.js';
-import { setupGameUI } from '../game/ui.js';
+import { setupGameUI, showDamageNumber } from '../game/ui.js';
 import { GameState } from '../game/gameState.js';
 import { setupShop } from '../game/shop.js';
 import { setupInput } from '../game/interaction.js';
@@ -27,6 +27,10 @@ function GameCanvas() {
             if (account?.address) {
                 const seed = await BlockchainService.getRandomness();
                 setRandomSeed(seed);
+                
+                // Pre-fetch magic card ownership to pass to game state
+                // We'll store this in a ref or just rely on the service cache if it's fast enough
+                // But better to pass it to GameState
             }
         };
         fetchData();
@@ -108,6 +112,62 @@ function GameCanvas() {
                             navigate(path);
                         });
 
+                        // Load Magic Card Ownership (Force Enabled for Testing)
+                        // if (account?.address) {
+                            // BlockchainService.checkMagicCard(account.address, 'heal').then(owned => {
+                                const ownedHeal = true; // Force enable
+                                gameState.magicCards.heal.owned = ownedHeal;
+                                if (ownedHeal) {
+                                    uiElements.magicBtns.heal.btn.opacity = 1;
+                                    uiElements.magicBtns.heal.btn.onClick(() => {
+                                        if (gameState.magicCards.heal.cooldownTimer <= 0) {
+                                            gameState.updateHealth(50);
+                                            gameState.magicCards.heal.cooldownTimer = GAME_CONFIG.magicCards.heal.cooldown;
+                                            k.shake(5);
+                                            k.add([
+                                                k.text("HEAL!", { size: 32 }),
+                                                k.pos(k.width()/2, k.height()/2),
+                                                k.anchor("center"),
+                                                k.color(0, 255, 0),
+                                                k.lifespan(1),
+                                                k.fixed(),
+                                                k.z(200)
+                                            ]);
+                                        }
+                                    });
+                                }
+                            // });
+
+                            // BlockchainService.checkMagicCard(account.address, 'nuke').then(owned => {
+                                const ownedNuke = true; // Force enable
+                                gameState.magicCards.nuke.owned = ownedNuke;
+                                if (ownedNuke) {
+                                    uiElements.magicBtns.nuke.btn.opacity = 1;
+                                    uiElements.magicBtns.nuke.btn.onClick(() => {
+                                        if (gameState.magicCards.nuke.cooldownTimer <= 0) {
+                                            // Damage all enemies
+                                            k.get("enemy").forEach(e => {
+                                                e.hp -= 500;
+                                                // Show damage number
+                                                showDamageNumber(k, e.pos, 500, gameState);
+                                            });
+                                            gameState.magicCards.nuke.cooldownTimer = GAME_CONFIG.magicCards.nuke.cooldown;
+                                            k.shake(20);
+                                            k.add([
+                                                k.text("NUKE!", { size: 48 }),
+                                                k.pos(k.width()/2, k.height()/2),
+                                                k.anchor("center"),
+                                                k.color(255, 0, 0),
+                                                k.lifespan(1),
+                                                k.fixed(),
+                                                k.z(200)
+                                            ]);
+                                        }
+                                    });
+                                }
+                            // });
+                        // }
+
                         // Use randomness seed for something (e.g., initial money bonus)
                         if (randomSeed > 0.8) {
                             gameState.money += 50; // Lucky bonus!
@@ -145,6 +205,21 @@ function GameCanvas() {
                         // Game Loop for Wave Checking
                         k.onUpdate(() => {
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
+                            
+                            // Update Magic Card Cooldowns
+                            gameState.updateCooldowns(k.dt());
+                            
+                            // Update UI for cooldowns
+                            if (gameState.magicCards.heal.owned) {
+                                const t = gameState.magicCards.heal.cooldownTimer;
+                                uiElements.magicBtns.heal.cdText.text = t > 0 ? Math.ceil(t) : "";
+                                uiElements.magicBtns.heal.btn.opacity = t > 0 ? 0.5 : 1;
+                            }
+                            if (gameState.magicCards.nuke.owned) {
+                                const t = gameState.magicCards.nuke.cooldownTimer;
+                                uiElements.magicBtns.nuke.cdText.text = t > 0 ? Math.ceil(t) : "";
+                                uiElements.magicBtns.nuke.btn.opacity = t > 0 ? 0.5 : 1;
+                            }
                         });
                     });
 

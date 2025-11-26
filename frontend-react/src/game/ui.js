@@ -66,7 +66,46 @@ export function setupGameUI(k, UI_HEIGHT) {
         k.z(102)
     ]);
 
-    return { healthText, atpText, waveNumberText, menuBtn };
+    // Magic Card Buttons
+    const magicBtns = {};
+    const magicConfig = [
+        { type: 'heal', label: 'HEAL', color: k.rgb(0, 255, 0), y: 100 },
+        { type: 'nuke', label: 'NUKE', color: k.rgb(255, 0, 0), y: 150 }
+    ];
+
+    magicConfig.forEach(cfg => {
+        const btn = k.add([
+            k.rect(80, 30, { radius: 4 }),
+            k.pos(k.width() - 50, cfg.y),
+            k.anchor("center"),
+            k.color(cfg.color),
+            k.area(),
+            k.z(101),
+            k.opacity(0.5), // Disabled by default
+            `magic-btn-${cfg.type}`
+        ]);
+
+        k.add([
+            k.text(cfg.label, { size: 14 }),
+            k.pos(k.width() - 50, cfg.y),
+            k.anchor("center"),
+            k.color(0, 0, 0),
+            k.z(102)
+        ]);
+        
+        // Cooldown overlay
+        const cdText = k.add([
+            k.text("", { size: 14 }),
+            k.pos(k.width() - 50, cfg.y),
+            k.anchor("center"),
+            k.color(255, 255, 255),
+            k.z(103)
+        ]);
+
+        magicBtns[cfg.type] = { btn, cdText };
+    });
+
+    return { healthText, atpText, waveNumberText, menuBtn, magicBtns };
 }
 
 export function showGameOver(k) {
