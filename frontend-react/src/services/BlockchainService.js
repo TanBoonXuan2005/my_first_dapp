@@ -155,6 +155,22 @@ const BlockchainService = {
             console.error("[Blockchain] Error fetching SBT stats:", error);
             return {};
         }
+    },
+
+    getUSDTBalance: async (client, walletAddress) => {
+        if (!client || !walletAddress) return 0;
+        try {
+            const coinType = `${PACKAGE_ID}::usdt::USDT`;
+            const { totalBalance } = await client.getBalance({
+                owner: walletAddress,
+                coinType: coinType
+            });
+            // Assuming 6 decimals for USDT
+            return parseInt(totalBalance) / 1000000;
+        } catch (err) {
+            console.error("[Blockchain] Error fetching USDT balance:", err);
+            return 0;
+        }
     }
 };
 

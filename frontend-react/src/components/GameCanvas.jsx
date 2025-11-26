@@ -16,6 +16,7 @@ import BlockchainService from '../services/BlockchainService.js';
 function GameCanvas() {
     const [randomSeed, setRandomSeed] = useState(null);
     const [sbtStats, setSbtStats] = useState({});
+    const [usdtBalance, setUsdtBalance] = useState(0);
     const canvasRef = useRef(null);
     const kRef = useRef(null);
     const account = useCurrentAccount();
@@ -33,6 +34,10 @@ function GameCanvas() {
                 // Fetch SBT stats for towers
                 const stats = await BlockchainService.getSBTStats(client, account.address);
                 setSbtStats(stats);
+
+                // Fetch USDT Balance
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
             } else {
                 // Default seed if no wallet connected
                 setRandomSeed(Math.random());
@@ -295,6 +300,26 @@ function GameCanvas() {
             <div className="canvas-wrapper glass-strong p-1" style={{ borderRadius: '16px', overflow: 'hidden' }}>
                 <canvas ref={canvasRef} id="game-canvas" style={{ display: 'block', borderRadius: '12px' }}></canvas>
             </div>
+
+            {/* USDT Balance Display */}
+            <div style={{
+                position: 'absolute',
+                top: '80px',
+                left: '20px',
+                color: '#00ff00',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                zIndex: 1000,
+                fontFamily: 'monospace',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                border: '1px solid #00ff00'
+            }}>
+                USDT: {usdtBalance.toLocaleString()}
+            </div>
+
             <button
                 onClick={() => {
                     localStorage.clear();
