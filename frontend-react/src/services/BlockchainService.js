@@ -39,7 +39,7 @@ const BlockchainService = {
             const target = `${PACKAGE_ID}::${MODULE_NAME}::mint_${unlockType}`;
 
             console.log(`[Blockchain] 🔗 Preparing transaction: ${target}`);
-            tx.setGasBudget(10000000); // Set gas budget to 0.01 SUI to help wallets that fail estimation
+            // tx.setGasBudget(10000000); // Let the wallet estimate gas
             tx.moveCall({
                 target: target,
                 arguments: []
@@ -73,12 +73,12 @@ const BlockchainService = {
         return BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
     },
 
-    mintMacrophageSBT: async (walletAddress) => {
-        return BlockchainService.mintUnlockSBT(walletAddress, 'macrophage');
+    mintMacrophageSBT: async (walletAddress, signAndExecute) => {
+        return BlockchainService.mintUnlockSBT(walletAddress, 'macrophage', signAndExecute);
     },
 
-    mintBasophilSBT: async (walletAddress) => {
-        return BlockchainService.mintUnlockSBT(walletAddress, 'basophil');
+    mintBasophilSBT: async (walletAddress, signAndExecute) => {
+        return BlockchainService.mintUnlockSBT(walletAddress, 'basophil', signAndExecute);
     },
 
     // Placeholder for future randomness

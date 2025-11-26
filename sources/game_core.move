@@ -1,9 +1,9 @@
 module my_first_package::game_core {
-    use sui::object::{Self, UID};
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
-    use sui::package;
-    use sui::display;
+    use one::object::{Self, UID};
+    use one::transfer;
+    use one::tx_context::{Self, TxContext};
+    use one::package;
+    use one::display;
     use std::string::{Self, String};
     use std::option;
 

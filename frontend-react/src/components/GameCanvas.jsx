@@ -202,6 +202,34 @@ function GameCanvas() {
             >
                 RESET CACHE
             </button>
+            <button
+                onClick={async () => {
+                    if (!account?.address) {
+                        alert("Please connect wallet first");
+                        return;
+                    }
+                    console.log("Testing Mint...");
+                    const success = await BlockchainService.mintMacrophageSBT(account.address, signAndExecute);
+                    if (success) alert("Mint Success!");
+                    else alert("Mint Failed - Check Console");
+                }}
+                style={{
+                    position: 'absolute',
+                    top: '50px',
+                    right: '10px',
+                    padding: '8px 16px',
+                    backgroundColor: '#4444ff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    zIndex: 1000,
+                    fontFamily: 'monospace',
+                    fontWeight: 'bold'
+                }}
+            >
+                TEST MINT
+            </button>
         </div>
     );
 }
