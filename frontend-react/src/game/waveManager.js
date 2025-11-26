@@ -22,7 +22,8 @@ export async function spawnWave(k, gameState, getPaths) {
 
     for (let i = 0; i < waveConfig.enemyCount; i++) {
         if (!gameState.gameActive) break; // Stop spawning if game over
-        const path = i % 2 === 0 ? path1Points : path2Points;
+        // Always use path1Points for single path gameplay
+        const path = path1Points;
         spawnEnemy(k, path, waveConfig, gameState);
 
         // Pause-aware wait
@@ -65,7 +66,7 @@ export function startNextWavePreparation(k, gameState, spawnWaveCallback) {
     // Show preparation message
     const prepMsg = k.add([
         k.text(`Prepare for Wave ${nextWave.waveNumber}!`, { size: 32 }),
-        k.pos(k.width() / 2, k.height() / 2 - 50),
+        k.pos(k.width() / 2, k.height() / 2 - 100), // Moved up
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(250)

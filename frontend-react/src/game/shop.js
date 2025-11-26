@@ -10,34 +10,32 @@ import BlockchainService from '../services/BlockchainService.js';
  * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
  * @param {import("./gameState.js").GameState} gameState - The game state manager.
  * @param {Function} onDragStart - The function to call when a shop item is clicked (from setupInput).
+ * @param {string} walletAddress - The user's wallet address.
+ * @param {object} sbtStats - The user's SBT stats.
  */
 
 const SPRITE_VERTICAL_POS = 65;
 const TEXT_VERTICAL_POS = 100;
 const COST_VERTICAL_POS = 120;
 
-<<<<<<< HEAD
-export function setupShop(k, gameState, onDragStart, walletAddress) {
-    // Shop Background Panel
+export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}) {
+    // Shop Background Panel (Glassmorphism) - Bottom Aligned
     const shopBg = k.add([
-        k.rect(k.width(), 100),
-        k.pos(0, 50),
-        k.color(15, 23, 42), // --bg-primary
-        k.opacity(0.0), // Transparent, just for grouping if needed
+        k.rect(k.width(), 110),
+        k.pos(0, k.height() - 110),
+        k.color(15, 23, 42), // Dark blue base
+        k.opacity(0.85),
         k.z(100),
         "shop-bg"
-=======
-export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}) {
-    // B-Cell
-    const shopItemBCell = k.add([
-        k.sprite("b-cell-neutral"),
-        k.pos(120, SPRITE_VERTICAL_POS),
-        k.anchor("center"),
-        k.scale(0.06),
-        k.z(101),
-        k.area(),
-        "shop-item-bcell"
->>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
+    ]);
+
+    // Top Border for Shop
+    k.add([
+        k.rect(k.width(), 2),
+        k.pos(0, k.height() - 110),
+        k.color(56, 189, 248), // Cyan accent
+        k.opacity(0.5),
+        k.z(100)
     ]);
 
     const towers = [
@@ -47,16 +45,16 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
         { type: 'basophil', sprite: 'basophil-idle', name: 'Basophil', cost: TOWER_COST.basophil, range: GAME_CONFIG.towers.basophil.range, color: k.rgb(255, 150, 50) }
     ];
 
-    const startX = k.width() / 2 - (towers.length * 80) / 2;
+    const startX = k.width() / 2 - (towers.length * 110) / 2 + 55; // Adjusted spacing
 
     towers.forEach((tower, index) => {
-        const xPos = startX + index * 100;
+        const xPos = startX + index * 110;
+        const baseY = k.height() - 55; // Center of the shop panel
 
-<<<<<<< HEAD
-        // Tower Icon Container
+        // Tower Icon Container (Glass Chip)
         const container = k.add([
-            k.rect(80, 90, { radius: 8 }),
-            k.pos(xPos, 90),
+            k.rect(90, 90, { radius: 12 }),
+            k.pos(xPos, baseY),
             k.anchor("center"),
             k.color(30, 41, 59), // --bg-secondary
             k.outline(1, k.rgb(71, 85, 105)),
@@ -68,34 +66,35 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
         // Tower Sprite
         const sprite = k.add([
             k.sprite(tower.sprite),
-            k.pos(xPos, 80),
+            k.pos(xPos, baseY - 10),
             k.anchor("center"),
-            k.scale(0.05),
+            k.scale(0.06), // Slightly larger
             k.z(102),
             `shop-item-${tower.type}`
         ]);
 
         // Tower Name
         k.add([
-            k.text(tower.name, { size: 12 }),
-            k.pos(xPos, 115),
+            k.text(tower.name, { size: 12, font: "monospace" }),
+            k.pos(xPos, baseY + 30),
             k.anchor("center"),
-            k.color(226, 232, 240),
+            k.color(148, 163, 184), // Muted text
             k.z(102)
         ]);
 
-        // Cost Badge
+        // Cost Badge (Pill style)
         const costBadge = k.add([
-            k.rect(50, 20, { radius: 4 }),
-            k.pos(xPos, 60),
+            k.rect(50, 20, { radius: 10 }),
+            k.pos(xPos, baseY - 35),
             k.anchor("center"),
             k.color(15, 23, 42),
+            k.outline(1, k.rgb(250, 204, 21)), // Yellow outline
             k.z(103)
         ]);
 
         k.add([
             k.text(`$${tower.cost}`, { size: 12, font: "monospace" }),
-            k.pos(xPos, 60),
+            k.pos(xPos, baseY - 35),
             k.anchor("center"),
             k.color(250, 204, 21), // Yellow
             k.z(104)
@@ -104,77 +103,33 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
         // Interaction
         container.onClick(() => {
             if (tower.unlockWave && !gameState.unlockedTowers[tower.type]) {
-                k.shake(5);
+                k.shake(2);
                 const lockMsg = k.add([
-                    k.text(`Unlock at Wave ${tower.unlockWave}`, { size: 16 }),
-                    k.pos(xPos, 150),
+                    k.text(`Unlock Wave ${tower.unlockWave}`, { size: 14 }),
+                    k.pos(xPos, baseY - 75), // Show above container
                     k.anchor("center"),
                     k.color(248, 113, 113),
                     k.z(200),
-                    k.lifespan(2, { fade: 0.5 })
+                    k.lifespan(1.5, { fade: 0.5 })
                 ]);
                 return;
-=======
-    // Platelet (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4, walletAddress, sbtStats);
-
-    // Basophil (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'basophil', "basophil-idle", GAME_CONFIG.towers.basophil.range, k.rgb(255, 150, 50), 3, walletAddress, sbtStats);
-
-    // Macrophage (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress, sbtStats);
-
-    // NK Cell (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 9, walletAddress);
-}
-
-/**
- * Checks if a tower is unlocked via BlockchainService.
- */
-function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress, sbtStats) {
-
-    // Create item immediately
-    createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats);
-
-    // Update state asynchronously
-    if (walletAddress) {
-        BlockchainService.checkUnlockSBT(walletAddress, type).then(unlocked => {
-            if (unlocked) {
-                gameState.unlockedTowers[type] = true;
-                updateTowerVisuals(k, type, true);
->>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
             }
-            onDragStart(tower.type, tower.sprite, tower.range, tower.color);
+            onDragStart(tower.type, tower.sprite, tower.range, tower.color, sbtStats[tower.type]);
         });
 
-<<<<<<< HEAD
         container.onHover(() => {
             container.color = k.rgb(51, 65, 85);
-            container.outline.color = k.rgb(56, 189, 248);
+            container.outline.color = k.rgb(56, 189, 248); // Cyan highlight
+            sprite.scale = k.vec2(0.07); // Slight zoom
             k.setCursor("pointer");
         });
 
         container.onHoverEnd(() => {
             container.color = k.rgb(30, 41, 59);
             container.outline.color = k.rgb(71, 85, 105);
+            sprite.scale = k.vec2(0.06);
             k.setCursor("default");
         });
-=======
-function createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats) {
-    // Position based on type (hardcoded for now)
-    let xPos = 200;
-    if (type === 'platelet') xPos = 280;
-    if (type === 'macrophage') xPos = 200; // Wait, original positions were: BCell 120, Platelet 280, Basophil 360, Macrophage 200? 
-    // Let's fix positions: BCell(120), Macrophage(200), Platelet(280), Basophil(360)
-    // Actually, let's keep original layout but just lock them.
-    // Original: BCell(120), Platelet(280), Basophil(360), Macrophage(200) -> This order is weird.
-    // Let's assume: BCell(120), Macrophage(200), Platelet(280), Basophil(360).
-
-    if (type === 'macrophage') xPos = 200;
-    if (type === 'platelet') xPos = 280;
-    if (type === 'basophil') xPos = 360;
-    if (type === 'nkCell') xPos = 440;
->>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
 
         // Initial Locked State
         if (tower.unlockWave && !gameState.unlockedTowers[tower.type]) {
@@ -184,13 +139,12 @@ function createShopItem(k, gameState, onDragStart, type, sprite, range, color, u
             // Lock Icon
             k.add([
                 k.text("🔒", { size: 24 }),
-                k.pos(xPos, 80),
+                k.pos(xPos, baseY - 10),
                 k.anchor("center"),
                 k.z(105),
                 `lock-icon-${tower.type}`
             ]);
         }
-<<<<<<< HEAD
 
         // Check unlock status if wallet connected
         if (tower.unlockWave && walletAddress) {
@@ -201,9 +155,6 @@ function createShopItem(k, gameState, onDragStart, type, sprite, range, color, u
                 }
             });
         }
-=======
-        onDragStart(type, sprite, range, color, sbtStats[type]);
->>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
     });
 }
 

@@ -86,19 +86,65 @@ function GameCanvas() {
 
                     // Define Game Scene
                     k.scene("main", () => {
-                        // Draw Paths
+                        // --- Background Texture (Organic Tissue) ---
+                        // Spawn random "cells" in the background
+                        for (let i = 0; i < 50; i++) {
+                            k.add([
+                                k.circle(k.rand(20, 100)),
+                                k.pos(k.rand(0, canvasWidth), k.rand(0, canvasHeight)),
+                                k.color(30, 20, 40), // Dark purple/organic
+                                k.opacity(0.05), // Reduced opacity
+                                k.fixed(),
+                                k.z(-10) // Behind everything
+                            ]);
+                        }
+
+                        // --- Organic Obstacles (Bloons Style) ---
+                        // Add some large "organs" or cell clusters in empty spaces
+                        const obstacles = [
+                            { pos: k.vec2(150, 350), size: 60, color: k.rgb(40, 20, 50) },
+                            { pos: k.vec2(400, 150), size: 70, color: k.rgb(40, 20, 50) },
+                            { pos: k.vec2(550, 450), size: 50, color: k.rgb(40, 20, 50) }
+                        ];
+
+                        obstacles.forEach(obs => {
+                            k.add([
+                                k.circle(obs.size),
+                                k.pos(obs.pos),
+                                k.color(obs.color),
+                                k.opacity(0.4),
+                                k.fixed(),
+                                k.z(-5) // Behind paths but above background
+                            ]);
+                        });
+
+                        // Draw Paths (Veins)
                         k.onDraw(() => {
+                            const pulse = Math.sin(k.time() * 3) * 2; // Pulsing effect
+
+                            // Main Path
+                            // Glow/Bruise Layer
                             k.drawLines({
                                 pts: path1Points,
-                                width: 60,
-                                color: k.rgb(60, 0, 0),
+                                width: 80,
+                                color: k.rgb(50, 0, 0),
+                                opacity: 0.2,
                                 join: "round",
                                 cap: "round",
                             });
+                            // Outer Wall
                             k.drawLines({
-                                pts: path2Points,
-                                width: 60,
-                                color: k.rgb(60, 0, 0),
+                                pts: path1Points,
+                                width: 70,
+                                color: k.rgb(60, 5, 5), // Darker wall
+                                join: "round",
+                                cap: "round",
+                            });
+                            // Inner Stream (Blood)
+                            k.drawLines({
+                                pts: path1Points,
+                                width: 55 + pulse,
+                                color: k.rgb(180, 30, 30), // Vibrant blood red
                                 join: "round",
                                 cap: "round",
                             });
@@ -123,7 +169,7 @@ function GameCanvas() {
                             gameState.money += 50; // Lucky bonus!
                             k.add([
                                 k.text("LUCKY BONUS! +$50", { size: 32, font: "monogram" }),
-                                k.pos(canvasWidth / 2, canvasHeight / 2),
+                                k.pos(canvasWidth / 2, canvasHeight / 2 + 80), // Moved down
                                 k.anchor("center"),
                                 k.color(255, 215, 0),
                                 k.lifespan(3),
@@ -154,12 +200,8 @@ function GameCanvas() {
 
                         // Game Loop for Wave Checking
                         k.onUpdate(() => {
-<<<<<<< HEAD
                             if (gameState.isPaused) return; // Don't update when paused
-                            checkWaveCompletion(k, gameState, handleWaveVictory, account?.address);
-=======
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
->>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
                         });
                     });
 
@@ -189,37 +231,10 @@ function GameCanvas() {
     }, [randomSeed]); // Re-run if seed changes
 
     return (
-<<<<<<< HEAD
         <div className="game-canvas-container flex-center gradient-bg" style={{ minHeight: '100vh', paddingTop: '70px' }}>
             <div className="canvas-wrapper glass-strong p-1" style={{ borderRadius: '16px', overflow: 'hidden' }}>
                 <canvas ref={canvasRef} id="game-canvas" style={{ display: 'block', borderRadius: '12px' }}></canvas>
             </div>
-=======
-        <div className="game-canvas-container" style={{ position: 'relative' }}>
-            <canvas ref={canvasRef} id="game-canvas"></canvas>
-            <button
-                onClick={() => {
-                    localStorage.clear();
-                    window.location.reload();
-                }}
-                style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    padding: '8px 16px',
-                    backgroundColor: '#ff4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    zIndex: 1000,
-                    fontFamily: 'monospace',
-                    fontWeight: 'bold'
-                }}
-            >
-                RESET CACHE
-            </button>
->>>>>>> aeed8bb60a0c96a20954945c24ff645496a1fb94
         </div>
     );
 }
