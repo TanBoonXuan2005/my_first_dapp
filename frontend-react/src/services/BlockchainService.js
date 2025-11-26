@@ -81,6 +81,10 @@ const BlockchainService = {
         return BlockchainService.mintUnlockSBT(walletAddress, 'basophil', signAndExecute);
     },
 
+    checkMagicCard: async (walletAddress, type) => {
+        return BlockchainService.checkUnlockSBT(walletAddress, type);
+    },
+
     // Placeholder for future randomness
     getRandomness: async () => {
         const randomValue = Math.random();

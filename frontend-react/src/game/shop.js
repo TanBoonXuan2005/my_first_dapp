@@ -1,4 +1,3 @@
-
 import { TOWER_COST } from './constants.js';
 import GAME_CONFIG from '../gameConfig.js';
 import BlockchainService from '../services/BlockchainService.js';
@@ -10,43 +9,25 @@ import BlockchainService from '../services/BlockchainService.js';
  * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
  * @param {import("./gameState.js").GameState} gameState - The game state manager.
  * @param {Function} onDragStart - The function to call when a shop item is clicked (from setupInput).
+ * @param {string} walletAddress - The connected wallet address.
+ * @param {Object} sbtStats - Stats from Soulbound Tokens.
  */
-
-const SPRITE_VERTICAL_POS = 65;
-const TEXT_VERTICAL_POS = 100;
-const COST_VERTICAL_POS = 120;
-
-export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}) {
-    // B-Cell
-    const shopItemBCell = k.add([
-        k.sprite("b-cell-neutral"),
-        k.pos(120, SPRITE_VERTICAL_POS),
-        k.anchor("center"),
-        k.scale(0.06),
-        k.z(101),
-        k.area(),
-        "shop-item-bcell"
-    ]);
-
+export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}, onMagicCardClick) {
+    // Shop Background Panel
     k.add([
-        k.text("B-Cell", { size: 14 }),
-        k.pos(120, TEXT_VERTICAL_POS),
-        k.anchor("center"),
-        k.color(255, 255, 255),
-        k.z(101)
+        k.rect(k.width(), 100),
+        k.pos(0, 50),
+        k.color(15, 23, 42), // --bg-primary
+        k.opacity(0.9),
+        k.z(100),
+        "shop-bg"
     ]);
 
-    k.add([
-        k.text(`Cost: ${TOWER_COST.bcell}`, { size: 12 }),
-        k.pos(120, COST_VERTICAL_POS),
-        k.anchor("center"),
-        k.color(200, 200, 0),
-        k.z(101)
-    ]);
+    // B-Cell (Always unlocked)
+    createShopItem(k, gameState, onDragStart, 'bcell', "b-cell-neutral", GAME_CONFIG.towers.bCell.range, k.rgb(100, 200, 255), 0, sbtStats);
 
-    shopItemBCell.onClick(() => {
-        onDragStart("bcell", "b-cell-neutral", GAME_CONFIG.towers.bCell.range, k.rgb(100, 200, 255));
-    });
+    // Macrophage (Unlockable)
+    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress, sbtStats);
 
     // Platelet (Unlockable)
     checkTowerUnlock(k, gameState, onDragStart, 'platelet', "platelet-idle", GAME_CONFIG.towers.platelet.range, k.rgb(100, 255, 100), 4, walletAddress, sbtStats);
@@ -54,18 +35,165 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
     // Basophil (Unlockable)
     checkTowerUnlock(k, gameState, onDragStart, 'basophil', "basophil-idle", GAME_CONFIG.towers.basophil.range, k.rgb(255, 150, 50), 3, walletAddress, sbtStats);
 
-    // Macrophage (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'macrophage', "macrophage-idle-neutral", GAME_CONFIG.towers.macrophage.range, k.rgb(200, 100, 255), 2, walletAddress, sbtStats);
-
     // NK Cell (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 9, walletAddress);
+    checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 9, walletAddress, sbtStats);
+
+    // --- Magic Cards ---
+    // Heal
+    checkMagicCardUnlock(k, gameState, 'heal', "magic-heal", k.rgb(0, 255, 0), walletAddress, onMagicCardClick);
+    // Nuke
+    checkMagicCardUnlock(k, gameState, 'nuke', "magic-nuke", k.rgb(255, 0, 0), walletAddress, onMagicCardClick);
+    // Freeze
+    checkMagicCardUnlock(k, gameState, 'freeze', "magic-freeze", k.rgb(0, 255, 255), walletAddress, onMagicCardClick);
+    // Poison
+    checkMagicCardUnlock(k, gameState, 'poison', "magic-poison", k.rgb(128, 0, 128), walletAddress, onMagicCardClick);
 }
 
 /**
- * Checks if a tower is unlocked via BlockchainService.
+ * Checks if a magic card is unlocked via BlockchainService.
  */
-function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress, sbtStats) {
+function checkMagicCardUnlock(k, gameState, type, sprite, color, walletAddress, onMagicCardClick) {
+    createMagicCardShopItem(k, gameState, type, sprite, color, onMagicCardClick);
 
+    if (walletAddress) {
+        BlockchainService.checkMagicCard(walletAddress, type).then(owned => {
+            if (owned) {
+                gameState.magicCards[type].owned = true;
+                updateMagicCardVisuals(k, type, true);
+            }
+        });
+    }
+}
+
+function createMagicCardShopItem(k, gameState, type, sprite, color, onMagicCardClick) {
+    // Position logic for Magic Cards (Row 2)
+    let xPos = 120;
+    if (type === 'nuke') xPos = 200;
+    if (type === 'freeze') xPos = 280;
+    if (type === 'poison') xPos = 360;
+    
+    const yPos = 200; // Lower row
+
+    // Container
+    const container = k.add([
+        k.rect(70, 90, { radius: 8 }),
+        k.pos(xPos, yPos),
+        k.anchor("center"),
+        k.color(30, 41, 59),
+        k.outline(1, k.rgb(71, 85, 105)),
+        k.area(),
+        k.z(101),
+        `shop-item-magic-${type}-container`
+    ]);
+
+    // Sprite
+    const spriteObj = k.add([
+        k.sprite(sprite),
+        k.pos(xPos, yPos - 10),
+        k.anchor("center"),
+        k.scale(0.1),
+        k.z(102),
+        `shop-item-magic-${type}`
+    ]);
+
+    // Name
+    const nameMap = {
+        'heal': 'Healing Pulse',
+        'nuke': 'Cytokine Storm',
+        'freeze': 'Cryo Stasis',
+        'poison': 'Viral Toxin'
+    };
+    const name = nameMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
+    
+    k.add([
+        k.text(name, { size: 10, width: 65, align: 'center' }), // Smaller text to fit
+        k.pos(xPos, yPos + 25),
+        k.anchor("center"),
+        k.color(226, 232, 240),
+        k.z(102)
+    ]);
+
+    // Interaction (Minting/Buying or Using)
+    container.onClick(() => {
+        if (gameState.magicCards[type].owned) {
+            if (onMagicCardClick) {
+                onMagicCardClick(type);
+            }
+        } else {
+            console.log(`Clicked locked magic card: ${type}`);
+            // In a real implementation, this would open a modal to mint the SBT
+        }
+    });
+
+    // Hover
+    container.onHover(() => {
+        container.color = k.rgb(51, 65, 85);
+        container.outline.color = k.rgb(56, 189, 248);
+        k.setCursor("pointer");
+    });
+
+    container.onHoverEnd(() => {
+        container.color = k.rgb(30, 41, 59);
+        container.outline.color = k.rgb(71, 85, 105);
+        k.setCursor("default");
+    });
+
+    // Initial Locked State
+    if (!gameState.magicCards[type].owned) {
+        spriteObj.color = k.rgb(100, 100, 100);
+        spriteObj.opacity = 0.5;
+        
+        // Ensure sprite is visible behind lock
+        // The sprite is already added at z(102), lock is at z(105)
+        
+        k.add([
+            k.text("🔒", { size: 24 }),
+            k.pos(xPos, yPos - 10),
+            k.anchor("center"),
+            k.z(105),
+            `lock-icon-magic-${type}`
+        ]);
+    }
+
+    // Cooldown Overlay (Hidden by default)
+    k.add([
+        k.text("", { size: 20, font: "monospace" }),
+        k.pos(xPos, yPos),
+        k.anchor("center"),
+        k.color(255, 255, 255),
+        k.z(110),
+        `cooldown-text-magic-${type}`
+    ]);
+}
+
+function updateMagicCardVisuals(k, type, isOwned) {
+    const items = k.get(`shop-item-magic-${type}`);
+    if (items.length > 0) {
+        const item = items[0];
+        if (isOwned) {
+            item.color = k.rgb(255, 255, 255);
+            item.opacity = 1;
+            
+            const lockIcons = k.get(`lock-icon-magic-${type}`);
+            lockIcons.forEach(icon => k.destroy(icon));
+        }
+    }
+}
+
+export function updateMagicCardCooldownVisuals(k, type, cooldownTimer) {
+    const texts = k.get(`cooldown-text-magic-${type}`);
+    const containers = k.get(`shop-item-magic-${type}-container`);
+    
+    if (texts.length > 0) {
+        texts[0].text = cooldownTimer > 0 ? Math.ceil(cooldownTimer) : "";
+    }
+    
+    if (containers.length > 0) {
+        // Dim the container if on cooldown
+        containers[0].opacity = cooldownTimer > 0 ? 0.5 : 1;
+    }
+}
+function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress, sbtStats) {
     // Create item immediately
     createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats);
 
@@ -81,86 +209,123 @@ function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color,
 }
 
 function createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats) {
-    // Position based on type (hardcoded for now)
-    let xPos = 200;
-    if (type === 'platelet') xPos = 280;
-    if (type === 'macrophage') xPos = 200; // Wait, original positions were: BCell 120, Platelet 280, Basophil 360, Macrophage 200? 
-    // Let's fix positions: BCell(120), Macrophage(200), Platelet(280), Basophil(360)
-    // Actually, let's keep original layout but just lock them.
-    // Original: BCell(120), Platelet(280), Basophil(360), Macrophage(200) -> This order is weird.
-    // Let's assume: BCell(120), Macrophage(200), Platelet(280), Basophil(360).
-
+    // Position logic
+    let xPos = 120;
     if (type === 'macrophage') xPos = 200;
     if (type === 'platelet') xPos = 280;
     if (type === 'basophil') xPos = 360;
     if (type === 'nkCell') xPos = 440;
 
-    const shopItem = k.add([
-        k.sprite(sprite),
-        k.pos(xPos, SPRITE_VERTICAL_POS),
+    // Tower Icon Container
+    const container = k.add([
+        k.rect(70, 90, { radius: 8 }),
+        k.pos(xPos, 90),
         k.anchor("center"),
-        k.scale(0.06),
-        k.z(101),
+        k.color(30, 41, 59), // --bg-secondary
+        k.outline(1, k.rgb(71, 85, 105)),
         k.area(),
+        k.z(101),
+        `shop-item-${type}-container`
+    ]);
+
+    // Tower Sprite
+    const spriteObj = k.add([
+        k.sprite(sprite),
+        k.pos(xPos, 80),
+        k.anchor("center"),
+        k.scale(0.05),
+        k.z(102),
         `shop-item-${type}`
     ]);
 
-    // Initial visual state based on current gameState (likely false initially, updated soon after)
-    if (!gameState.unlockedTowers[type]) {
-        shopItem.color = k.rgb(100, 100, 100);
-        shopItem.opacity = 0.5;
-    }
-
+    // Tower Name
+    const name = type.charAt(0).toUpperCase() + type.slice(1);
     k.add([
-        k.text(type.charAt(0).toUpperCase() + type.slice(1), { size: 14 }),
-        k.pos(xPos, TEXT_VERTICAL_POS),
+        k.text(name, { size: 12 }),
+        k.pos(xPos, 115),
         k.anchor("center"),
-        k.color(255, 255, 255),
-        k.z(101)
+        k.color(226, 232, 240),
+        k.z(102)
     ]);
 
+    // Cost Badge
     k.add([
-        k.text(`Cost: ${TOWER_COST[type]}`, { size: 12 }),
-        k.pos(xPos, COST_VERTICAL_POS),
+        k.rect(40, 18, { radius: 4 }),
+        k.pos(xPos, 60),
         k.anchor("center"),
-        k.color(200, 200, 0),
-        k.z(101)
+        k.color(15, 23, 42),
+        k.z(103)
     ]);
 
-    shopItem.onClick(() => {
-        // Check dynamic state
-        if (!gameState.unlockedTowers[type]) {
-            k.shake(8);
-            const lockMsg = k.add([
-                k.text(`Complete Wave ${unlockWave} to unlock!`, { size: 18 }),
-                k.pos(k.width() / 2, 120),
+    const cost = TOWER_COST[type] || 0;
+    k.add([
+        k.text(`$${cost}`, { size: 12, font: "monospace" }),
+        k.pos(xPos, 60),
+        k.anchor("center"),
+        k.color(250, 204, 21), // Yellow
+        k.z(104)
+    ]);
+
+    // Interaction
+    container.onClick(() => {
+        if (unlockWave && !gameState.unlockedTowers[type]) {
+            k.shake(5);
+            k.add([
+                k.text(`Unlock at Wave ${unlockWave}`, { size: 16 }),
+                k.pos(xPos, 150),
                 k.anchor("center"),
-                k.color(255, 100, 100),
+                k.color(248, 113, 113),
                 k.z(200),
-                k.opacity(1)
+                k.lifespan(2, { fade: 0.5 })
             ]);
-            k.wait(2, () => k.destroy(lockMsg));
             return;
         }
-        onDragStart(type, sprite, range, color, sbtStats[type]);
+        onDragStart(type, sprite, range, color, sbtStats ? sbtStats[type] : null);
     });
+
+    // Hover effects
+    container.onHover(() => {
+        container.color = k.rgb(51, 65, 85);
+        container.outline.color = k.rgb(56, 189, 248);
+        k.setCursor("pointer");
+    });
+
+    container.onHoverEnd(() => {
+        container.color = k.rgb(30, 41, 59);
+        container.outline.color = k.rgb(71, 85, 105);
+        k.setCursor("default");
+    });
+
+    // Initial Locked State
+    if (unlockWave && !gameState.unlockedTowers[type]) {
+        spriteObj.color = k.rgb(100, 100, 100);
+        spriteObj.opacity = 0.5;
+
+        // Lock Icon
+        k.add([
+            k.text("🔒", { size: 24 }),
+            k.pos(xPos, 80),
+            k.anchor("center"),
+            k.z(105),
+            `lock-icon-${type}`
+        ]);
+    }
 }
 
 export function updateTowerVisuals(k, type, isUnlocked) {
-    console.log(`[Shop] Updating ${type} visuals, unlocked: ${isUnlocked}`);
     const items = k.get(`shop-item-${type}`);
-    console.log(`[Shop] Found ${items.length} items with tag shop-item-${type}`);
     if (items.length > 0) {
         const item = items[0];
         if (isUnlocked) {
-            // Restore original sprite appearance
             item.color = k.rgb(255, 255, 255);
             item.opacity = 1;
-            console.log(`[Shop] ${type} unlocked - color set to white`);
+
+            // Remove lock icon
+            const lockIcons = k.get(`lock-icon-${type}`);
+            lockIcons.forEach(icon => k.destroy(icon));
         } else {
             item.color = k.rgb(100, 100, 100);
             item.opacity = 0.5;
-            console.log(`[Shop] ${type} locked - color set to gray`);
         }
     }
 }

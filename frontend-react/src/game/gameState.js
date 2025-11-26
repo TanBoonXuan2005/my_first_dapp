@@ -33,6 +33,14 @@ export class GameState {
             platelet: false
         };
 
+        // Magic Cards State
+        this.magicCards = {
+            heal: { owned: false, cooldownTimer: 0 },
+            nuke: { owned: false, cooldownTimer: 0 },
+            freeze: { owned: false, cooldownTimer: 0 },
+            poison: { owned: false, cooldownTimer: 0 }
+        };
+
         this.isPaused = false;
         this.setupMenu();
     }
@@ -79,6 +87,21 @@ export class GameState {
 
         if (this.playerHealth <= 0) {
             this.gameOver();
+        }
+    }
+
+    /**
+     * Updates magic card cooldowns. Should be called in the game loop.
+     * @param {number} dt - Delta time since last frame.
+     */
+    updateCooldowns(dt) {
+        for (const key in this.magicCards) {
+            if (this.magicCards[key].cooldownTimer > 0) {
+                this.magicCards[key].cooldownTimer -= dt;
+                if (this.magicCards[key].cooldownTimer < 0) {
+                    this.magicCards[key].cooldownTimer = 0;
+                }
+            }
         }
     }
 
