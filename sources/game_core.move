@@ -72,7 +72,25 @@ module my_first_package::game_core {
             &publisher, keys_p, values_p, ctx
         );
         display::update_version(&mut display_p);
+        display::update_version(&mut display_p);
         transfer::public_transfer(display_p, tx_context::sender(ctx));
+
+        // --- Basophil Display ---
+        let keys_b = vector[
+            string::utf8(b"name"),
+            string::utf8(b"description"),
+            string::utf8(b"image_url"),
+        ];
+        let values_b = vector[
+            string::utf8(b"Basophil"),
+            string::utf8(b"A heavy bomber unit unlocked at Wave 3."),
+            string::utf8(b"https://raw.githubusercontent.com/TanBoonXuan2005/my_first_dapp/main/frontend-react/public/assets/animation_frames/Basophil/Basophil_Idle.png"),
+        ];
+        let mut display_b = display::new_with_fields<Basophil>(
+            &publisher, keys_b, values_b, ctx
+        );
+        display::update_version(&mut display_b);
+        transfer::public_transfer(display_b, tx_context::sender(ctx));
 
         transfer::public_transfer(publisher, tx_context::sender(ctx));
     }
@@ -111,21 +129,43 @@ module my_first_package::game_core {
     /// Removed 'store' ability to make it a true Soulbound Token (SBT)
     public struct Macrophage has key {
         id: UID,
-        power: u64,
+        level: u64,
+        attack_speed: u64, // in ms (e.g., 2000 for 2.0s)
+        damage: u64,
+        range: u64,
+        damage_type: u8, // 0: Single, 1: Area
     }
 
     /// Platelet: Unlocked at Wave 4
     /// Removed 'store' ability to make it a true Soulbound Token (SBT)
     public struct Platelet has key {
         id: UID,
-        healing_factor: u64,
+        level: u64,
+        attack_speed: u64, // in ms (e.g., 1000 for 1.0s)
+        damage: u64,
+        range: u64,
+        damage_type: u8, // 0: Single, 1: Area
+    }
+
+    /// Basophil: Unlocked at Wave 3
+    public struct Basophil has key {
+        id: UID,
+        level: u64,
+        attack_speed: u64, // in ms
+        damage: u64,
+        range: u64,
+        damage_type: u8, // 0: Single, 1: Area
     }
 
     /// Mint a Macrophage SBT to the sender
     entry fun mint_macrophage(ctx: &mut TxContext) {
         let macrophage = Macrophage {
             id: object::new(ctx),
-            power: 100,
+            level: 1,
+            attack_speed: 2000, // 2.0s
+            damage: 50,
+            range: 120,
+            damage_type: 1, // Area
         };
         transfer::transfer(macrophage, tx_context::sender(ctx));
     }
@@ -134,20 +174,43 @@ module my_first_package::game_core {
     entry fun mint_platelet(ctx: &mut TxContext) {
         let platelet = Platelet {
             id: object::new(ctx),
-            healing_factor: 50,
+            level: 1,
+            attack_speed: 1000, // 1.0s
+            damage: 5,
+            range: 180,
+            damage_type: 0, // Single (Net)
         };
         transfer::transfer(platelet, tx_context::sender(ctx));
     }
 
+    /// Mint a Basophil SBT to the sender
+    entry fun mint_basophil(ctx: &mut TxContext) {
+        let basophil = Basophil {
+            id: object::new(ctx),
+            level: 1,
+            attack_speed: 2500, // 2.5s
+            damage: 25,
+            range: 200,
+            damage_type: 1, // Area
+        };
+        transfer::transfer(basophil, tx_context::sender(ctx));
+    }
+
     /// Burn a Macrophage SBT (since it cannot be transferred)
     entry fun burn_macrophage(macrophage: Macrophage) {
-        let Macrophage { id, power: _ } = macrophage;
+        let Macrophage { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = macrophage;
         object::delete(id);
     }
 
     /// Burn a Platelet SBT (since it cannot be transferred)
     entry fun burn_platelet(platelet: Platelet) {
-        let Platelet { id, healing_factor: _ } = platelet;
+        let Platelet { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = platelet;
+        object::delete(id);
+    }
+
+    /// Burn a Basophil SBT
+    entry fun burn_basophil(basophil: Basophil) {
+        let Basophil { id, level: _, attack_speed: _, damage: _, range: _, damage_type: _ } = basophil;
         object::delete(id);
     }
 

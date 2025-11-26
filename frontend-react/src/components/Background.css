@@ -1,0 +1,46 @@
+.dynamic-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, transparent 0%, var(--bg-primary) 100%);
+    z-index: 1;
+}
+
+.bg-particle {
+    position: absolute;
+    object-fit: contain;
+    filter: blur(2px) grayscale(0.3);
+    animation: float-particle linear infinite;
+}
+
+@keyframes float-particle {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(50px, 50px) rotate(90deg);
+    }
+
+    50% {
+        transform: translate(0, 100px) rotate(180deg);
+    }
+
+    75% {
+        transform: translate(-50px, 50px) rotate(270deg);
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(360deg);
+    }
+}

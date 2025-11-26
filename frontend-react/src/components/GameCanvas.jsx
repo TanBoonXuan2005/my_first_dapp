@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react';
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@onelabs/dapp-kit';
 import { useNavigate } from 'react-router-dom';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
@@ -15,9 +15,11 @@ import BlockchainService from '../services/BlockchainService.js';
 
 function GameCanvas() {
     const [randomSeed, setRandomSeed] = useState(null);
+    const [sbtStats, setSbtStats] = useState({});
     const canvasRef = useRef(null);
     const kRef = useRef(null);
     const account = useCurrentAccount();
+    const client = useSuiClient();
     const { mutate: signAndExecute } = useSignAndExecuteTransaction();
     const navigate = useNavigate();
 
@@ -28,9 +30,9 @@ function GameCanvas() {
                 const seed = await BlockchainService.getRandomness();
                 setRandomSeed(seed);
                 
-                // Pre-fetch magic card ownership to pass to game state
-                // We'll store this in a ref or just rely on the service cache if it's fast enough
-                // But better to pass it to GameState
+                // Fetch SBT stats for towers
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setSbtStats(stats);
             }
         };
         fetchData();
@@ -56,6 +58,12 @@ function GameCanvas() {
                 if (canvasHeight > maxHeight) {
                     canvasHeight = maxHeight;
                     canvasWidth = canvasHeight * aspectRatio;
+                }
+
+                // Check if canvas element is ready
+                if (!canvasRef.current) {
+                    console.warn('Canvas element not ready yet');
+                    return;
                 }
 
                 try {
@@ -186,7 +194,7 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        setupShop(k, gameState, startDrag, account?.address);
+                        setupShop(k, gameState, startDrag, account?.address, sbtStats);
 
                         // Wave Management Callbacks
                         const handleWaveVictory = (walletAddress, signAndExecute) => {
@@ -204,6 +212,7 @@ function GameCanvas() {
 
                         // Game Loop for Wave Checking
                         k.onUpdate(() => {
+                            if (gameState.isPaused) return; // Don't update when paused
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
                             
                             // Update Magic Card Cooldowns
@@ -249,8 +258,10 @@ function GameCanvas() {
     }, [randomSeed]); // Re-run if seed changes
 
     return (
-        <div className="game-canvas-container">
-            <canvas ref={canvasRef} id="game-canvas"></canvas>
+        <div className="game-canvas-container flex-center gradient-bg" style={{ minHeight: '100vh', paddingTop: '70px' }}>
+            <div className="canvas-wrapper glass-strong p-1" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+                <canvas ref={canvasRef} id="game-canvas" style={{ display: 'block', borderRadius: '12px' }}></canvas>
+            </div>
         </div>
     );
 }

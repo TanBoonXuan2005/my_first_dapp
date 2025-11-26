@@ -1,68 +1,104 @@
 
 export function setupGameUI(k, UI_HEIGHT) {
-    // UI Background
+    // UI Background (Darker, slightly transparent)
     k.add([
         k.rect(k.width(), UI_HEIGHT),
         k.pos(0, 0),
-        k.color(50, 50, 60),
+        k.color(15, 23, 42), // --bg-primary
+        k.opacity(0.9),
         k.z(100),
         "ui-bg"
     ]);
 
+    // Bottom Border for UI
     k.add([
-        k.text("SHOP", { size: 24, font: "monospace" }),
-        k.pos(40, 50),
-        k.anchor("center"),
-        k.color(255, 255, 255),
+        k.rect(k.width(), 2),
+        k.pos(0, UI_HEIGHT),
+        k.color(56, 189, 248), // --accent-primary
+        k.opacity(0.3),
+        k.z(100)
+    ]);
+
+    // Shop Label
+    k.add([
+        k.text("DEFENSE SYSTEMS", { size: 16, font: "monospace" }),
+        k.pos(20, 20),
+        k.color(148, 163, 184), // --text-secondary
         k.z(101)
     ]);
 
     // Health Display
+    const healthContainer = k.add([
+        k.rect(160, 40, { radius: 8 }),
+        k.pos(k.width() - 200, 20),
+        k.color(30, 41, 59), // --bg-secondary
+        k.outline(1, k.rgb(255, 255, 255)), // slight border
+        k.z(101)
+    ]);
+    healthContainer.outline.color = k.rgb(50, 50, 60); // Fix outline color manually if needed
+
     const healthText = k.add([
-        k.text("❤️ Health: 100", { size: 20 }),
-        k.pos(k.width() - 120, 30),
+        k.text("❤️ 100", { size: 24, font: "monospace" }),
+        k.pos(k.width() - 120, 40),
         k.anchor("center"),
-        k.color(255, 100, 100),
-        k.z(101),
+        k.color(248, 113, 113), // Red
+        k.z(102),
         "health-text"
     ]);
 
     // ATP Display (currency)
+    const atpContainer = k.add([
+        k.rect(160, 40, { radius: 8 }),
+        k.pos(k.width() - 200, 70),
+        k.color(30, 41, 59), // --bg-secondary
+        k.z(101)
+    ]);
+
     const atpText = k.add([
-        k.text("⚡ ATP: 50", { size: 20 }),
-        k.pos(k.width() - 120, 60),
+        k.text("⚡ 50", { size: 24, font: "monospace" }),
+        k.pos(k.width() - 120, 90),
         k.anchor("center"),
-        k.color(100, 255, 255),
-        k.z(101),
+        k.color(56, 189, 248), // --accent-primary
+        k.z(102),
         "atp-text"
     ]);
 
     // Wave Number Display
+    const waveContainer = k.add([
+        k.rect(200, 50, { radius: 12 }),
+        k.pos(k.width() / 2, 40),
+        k.anchor("center"),
+        k.color(15, 23, 42),
+        k.outline(2, k.rgb(56, 189, 248)),
+        k.z(101)
+    ]);
+
     const waveNumberText = k.add([
-        k.text("Wave 1", { size: 24 }),
-        k.pos(k.width() / 2, 30),
+        k.text("WAVE 1", { size: 28, font: "monospace" }),
+        k.pos(k.width() / 2, 40),
         k.anchor("center"),
         k.color(255, 255, 255),
-        k.z(101),
+        k.z(102),
         "wave-text"
     ]);
 
     // Menu Button
     const menuBtn = k.add([
-        k.rect(80, 30, { radius: 4 }),
-        k.pos(k.width() - 50, 30),
+        k.rect(100, 36, { radius: 8 }),
+        k.pos(k.width() - 60, 40),
         k.anchor("center"),
-        k.color(70, 70, 80),
+        k.color(30, 41, 59),
+        k.outline(1, k.rgb(148, 163, 184)),
         k.area(),
         k.z(101),
         "menu-btn"
     ]);
 
-    k.add([
+    const menuText = k.add([
         k.text("MENU", { size: 16 }),
-        k.pos(k.width() - 50, 30),
+        k.pos(k.width() - 60, 40),
         k.anchor("center"),
-        k.color(255, 255, 255),
+        k.color(226, 232, 240),
         k.z(102)
     ]);
 
@@ -103,6 +139,16 @@ export function setupGameUI(k, UI_HEIGHT) {
         ]);
 
         magicBtns[cfg.type] = { btn, cdText };
+    });
+
+    // Menu Button Hover Effects
+    menuBtn.onHover(() => {
+        menuBtn.color = k.rgb(51, 65, 85);
+        k.setCursor("pointer");
+    });
+    menuBtn.onHoverEnd(() => {
+        menuBtn.color = k.rgb(30, 41, 59);
+        k.setCursor("default");
     });
 
     return { healthText, atpText, waveNumberText, menuBtn, magicBtns };
