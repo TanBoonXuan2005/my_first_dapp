@@ -8,7 +8,7 @@ import { UI_HEIGHT, getPaths, MAGIC_CARD_COSTS } from '../game/constants.js';
 import { loadGameAssets } from '../game/assets.js';
 import { setupGameUI, showDamageNumber } from '../game/ui.js';
 import { GameState } from '../game/gameState.js';
-import { setupShop, updateMagicCardCooldownVisuals, updateMagicCardVisuals } from '../game/shop.js';
+import { setupShop, updateMagicCardCooldownVisuals, updateTowerVisuals, updateMagicCardVisuals } from '../game/shop.js';
 import { setupInput } from '../game/interaction.js';
 import { spawnWave, startNextWavePreparation, checkWaveCompletion, onWaveVictory } from '../game/waveManager.js';
 import BlockchainService from '../services/BlockchainService.js';
@@ -290,7 +290,65 @@ function GameCanvas() {
                         );
 
                         // Wave Management Callbacks
-                        const handleWaveVictory = (walletAddress, signAndExecute) => {
+                        const handleWaveVictory = async (walletAddress, signAndExecute) => {
+                            // Check for automatic unlocks
+                            if (walletAddress && signAndExecute) {
+                                const completedWave = gameState.currentWaveIndex + 1;
+                                console.log(`[Game] Victory at Wave ${completedWave}. Checking unlocks...`);
+
+                                // Wave 9 Victory -> Unlock Macrophage (for Wave 10)
+                                if (completedWave === 9) {
+                                    const hasMacrophage = await BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
+                                    if (!hasMacrophage) {
+                                        console.log("[Game] Unlocking Macrophage...");
+                                        const success = await BlockchainService.mintMacrophageSBT(walletAddress, signAndExecute);
+                                        if (success) {
+                                            gameState.unlockedTowers.macrophage = true;
+                                            updateTowerVisuals(k, 'macrophage', true);
+                                        }
+                                    }
+                                }
+
+                                // Wave 3 Victory -> Unlock Basophil (for Wave 4)
+                                if (completedWave === 3) {
+                                    const hasBasophil = await BlockchainService.checkUnlockSBT(walletAddress, 'basophil');
+                                    if (!hasBasophil) {
+                                        console.log("[Game] Unlocking Basophil...");
+                                        const success = await BlockchainService.mintBasophilSBT(walletAddress, signAndExecute);
+                                        if (success) {
+                                            gameState.unlockedTowers.basophil = true;
+                                            updateTowerVisuals(k, 'basophil', true);
+                                        }
+                                    }
+                                }
+
+                                // Wave 6 Victory -> Unlock Platelet (for Wave 7)
+                                if (completedWave === 6) {
+                                    const hasPlatelet = await BlockchainService.checkUnlockSBT(walletAddress, 'platelet');
+                                    if (!hasPlatelet) {
+                                        console.log("[Game] Unlocking Platelet...");
+                                        const success = await BlockchainService.mintUnlockSBT(walletAddress, 'platelet', signAndExecute);
+                                        if (success) {
+                                            gameState.unlockedTowers.platelet = true;
+                                            updateTowerVisuals(k, 'platelet', true);
+                                        }
+                                    }
+                                }
+
+                                // Wave 12 Victory -> Unlock NK Cell (for Wave 13)
+                                if (completedWave === 12) {
+                                    const hasNK = await BlockchainService.checkUnlockSBT(walletAddress, 'nk_cell');
+                                    if (!hasNK) {
+                                        console.log("[Game] Unlocking NK Cell...");
+                                        const success = await BlockchainService.mintNKCellSBT(walletAddress, signAndExecute);
+                                        if (success) {
+                                            gameState.unlockedTowers.nkCell = true;
+                                            updateTowerVisuals(k, 'nkCell', true);
+                                        }
+                                    }
+                                }
+                            }
+
                             onWaveVictory(k, gameState, () => {
                                 startNextWavePreparation(k, gameState, () => {
                                     spawnWave(k, gameState, () => ({ path1Points, path2Points }));
@@ -351,10 +409,23 @@ function GameCanvas() {
             <div className="canvas-wrapper glass-strong p-1" style={{ borderRadius: '16px', overflow: 'hidden' }}>
                 <canvas ref={canvasRef} id="game-canvas" style={{ display: 'block', borderRadius: '12px' }}></canvas>
             </div>
+
+
+
             <button
-                onClick={() => {
-                    localStorage.clear();
-                    window.location.reload();
+                onClick={async () => {
+                    if (confirm("⚠️ This will BURN all your game items (Macrophage, etc.) from the blockchain to reset your progress. Are you sure?")) {
+                        if (account?.address) {
+                            console.log("Initiating True Reset...");
+                            const success = await BlockchainService.resetSBTs(client, account.address, signAndExecute);
+                            if (!success) {
+                                alert("Reset cancelled or failed.");
+                                return;
+                            }
+                        }
+                        localStorage.clear();
+                        window.location.reload();
+                    }
                 }}
                 style={{
                     position: 'absolute',
@@ -371,7 +442,7 @@ function GameCanvas() {
                     fontWeight: 'bold'
                 }}
             >
-                RESET CACHE
+                RESET PROGRESS (BURN)
             </button>
             <button
                 onClick={async () => {

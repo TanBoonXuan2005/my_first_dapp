@@ -1,15 +1,44 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentAccount, ConnectButton } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction, ConnectButton } from '@onelabs/dapp-kit';
+import BlockchainService from '../services/BlockchainService';
 import './Home.css';
 
 function Home() {
     const navigate = useNavigate();
     const account = useCurrentAccount();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+    const [hasLicense, setHasLicense] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const checkLicense = async () => {
+            if (account?.address) {
+                setLoading(true);
+                const has = await BlockchainService.checkDefenderLicense(account.address);
+                setHasLicense(has);
+                setLoading(false);
+            } else {
+                setHasLicense(false);
+            }
+        };
+        checkLicense();
+    }, [account]);
 
     const handlePlayClick = () => {
-        if (account) {
+        if (account && hasLicense) {
             navigate('/game');
         }
+    };
+
+    const handleMintLicense = async () => {
+        if (!account) return;
+        setLoading(true);
+        const success = await BlockchainService.mintDefenderLicense(account.address, signAndExecute);
+        if (success) {
+            setHasLicense(true);
+        }
+        setLoading(false);
     };
 
     return (
@@ -27,9 +56,24 @@ function Home() {
                         </p>
 
                         {account ? (
-                            <button className="btn btn-primary btn-large" onClick={handlePlayClick}>
-                                🎮 Start Playing
-                            </button>
+                            <>
+                                {loading ? (
+                                    <button className="btn btn-secondary btn-large" disabled>
+                                        ⏳ Checking License...
+                                    </button>
+                                ) : hasLicense ? (
+                                    <button className="btn btn-primary btn-large" onClick={handlePlayClick}>
+                                        🎮 Start Playing
+                                    </button>
+                                ) : (
+                                    <div className="license-section">
+                                        <p className="license-warning">⚠️ Defender License Required</p>
+                                        <button className="btn btn-accent btn-large" onClick={handleMintLicense}>
+                                            📝 Mint License & Enter
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <div className="connect-section">
                                 <div className="connect-prompt-box glass">

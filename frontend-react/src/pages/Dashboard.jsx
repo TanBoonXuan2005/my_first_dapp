@@ -1,13 +1,31 @@
 import { useState, useEffect } from 'react';
-import { useCurrentAccount, useSuiClient } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
 import { useNavigate } from 'react-router-dom';
 import BlockchainService from '../services/BlockchainService';
 import './Dashboard.css';
 
+
 function Dashboard() {
     const account = useCurrentAccount();
     const client = useSuiClient();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
     const navigate = useNavigate();
+    const [usdtBalance, setUsdtBalance] = useState(0);
+
+
+
+
+
+    const handleMintUSDT = async () => {
+        if (!account?.address) return;
+        const success = await BlockchainService.mintUSDT(client, account.address, 100, signAndExecute);
+        if (success) {
+            alert("Successfully minted 100 USDT!");
+            // Refresh data logic is now centralized in useEffect, but for manual refresh:
+            const balance = await BlockchainService.getUSDTBalance(client, account.address);
+            setUsdtBalance(balance);
+        }
+    };
 
     const [inventory, setInventory] = useState([
         { id: 'bcell', name: 'B-Cell', image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png', unlocked: true, type: 'Ranged', damage: 15 },
@@ -19,6 +37,10 @@ function Dashboard() {
     useEffect(() => {
         if (account?.address) {
             const fetchInventory = async () => {
+                // Fetch USDT Balance
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
                 // Fetch real SBT stats from blockchain
                 const sbtStats = await BlockchainService.getSBTStats(client, account.address);
 
@@ -44,6 +66,7 @@ function Dashboard() {
         totalGames: 12,
         totalEnemiesDefeated: 247
     };
+
 
     const recentGames = [
         { id: 1, wave: 5, date: '2025-11-24', result: 'Victory', score: 1250 },
@@ -126,8 +149,25 @@ function Dashboard() {
                                     <span className="wallet-value">{account.address}</span>
                                 </div>
                                 <div className="wallet-item">
-                                    <span className="wallet-label">ATP Balance</span>
-                                    <span className="wallet-value text-accent">500 ATP</span>
+                                    <span className="wallet-label">USDT Balance</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span className="wallet-value text-accent">{usdtBalance.toLocaleString()} USDT</span>
+                                        <button
+                                            onClick={handleMintUSDT}
+                                            className="btn-small"
+                                            style={{
+                                                padding: '4px 8px',
+                                                fontSize: '12px',
+                                                backgroundColor: '#22c55e',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            +100
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

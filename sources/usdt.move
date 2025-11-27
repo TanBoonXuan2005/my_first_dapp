@@ -17,7 +17,7 @@ module my_first_package::usdt {
             ctx
         );
         transfer::public_freeze_object(metadata);
-        transfer::public_transfer(treasury, tx_context::sender(ctx));
+        transfer::public_share_object(treasury);
     }
 
     public entry fun mint(

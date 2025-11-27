@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { useCurrentAccount, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
+import { useState, useEffect } from 'react';
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
 import BlockchainService from '../services/BlockchainService';
 import GAME_CONFIG from '../gameConfig.js';
 import './Store.css';
 
 function Store() {
     const account = useCurrentAccount();
+    const client = useSuiClient();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+    const [usdtBalance, setUsdtBalance] = useState(0);
+    const [isPurchasing, setIsPurchasing] = useState(false);
     const [ownedTowers, setOwnedTowers] = useState({
         bcell: true, // Always owned
         macrophage: false,
@@ -13,6 +17,27 @@ function Store() {
         basophil: false,
         nkCell: false
     });
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (account?.address) {
+                // Fetch USDT Balance
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
+                // Fetch Owned SBTs
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setOwnedTowers(prev => ({
+                    ...prev,
+                    macrophage: !!stats.macrophage,
+                    platelet: !!stats.platelet,
+                    basophil: !!stats.basophil,
+                    nkCell: !!stats.nkCell
+                }));
+            }
+        };
+        fetchData();
+    }, [account, client]);
 
     const towers = [
         {
@@ -24,12 +49,13 @@ function Store() {
             range: GAME_CONFIG.towers.bCell.range,
             speed: 'Medium', // Could derive this from attackSpeed if we wanted logic
             price: 0,
-            unlocked: true
+            unlocked: true,
+            stats: { damage: 10, range: 150, speed: 'Medium' }
         },
         {
             id: 'macrophage',
             name: 'Macrophage',
-            description: 'Engulfs nearby enemies with powerful area attacks',
+            description: 'A powerful general-purpose defense unit.',
             image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png',
             damage: GAME_CONFIG.towers.macrophage.damage,
             range: GAME_CONFIG.towers.macrophage.range,
@@ -40,7 +66,7 @@ function Store() {
         {
             id: 'platelet',
             name: 'Platelet',
-            description: 'Deploys fibrin nets to slow down enemies',
+            description: 'Support unit that slows down enemies.',
             image: '/assets/animation_frames/Platelet/Platelet_Idle.png',
             damage: GAME_CONFIG.towers.platelet.damage,
             range: GAME_CONFIG.towers.platelet.range,
@@ -51,7 +77,7 @@ function Store() {
         {
             id: 'basophil',
             name: 'Basophil',
-            description: 'Releases explosive histamine bombs for area damage',
+            description: 'Heavy bomber that deals area damage.',
             image: '/assets/animation_frames/Basophil/Basophil_Idle.png',
             damage: GAME_CONFIG.towers.basophil.damage,
             range: GAME_CONFIG.towers.basophil.range,
@@ -118,8 +144,6 @@ function Store() {
         }
     ];
 
-    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
-
     const handlePurchase = async (item) => {
         if (!account) {
             alert('Please connect your wallet first!');
@@ -131,13 +155,13 @@ function Store() {
             return;
         }
 
-        // Check if it's a Magic Card (has cooldown) or Tower
+        // Magic Card Logic
         if (item.cooldown !== undefined) {
-            // Magic Card Claim Logic
             const confirmed = confirm(`Claim ${item.name} for FREE?`);
             if (!confirmed) return;
 
-            const success = await BlockchainService.purchaseMagicCard(account.address, item.id, 0, signAndExecute);
+            // Use mintMagicCard from Local BlockchainService
+            const success = await BlockchainService.mintMagicCard(account.address, item.id, signAndExecute);
             if (success) {
                 setOwnedMagicCards(prev => ({ ...prev, [item.id]: true }));
                 alert(`Successfully claimed ${item.name}!`);
@@ -145,17 +169,32 @@ function Store() {
                 alert("Claim failed. Check console for details.");
             }
         } else {
-            // Tower Purchase Logic (Placeholder for now, or use mintUnlockSBT if ready)
-            // For now, let's keep the "Coming soon" for towers if they cost ATP, 
-            // but if we want to enable them via SBT minting:
-            // alert(`Purchase ${item.name} for ${item.price} ATP - Coming soon!`);
-            const confirmed = confirm(`Unlock ${item.name}? (Dev: Free Mint)`);
-            if (!confirmed) return;
+            // Tower Logic (USDT Purchase)
+            if (usdtBalance < item.price) {
+                alert(`Insufficient USDT! You need ${item.price} USDT.`);
+                return;
+            }
 
-            const success = await BlockchainService.mintUnlockSBT(account.address, item.id, signAndExecute);
+            if (isPurchasing) return;
+
+            setIsPurchasing(true);
+            const success = await BlockchainService.purchaseCell(client, account.address, item.id, item.price, signAndExecute);
+            setIsPurchasing(false);
+
             if (success) {
-                setOwnedTowers(prev => ({ ...prev, [item.id]: true }));
-                alert(`Successfully unlocked ${item.name}!`);
+                alert(`Successfully purchased ${item.name}!`);
+                // Refresh data
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setOwnedTowers(prev => ({
+                    ...prev,
+                    macrophage: !!stats.macrophage,
+                    platelet: !!stats.platelet,
+                    basophil: !!stats.basophil,
+                    nkCell: !!stats.nkCell
+                }));
             }
         }
     };
@@ -168,10 +207,10 @@ function Store() {
                     <p>Acquire advanced immune cells and upgrades to strengthen your defenses.</p>
                     {account ? (
                         <div className="atp-balance glass-strong">
-                            <span className="atp-icon">⚡</span>
+                            <span className="atp-icon">💲</span>
                             <div className="balance-info">
-                                <span className="balance-label">Current Balance</span>
-                                <span className="atp-amount">500 ATP</span>
+                                <span className="balance-label">USDT Balance</span>
+                                <span className="atp-amount">{usdtBalance.toLocaleString()} USDT</span>
                             </div>
                         </div>
                     ) : (
@@ -243,9 +282,10 @@ function Store() {
                                         <button
                                             className="btn btn-primary full-width"
                                             onClick={() => handlePurchase(tower)}
+                                            disabled={isPurchasing}
                                         >
-                                            <span className="price-tag">{tower.price} ATP</span>
-                                            <span className="action-text">Purchase</span>
+                                            <span className="price-tag">{tower.price.toLocaleString()} USDT</span>
+                                            <span className="action-text">{isPurchasing ? 'Buying...' : 'Purchase'}</span>
                                         </button>
                                     )}
                                 </div>

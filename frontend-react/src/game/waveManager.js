@@ -2,7 +2,6 @@
 import GAME_CONFIG from '../gameConfig.js';
 import { spawnEnemy } from './enemies.js';
 import { showVictoryMessage } from './ui.js';
-import BlockchainService from '../services/BlockchainService.js';
 
 export async function spawnWave(k, gameState, getPaths) {
     const waveConfig = GAME_CONFIG.getWaveConfig(gameState.currentWaveIndex);
@@ -134,78 +133,9 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
 
     showVictoryMessage(k, gameState.currentWaveIndex + 1, gameState.playerHealth);
 
-    // Check for Unlocks
+    // Check for Unlocks - Handled in GameCanvas.jsx now
     if (walletAddress) {
-        // Wave 9 Victory -> Unlock Macrophage
-        if (gameState.currentWaveIndex + 1 === 9) {
-            const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
-            if (!unlocked) {
-                console.log("Minting Macrophage SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'macrophage', signAndExecute);
-                if (success) {
-                    // Update Game State Immediately
-                    gameState.unlockedTowers.macrophage = true;
-                    // Update visuals
-                    updateTowerVisuals(k, 'macrophage', true);
-                    console.log("✅ Macrophage unlocked!");
-                }
-            }
-        }
-
-        // Wave 3 Victory -> Unlock Basophil
-        if (gameState.currentWaveIndex + 1 === 3) {
-            const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'basophil');
-            if (!unlocked) {
-                console.log("Minting Basophil SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'basophil', signAndExecute);
-                if (success) {
-                    // Update Game State Immediately
-                    gameState.unlockedTowers.basophil = true;
-                    // Update visuals
-                    updateTowerVisuals(k, 'basophil', true);
-                    console.log("✅ Basophil unlocked!");
-                }
-            }
-        }
-
-        // Wave 6 Victory -> Unlock Platelet
-        if (gameState.currentWaveIndex + 1 === 6) {
-            const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'platelet');
-            if (!unlocked) {
-                console.log("Minting Platelet SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'platelet', signAndExecute);
-                if (success) {
-                    // Update Game State Immediately
-                    gameState.unlockedTowers.platelet = true;
-                    // Update visuals
-                    updateTowerVisuals(k, 'platelet', true);
-                    console.log("✅ Platelet unlocked!");
-                }
-            }
-        }
-
-        // Wave 12 Victory -> Unlock NK Cell
-        if (gameState.currentWaveIndex + 1 === 12) {
-            const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'nkCell');
-            if (!unlocked) {
-                console.log("Minting NK-Cell SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'nkCell', signAndExecute);
-                if (success) {
-                    // Update Game State Immediately
-                    gameState.unlockedTowers.nkCell = true;
-                    updateTowerVisuals(k, 'nkCell', true);
-
-                    k.add([
-                        k.text("NK-cell Unlocked!", { size: 32 }),
-                        k.pos(k.width() / 2, k.height() / 2 + 50),
-                        k.anchor("center"),
-                        k.color(255, 215, 0),
-                        k.lifespan(3),
-                        k.z(250)
-                    ]);
-                }
-            }
-        }
+        // Legacy logic removed to avoid conflicts
     }
 
     // Celebration effect (pause-aware)
