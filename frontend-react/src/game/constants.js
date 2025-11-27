@@ -1,13 +1,19 @@
-
 export const TOWER_COST = {
-    bcell: 10,
-    macrophage: 20,
-    platelet: 15,
-    basophil: 25,
-    nkCell: 30
+    bcell: 50,
+    macrophage: 120,
+    platelet: 80,
+    basophil: 100,
+    nkCell: 200
 };
 
-export const UI_HEIGHT = 135;
+export const MAGIC_CARD_COSTS = {
+    heal: 0,
+    nuke: 0,
+    freeze: 0,
+    poison: 0
+};
+
+export const UI_HEIGHT = 60;
 
 export function getPaths(k, canvasWidth) {
     // Single winding path (Bloons style)

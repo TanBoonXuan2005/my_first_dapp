@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
+import BlockchainService from '../services/BlockchainService';
 import './Store.css';
 
 function Store() {
@@ -104,19 +105,46 @@ function Store() {
         }
     ];
 
-    const handlePurchase = (tower) => {
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+
+    const handlePurchase = async (item) => {
         if (!account) {
             alert('Please connect your wallet first!');
             return;
         }
 
-        if (tower.unlocked) {
-            alert('You already own this tower!');
+        if (item.unlocked) {
+            alert('You already own this item!');
             return;
         }
 
-        // TODO: Implement blockchain purchase
-        alert(`Purchase ${tower.name} for ${tower.price} ATP - Coming soon!`);
+        // Check if it's a Magic Card (has cooldown) or Tower
+        if (item.cooldown !== undefined) {
+            // Magic Card Claim Logic
+            const confirmed = confirm(`Claim ${item.name} for FREE?`);
+            if (!confirmed) return;
+
+            const success = await BlockchainService.purchaseMagicCard(account.address, item.id, 0, signAndExecute);
+            if (success) {
+                setOwnedMagicCards(prev => ({ ...prev, [item.id]: true }));
+                alert(`Successfully claimed ${item.name}!`);
+            } else {
+                alert("Claim failed. Check console for details.");
+            }
+        } else {
+            // Tower Purchase Logic (Placeholder for now, or use mintUnlockSBT if ready)
+            // For now, let's keep the "Coming soon" for towers if they cost ATP, 
+            // but if we want to enable them via SBT minting:
+            // alert(`Purchase ${item.name} for ${item.price} ATP - Coming soon!`);
+            const confirmed = confirm(`Unlock ${item.name}? (Dev: Free Mint)`);
+            if (!confirmed) return;
+
+            const success = await BlockchainService.mintUnlockSBT(account.address, item.id, signAndExecute);
+            if (success) {
+                setOwnedTowers(prev => ({ ...prev, [item.id]: true }));
+                alert(`Successfully unlocked ${item.name}!`);
+            }
+        }
     };
 
     return (

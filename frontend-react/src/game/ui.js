@@ -1,93 +1,84 @@
 
 
 export function setupGameUI(k, UI_HEIGHT) {
-    // UI Background (Glassmorphism Panel)
+    // UI Background (Glassmorphism Panel) - Top Bar
     k.add([
         k.rect(k.width(), UI_HEIGHT),
         k.pos(0, 0),
         k.color(15, 23, 42), // Dark blue base
-        k.opacity(0.85),
+        k.opacity(0.6), // More transparent
         k.z(100),
         "ui-bg"
     ]);
 
     // Bottom Border (Gradient-like line)
     k.add([
-        k.rect(k.width(), 2),
+        k.rect(k.width(), 1),
         k.pos(0, UI_HEIGHT),
         k.color(56, 189, 248), // Cyan accent
-        k.opacity(0.5),
+        k.opacity(0.3),
         k.z(100)
-    ]);
-
-    // Shop Label (Styled)
-    k.add([
-        k.text("DEFENSE SYSTEMS", { size: 14, font: "monospace" }),
-        k.pos(20, 20),
-        k.color(148, 163, 184), // Muted text
-        k.z(101)
-    ]);
-
-    // --- Stats Container (Right Side) ---
-    const statsBg = k.add([
-        k.rect(320, 50, { radius: 12 }),
-        k.pos(k.width() - 420, 15), // Shifted left to avoid menu button
-        k.color(30, 41, 59),
-        k.outline(1, k.rgb(71, 85, 105)),
-        k.z(101)
-    ]);
-
-    // Health Display
-    const healthText = k.add([
-        k.text("❤️ 100", { size: 20, font: "monospace" }),
-        k.pos(k.width() - 380, 40), // Shifted left
-        k.anchor("left"),
-        k.color(248, 113, 113), // Red
-        k.z(102),
-        "health-text"
-    ]);
-
-    // Divider
-    k.add([
-        k.rect(2, 30),
-        k.pos(k.width() - 260, 25), // Shifted left
-        k.color(71, 85, 105),
-        k.z(102)
-    ]);
-
-    // ATP Display
-    const atpText = k.add([
-        k.text("⚡ 50", { size: 20, font: "monospace" }),
-        k.pos(k.width() - 240, 40), // Shifted left
-        k.anchor("left"),
-        k.color(56, 189, 248), // Cyan
-        k.z(102),
-        "atp-text"
     ]);
 
     // --- Wave Display (Center) ---
     const waveContainer = k.add([
-        k.rect(180, 44, { radius: 22 }),
-        k.pos(k.width() / 2, 40),
+        k.rect(160, 36, { radius: 18 }),
+        k.pos(k.width() / 2, UI_HEIGHT / 2),
         k.anchor("center"),
-        k.color(15, 23, 42),
-        k.outline(2, k.rgb(56, 189, 248)),
+        k.color(30, 41, 59),
+        k.outline(1, k.rgb(56, 189, 248)),
         k.z(101)
     ]);
 
     const waveNumberText = k.add([
-        k.text("WAVE 1", { size: 24, font: "monospace" }),
-        k.pos(k.width() / 2, 40),
+        k.text("WAVE 1", { size: 18, font: "monospace" }),
+        k.pos(k.width() / 2, UI_HEIGHT / 2),
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(102),
         "wave-text"
     ]);
 
+    // --- Health Display (Left) ---
+    // Icon
+    k.add([
+        k.text("❤️", { size: 20 }),
+        k.pos(30, UI_HEIGHT / 2),
+        k.anchor("center"),
+        k.z(102)
+    ]);
+
+    const healthText = k.add([
+        k.text("100", { size: 20, font: "monospace" }),
+        k.pos(60, UI_HEIGHT / 2),
+        k.anchor("left"),
+        k.color(248, 113, 113), // Red
+        k.z(102),
+        "health-text"
+    ]);
+
+    // --- ATP Display (Right - Left of Menu) ---
+    // Icon
+    k.add([
+        k.text("⚡", { size: 20 }),
+        k.pos(k.width() - 220, UI_HEIGHT / 2), // Moved further left (was 180)
+        k.anchor("center"),
+        k.z(102)
+    ]);
+
+    const atpText = k.add([
+        k.text("50", { size: 20, font: "monospace" }),
+        k.pos(k.width() - 190, UI_HEIGHT / 2), // Moved further left (was 150)
+        k.anchor("left"),
+        k.color(56, 189, 248), // Cyan
+        k.z(102),
+        "atp-text"
+    ]);
+
     // --- Menu Button (Top Right) ---
     const menuBtn = k.add([
-        k.rect(40, 40, { radius: 8 }),
-        k.pos(k.width() - 60, 40),
+        k.rect(36, 36, { radius: 8 }),
+        k.pos(k.width() - 40, UI_HEIGHT / 2),
         k.anchor("center"),
         k.color(30, 41, 59),
         k.outline(1, k.rgb(148, 163, 184)),
@@ -98,11 +89,9 @@ export function setupGameUI(k, UI_HEIGHT) {
 
     // Hamburger Icon (Simple lines)
     const iconColor = k.rgb(226, 232, 240);
-    menuBtn.add([k.rect(20, 2), k.pos(0, -6), k.anchor("center"), k.color(iconColor)]);
-    menuBtn.add([k.rect(20, 2), k.pos(0, 0), k.anchor("center"), k.color(iconColor)]);
-    menuBtn.add([k.rect(20, 2), k.pos(0, 6), k.anchor("center"), k.color(iconColor)]);
-
-
+    menuBtn.add([k.rect(18, 2), k.pos(0, -5), k.anchor("center"), k.color(iconColor)]);
+    menuBtn.add([k.rect(18, 2), k.pos(0, 0), k.anchor("center"), k.color(iconColor)]);
+    menuBtn.add([k.rect(18, 2), k.pos(0, 5), k.anchor("center"), k.color(iconColor)]);
 
     // Menu Button Hover Effects
     menuBtn.onHover(() => {

@@ -4,11 +4,11 @@ import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@
 import { useNavigate } from 'react-router-dom';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
-import { UI_HEIGHT, getPaths } from '../game/constants.js';
+import { UI_HEIGHT, getPaths, MAGIC_CARD_COSTS } from '../game/constants.js';
 import { loadGameAssets } from '../game/assets.js';
 import { setupGameUI, showDamageNumber } from '../game/ui.js';
 import { GameState } from '../game/gameState.js';
-import { setupShop, updateMagicCardCooldownVisuals } from '../game/shop.js';
+import { setupShop, updateMagicCardCooldownVisuals, updateMagicCardVisuals } from '../game/shop.js';
 import { setupInput } from '../game/interaction.js';
 import { spawnWave, startNextWavePreparation, checkWaveCompletion, onWaveVictory } from '../game/waveManager.js';
 import BlockchainService from '../services/BlockchainService.js';
@@ -266,12 +266,20 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        setupShop(k, gameState, startDrag, account?.address, sbtStats, (type) => {
-                            if (gameState.magicCards[type].cooldownTimer <= 0) {
-                                activateMagicCard(k, gameState, type);
-                                gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
+                        // Setup Shop
+                        setupShop(k, gameState, startDrag, account?.address, sbtStats,
+                            // On Magic Card Click (Activate)
+                            (type) => {
+                                if (gameState.magicCards[type].cooldownTimer <= 0) {
+                                    activateMagicCard(k, gameState, type);
+                                    gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
+                                }
+                            },
+                            // On Magic Card Purchase (Disabled in-game)
+                            async (type) => {
+                                alert(`You don't own the ${type.toUpperCase()} card!\nPlease visit the Main Menu Store to claim it.`);
                             }
-                        });
+                        );
 
                         // Wave Management Callbacks
                         const handleWaveVictory = (walletAddress, signAndExecute) => {
@@ -291,13 +299,6 @@ function GameCanvas() {
                         k.onUpdate(() => {
                             if (gameState.isPaused) return; // Don't update when paused
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                            
-=======
-
->>>>>>> 9c5407b87188ab29a296a5ff31806290230f4081
                             // Update Magic Card Cooldowns
                             gameState.updateCooldowns(k.dt());
 
@@ -306,15 +307,9 @@ function GameCanvas() {
                             magicTypes.forEach(type => {
                                 if (gameState.magicCards[type].owned) {
                                     const t = gameState.magicCards[type].cooldownTimer;
-                                    // Import this dynamically or ensure it's available
-                                    // Since we can't easily import inside the loop without refactoring imports, 
-                                    // we'll assume updateMagicCardCooldownVisuals is available or we need to import it at top level.
-                                    // Wait, I need to import it at the top of the file first.
-                                    // For now, let's use the imported function.
                                     updateMagicCardCooldownVisuals(k, type, t);
                                 }
                             });
->>>>>>> d8b9ca84b5ce86d10d88fc68635368ba645d596d
                         });
                     });
 
