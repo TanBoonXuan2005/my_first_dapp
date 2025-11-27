@@ -276,8 +276,16 @@ function GameCanvas() {
                                 }
                             },
                             // On Magic Card Purchase (Disabled in-game)
-                            async (type) => {
-                                alert(`You don't own the ${type.toUpperCase()} card!\nPlease visit the Main Menu Store to claim it.`);
+                            async (type, pos) => {
+                                k.shake(2);
+                                k.add([
+                                    k.text("Please buy in store first!", { size: 14, font: "monospace" }),
+                                    k.pos(pos.x, pos.y - 75),
+                                    k.anchor("center"),
+                                    k.color(248, 113, 113), // Red warning color
+                                    k.z(200),
+                                    k.lifespan(0.5, { fade: 0.5 })
+                                ]);
                             }
                         );
 
