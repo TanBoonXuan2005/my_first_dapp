@@ -17,6 +17,12 @@ module my_first_package::game_core {
         creation_time: u64,
     }
 
+    // A Soulbound Token that serves as a "License" to play the game.
+    public struct DefenderLicense has key {
+        id: UID,
+        creation_time: u64,
+    }
+
     // Error codes
     const EALREADY_HAS_SBT: u64 = 1;
 
@@ -91,6 +97,23 @@ module my_first_package::game_core {
         );
         display::update_version(&mut display_b);
         transfer::public_transfer(display_b, tx_context::sender(ctx));
+
+        // --- Defender License Display ---
+        let keys_l = vector[
+            string::utf8(b"name"),
+            string::utf8(b"description"),
+            string::utf8(b"image_url"),
+        ];
+        let values_l = vector[
+            string::utf8(b"Defender License"),
+            string::utf8(b"Official license to defend the host against viral invasions."),
+            string::utf8(b"https://raw.githubusercontent.com/TanBoonXuan2005/my_first_dapp/main/frontend-react/public/assets/ui/DefenderLicense.png"),
+        ];
+        let mut display_l = display::new_with_fields<DefenderLicense>(
+            &publisher, keys_l, values_l, ctx
+        );
+        display::update_version(&mut display_l);
+        transfer::public_transfer(display_l, tx_context::sender(ctx));
 
         transfer::public_transfer(publisher, tx_context::sender(ctx));
     }
@@ -235,5 +258,16 @@ module my_first_package::game_core {
     entry fun burn_magic_card(card: MagicCard) {
         let MagicCard { id, card_type: _ } = card;
         object::delete(id);
+    }
+
+    // --- Defender License ---
+
+    /// Mint a Defender License to the sender
+    entry fun mint_defender_license(ctx: &mut TxContext) {
+        let license = DefenderLicense {
+            id: object::new(ctx),
+            creation_time: tx_context::epoch(ctx),
+        };
+        transfer::transfer(license, tx_context::sender(ctx));
     }
 }
