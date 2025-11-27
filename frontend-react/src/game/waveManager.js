@@ -136,8 +136,8 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
 
     // Check for Unlocks
     if (walletAddress) {
-        // Wave 2 Victory -> Unlock Macrophage
-        if (gameState.currentWaveIndex + 1 === 3) {
+        // Wave 9 Victory -> Unlock Macrophage
+        if (gameState.currentWaveIndex + 1 === 9) {
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
             if (!unlocked) {
                 console.log("Minting Macrophage SBT...");
@@ -168,7 +168,7 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
             }
         }
 
-        // Wave 4 Victory -> Unlock Platelet
+        // Wave 6 Victory -> Unlock Platelet
         if (gameState.currentWaveIndex + 1 === 6) {
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'platelet');
             if (!unlocked) {
@@ -184,11 +184,12 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
             }
         }
 
-        if (gameState.currentWaveIndex + 1 === 9) {
+        // Wave 12 Victory -> Unlock NK Cell
+        if (gameState.currentWaveIndex + 1 === 12) {
             const unlocked = await BlockchainService.checkUnlockSBT(walletAddress, 'nkCell');
             if (!unlocked) {
                 console.log("Minting NK-Cell SBT...");
-                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'nkCell');
+                const success = await BlockchainService.mintUnlockSBT(walletAddress, 'nkCell', signAndExecute);
                 if (success) {
                     // Update Game State Immediately
                     gameState.unlockedTowers.nkCell = true;

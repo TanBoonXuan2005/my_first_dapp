@@ -25,19 +25,19 @@ const GAME_CONFIG = {
         },
         basophil: {
             range: 200,           // Medium-long attack range in pixels
-            attackSpeed: 2.5,     // Slow attack speed (2.5 seconds between throws)
+            attackSpeed: 1.5,     // Slow attack speed (1.5 seconds between throws)
             damage: 25,           // Area damage per bomb
             projectileSpeed: 500, // Bomb projectile speed (pixels/second)
             explosionRadius: 80   // Explosion damage radius in pixels
         },
         nkCell: {
-            range: 400,           // Long attack range
+            range: 500,           // Long attack range
             attackSpeed: 3.0,     // Slow attack speed
             damage: 100,           // High single target damage
-            projectileSpeed: 600  // Fast projectile
+            projectileSpeed: 800  // Fast projectile
         }
     },
-    
+
     // Magic Cards (Active Abilities)
     magicCards: {
         heal: {
