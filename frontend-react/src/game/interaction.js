@@ -89,6 +89,130 @@ export function setupInput(k, gameState, getPaths) {
         selectedTowerStats = null;
     });
 
+    // Handle Clicking on Placed Towers (Selection)
+    k.onMousePress(() => {
+        if (gameState.isPaused) return;
+        if (isDragging) return;
+
+        const mousePos = k.mousePos();
+
+        // Check if we clicked on a tower
+        const towerTags = ["b-cell", "macrophage", "platelet", "basophil", "nk-cell"];
+        let clickedTower = null;
+        let clickedType = null;
+
+        for (const tag of towerTags) {
+            const towers = k.get(tag);
+            for (const t of towers) {
+                if (t.pos.dist(mousePos) < 30) { // Approximate radius
+                    clickedTower = t;
+                    clickedType = tag;
+                    break;
+                }
+            }
+            if (clickedTower) break;
+        }
+
+        // Handle Selection/Deselection
+        if (clickedTower) {
+            // If we already have a selected tower, deselect it first (remove UI)
+            if (gameState.selectedTower) {
+                removeSelectionUI(k);
+            }
+
+            gameState.selectedTower = clickedTower;
+
+            // Show Range Indicator
+            const range = clickedTower.range || 100;
+            gameState.selectionRange = k.add([
+                k.circle(range),
+                k.pos(clickedTower.pos),
+                k.anchor("center"),
+                k.opacity(0.2),
+                k.color(255, 255, 255),
+                k.outline(2, k.rgb(255, 255, 255)),
+                k.z(49), // Below tower
+                "selection-ui"
+            ]);
+
+            // Show Sell Button
+            // Map tag to cost key (some tags might differ slightly from cost keys if not careful, but here they seem consistent enough or we map them)
+            // TOWER_COST keys: bcell, macrophage, platelet, basophil, nkCell
+            // Tags: b-cell, macrophage, platelet, basophil, nk-cell
+
+            let costKey = clickedType;
+            if (clickedType === "b-cell") costKey = "bcell";
+            if (clickedType === "nk-cell") costKey = "nkCell";
+
+            const refundAmount = Math.floor((TOWER_COST[costKey] || 0) / 2);
+
+            gameState.sellBtn = k.add([
+                k.rect(80, 30, { radius: 4 }),
+                k.pos(clickedTower.pos.x, clickedTower.pos.y - 40),
+                k.anchor("center"),
+                k.color(255, 50, 50),
+                k.area(),
+                k.z(200),
+                "selection-ui",
+                "sell-btn"
+            ]);
+
+            gameState.sellText = k.add([
+                k.text(`Sell ${refundAmount} ATP`, { size: 14 }),
+                k.pos(clickedTower.pos.x, clickedTower.pos.y - 40),
+                k.anchor("center"),
+                k.color(255, 255, 255),
+                k.z(201),
+                "selection-ui"
+            ]);
+
+            gameState.sellBtn.onClick(() => {
+                if (gameState.isPaused) return;
+
+                gameState.updateATP(refundAmount);
+
+                k.add([
+                    k.text(`+${refundAmount} ATP`, { size: 20, font: "monospace" }),
+                    k.pos(clickedTower.pos),
+                    k.anchor("center"),
+                    k.color(150, 255, 150),
+                    k.z(200),
+                    k.lifespan(1, { fade: 0.5 }),
+                    k.move(k.vec2(0, -50), 30)
+                ]);
+
+                k.destroy(clickedTower);
+                removeSelectionUI(k);
+                gameState.selectedTower = null;
+            });
+        } else {
+            // Clicked empty space
+            // Check if we clicked the sell button itself (handled by onClick above usually, but let's be safe)
+            // If we clicked outside, deselect
+            // Note: k.onMousePress is global. If we clicked the sell button, this handler also fires.
+            // However, the sell button's onClick will also fire.
+            // We need to be careful not to deselect immediately if clicking the button.
+
+            // Actually, checking if we clicked the sell button in this global handler is tricky without more logic.
+            // A simpler way: if we clicked empty space AND didn't click the sell button.
+
+            // Let's check if we are hovering the sell button
+            const isHoveringSell = gameState.sellBtn && gameState.sellBtn.isHovering();
+
+            if (!isHoveringSell) {
+                removeSelectionUI(k);
+                gameState.selectedTower = null;
+            }
+        }
+    });
+
+    function removeSelectionUI(k) {
+        k.destroyAll("selection-ui");
+        gameState.selectionRange = null;
+        gameState.sellBtn = null;
+        gameState.sellText = null;
+    }
+
     /**
      * Initiates the dragging process for a specific tower type.
      * This function is returned by setupInput and is meant to be passed to the shop.
@@ -101,6 +225,13 @@ export function setupInput(k, gameState, getPaths) {
     return function startDrag(type, spriteName, range, color, stats = null) {
         if (gameState.isPaused) return; // Don't start drag when paused
         if (isDragging) return;
+
+        // Deselect any selected tower when starting to drag a new one
+        if (gameState.selectedTower) {
+            removeSelectionUI(k);
+            gameState.selectedTower = null;
+        }
+
         isDragging = true;
         selectedTowerType = type;
         selectedTowerStats = stats;
@@ -127,3 +258,4 @@ export function setupInput(k, gameState, getPaths) {
         ]);
     };
 }
+

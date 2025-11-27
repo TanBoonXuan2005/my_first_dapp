@@ -50,18 +50,18 @@ function GameCanvas() {
             setTimeout(() => {
                 if (kRef.current) return; // Double check
 
-                // Calculate responsive canvas size
-                const maxWidth = Math.min(window.innerWidth - 40, 1200);
-                const maxHeight = Math.min(window.innerHeight - 100, 800);
-                const aspectRatio = 4 / 3;
+                // Fixed logical resolution for consistent gameplay
+                const LOGICAL_WIDTH = 1024;
+                const LOGICAL_HEIGHT = 768;
 
-                let canvasWidth = maxWidth;
-                let canvasHeight = canvasWidth / aspectRatio;
+                // Calculate scale to fit window while maintaining aspect ratio
+                // We want to fit within the window minus some padding
+                const availableWidth = window.innerWidth - 40;
+                const availableHeight = window.innerHeight - 100;
 
-                if (canvasHeight > maxHeight) {
-                    canvasHeight = maxHeight;
-                    canvasWidth = canvasHeight * aspectRatio;
-                }
+                const scaleX = availableWidth / LOGICAL_WIDTH;
+                const scaleY = availableHeight / LOGICAL_HEIGHT;
+                const scale = Math.min(scaleX, scaleY);
 
                 // Check if canvas element is ready
                 if (!canvasRef.current) {
@@ -73,9 +73,9 @@ function GameCanvas() {
                     const k = kaboom({
                         canvas: canvasRef.current,
                         background: [20, 20, 30],
-                        width: canvasWidth,
-                        height: canvasHeight,
-                        scale: 1,
+                        width: LOGICAL_WIDTH,
+                        height: LOGICAL_HEIGHT,
+                        scale: scale, // Scale the entire game up/down
                         global: false,
                         debug: false, // Disable debug to prevent overlay crashes
                     });
@@ -87,7 +87,7 @@ function GameCanvas() {
                     loadGameAssets(k);
 
                     // Define Paths
-                    const { path1Points, path2Points } = getPaths(k, canvasWidth);
+                    const { path1Points, path2Points } = getPaths(k, LOGICAL_WIDTH);
 
                     // Define Game Scene
                     k.scene("main", () => {
@@ -96,7 +96,7 @@ function GameCanvas() {
                         for (let i = 0; i < 50; i++) {
                             k.add([
                                 k.circle(k.rand(20, 100)),
-                                k.pos(k.rand(0, canvasWidth), k.rand(0, canvasHeight)),
+                                k.pos(k.rand(0, k.width()), k.rand(0, k.height())),
                                 k.color(30, 20, 40), // Dark purple/organic
                                 k.opacity(0.05), // Reduced opacity
                                 k.fixed(),
@@ -253,7 +253,7 @@ function GameCanvas() {
                             gameState.money += 50; // Lucky bonus!
                             k.add([
                                 k.text("LUCKY BONUS! +$50", { size: 32, font: "monogram" }),
-                                k.pos(canvasWidth / 2, canvasHeight / 2 + 80), // Moved down
+                                k.pos(k.width() / 2, k.height() / 2 + 80), // Moved down
                                 k.anchor("center"),
                                 k.color(255, 215, 0),
                                 k.lifespan(3),
