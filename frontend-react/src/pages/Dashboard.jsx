@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
 import { useNavigate } from 'react-router-dom';
+import BlockchainService from '../services/BlockchainService';
 import './Dashboard.css';
 import BlockchainService from '../services/BlockchainService';
 import { useState, useEffect } from 'react';
@@ -26,6 +28,39 @@ function Dashboard() {
         }
     };
 
+    const [inventory, setInventory] = useState([
+        { id: 'bcell', name: 'B-Cell', image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png', unlocked: true, type: 'Ranged', damage: 15 },
+        { id: 'macrophage', name: 'Macrophage', image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png', unlocked: false, type: 'Melee', damage: 25 },
+        { id: 'platelet', name: 'Platelet', image: '/assets/animation_frames/Platelet/Platelet_Idle.png', unlocked: false, type: 'Support', damage: 5 },
+        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 }
+    ]);
+
+    useEffect(() => {
+        if (account?.address) {
+            const fetchInventory = async () => {
+                // Fetch USDT Balance
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
+                // Fetch real SBT stats from blockchain
+                const sbtStats = await BlockchainService.getSBTStats(client, account.address);
+
+                // Also check local storage simulation for smoother dev experience
+                const macrophageUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'macrophage');
+                const plateletUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'platelet');
+                const basophilUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'basophil');
+
+                setInventory(prev => prev.map(item => {
+                    if (item.id === 'macrophage') return { ...item, unlocked: !!sbtStats.macrophage || macrophageUnlocked };
+                    if (item.id === 'platelet') return { ...item, unlocked: !!sbtStats.platelet || plateletUnlocked };
+                    if (item.id === 'basophil') return { ...item, unlocked: !!sbtStats.basophil || basophilUnlocked };
+                    return item;
+                }));
+            };
+            fetchInventory();
+        }
+    }, [account, client]);
+
     // Mock data - TODO: Fetch from blockchain
     const stats = {
         highestWave: 5,
@@ -33,37 +68,6 @@ function Dashboard() {
         totalEnemiesDefeated: 247
     };
 
-    const [ownedTowers, setOwnedTowers] = useState([
-        { id: 'bcell', name: 'B-Cell', image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png', unlocked: true, type: 'Ranged', damage: 15 },
-        { id: 'macrophage', name: 'Macrophage', image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png', unlocked: false, type: 'Melee', damage: 25 },
-        { id: 'platelet', name: 'Platelet', image: '/assets/animation_frames/Platelet/Platelet_Idle.png', unlocked: false, type: 'Support', damage: 5 },
-        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 },
-        { id: 'nkCell', name: 'NK Cell', image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png', unlocked: false, type: 'Single', damage: 100 }
-    ]);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            if (account?.address) {
-                // Fetch USDT Balance
-                const balance = await BlockchainService.getUSDTBalance(client, account.address);
-                setUsdtBalance(balance);
-
-                // Fetch Owned SBTs
-                const stats = await BlockchainService.getSBTStats(client, account.address);
-
-                // Update ownedTowers based on stats
-                setOwnedTowers(prev => prev.map(tower => {
-                    if (tower.id === 'bcell') return tower; // Always unlocked
-                    if (tower.id === 'macrophage' && stats.macrophage) return { ...tower, unlocked: true };
-                    if (tower.id === 'platelet' && stats.platelet) return { ...tower, unlocked: true };
-                    if (tower.id === 'basophil' && stats.basophil) return { ...tower, unlocked: true };
-                    if (tower.id === 'nkCell' && stats.nkCell) return { ...tower, unlocked: true };
-                    return { ...tower, unlocked: false };
-                }));
-            }
-        };
-        fetchData();
-    }, [account, client]);
 
     const recentGames = [
         { id: 1, wave: 5, date: '2025-11-24', result: 'Victory', score: 1250 },
@@ -196,10 +200,10 @@ function Dashboard() {
                         <div className="inventory-section glass fade-in" style={{ animationDelay: '0.1s' }}>
                             <div className="section-header">
                                 <h2>🎒 Tower Inventory</h2>
-                                <span className="inventory-count">{ownedTowers.filter(t => t.unlocked).length}/{ownedTowers.length}</span>
+                                <span className="inventory-count">{inventory.filter(t => t.unlocked).length}/{inventory.length}</span>
                             </div>
                             <div className="inventory-grid">
-                                {ownedTowers.map((tower) => (
+                                {inventory.map((tower) => (
                                     <div
                                         key={tower.id}
                                         className={`inventory-item ${tower.unlocked ? 'unlocked' : 'locked'}`}

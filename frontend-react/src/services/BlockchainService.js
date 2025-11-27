@@ -102,6 +102,56 @@ const BlockchainService = {
         return BlockchainService.checkUnlockSBT(walletAddress, type);
     },
 
+    purchaseMagicCard: async (walletAddress, type, cost, signAndExecute) => {
+        if (!walletAddress || !signAndExecute) return false;
+
+        try {
+            const tx = new Transaction();
+
+            if (cost > 0) {
+                // Convert SUI to MIST (1 SUI = 1,000,000,000 MIST)
+                const costInMist = BigInt(Math.floor(cost * 1_000_000_000));
+
+                // Split the gas coin to get the payment amount
+                const [coin] = tx.splitCoins(tx.gas, [costInMist]);
+
+                // Transfer to Treasury
+                const TREASURY_ADDRESS = "0x7d20dcdb2bca4f508ea9613994683eb4e76e9c4ed274648c22d9353e543b99";
+                tx.transferObjects([coin], TREASURY_ADDRESS);
+                console.log(`[Blockchain] 🔗 Preparing purchase tx for ${type} (${cost} SUI)`);
+            } else {
+                console.log(`[Blockchain] 🔗 Preparing free claim tx for ${type}`);
+                // For free claim, we just execute a transaction to prove active user/gas payment
+                // We could add a dummy move call here if needed, but an empty tx (paying gas) is also a form of interaction
+                // Or we can just transfer 0 coins? No, that's messy.
+                // Let's just let the transaction go through. 
+                // Note: Some wallets might warn about empty transactions. 
+                // To be safe, let's just do a self-transfer of 1 MIST if we really wanted to, but let's try empty first.
+            }
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Transaction successful! Digest: ${result.digest}`);
+                            // Unlock locally
+                            localStorage.setItem(`sbt_${type}_${walletAddress}`, 'true');
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Transaction failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error(`[Blockchain] Error preparing transaction:`, error);
+            return false;
+        }
+    },
+
     // Placeholder for future randomness
     getRandomness: async () => {
         const randomValue = Math.random();

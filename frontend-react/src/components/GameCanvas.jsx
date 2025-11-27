@@ -4,11 +4,11 @@ import { useCurrentAccount, useSignAndExecuteTransaction, useSuiClient } from '@
 import { useNavigate } from 'react-router-dom';
 import kaboom from 'kaboom';
 import GAME_CONFIG from '../gameConfig.js';
-import { UI_HEIGHT, getPaths } from '../game/constants.js';
+import { UI_HEIGHT, getPaths, MAGIC_CARD_COSTS } from '../game/constants.js';
 import { loadGameAssets } from '../game/assets.js';
 import { setupGameUI, showDamageNumber } from '../game/ui.js';
 import { GameState } from '../game/gameState.js';
-import { setupShop, updateMagicCardCooldownVisuals, updateTowerVisuals } from '../game/shop.js';
+import { setupShop, updateMagicCardCooldownVisuals, updateTowerVisuals, updateMagicCardVisuals } from '../game/shop.js';
 import { setupInput } from '../game/interaction.js';
 import { spawnWave, startNextWavePreparation, checkWaveCompletion, onWaveVictory } from '../game/waveManager.js';
 import BlockchainService from '../services/BlockchainService.js';
@@ -50,18 +50,18 @@ function GameCanvas() {
             setTimeout(() => {
                 if (kRef.current) return; // Double check
 
-                // Calculate responsive canvas size
-                const maxWidth = Math.min(window.innerWidth - 40, 1200);
-                const maxHeight = Math.min(window.innerHeight - 100, 800);
-                const aspectRatio = 4 / 3;
+                // Fixed logical resolution for consistent gameplay
+                const LOGICAL_WIDTH = 1024;
+                const LOGICAL_HEIGHT = 768;
 
-                let canvasWidth = maxWidth;
-                let canvasHeight = canvasWidth / aspectRatio;
+                // Calculate scale to fit window while maintaining aspect ratio
+                // We want to fit within the window minus some padding
+                const availableWidth = window.innerWidth - 40;
+                const availableHeight = window.innerHeight - 100;
 
-                if (canvasHeight > maxHeight) {
-                    canvasHeight = maxHeight;
-                    canvasWidth = canvasHeight * aspectRatio;
-                }
+                const scaleX = availableWidth / LOGICAL_WIDTH;
+                const scaleY = availableHeight / LOGICAL_HEIGHT;
+                const scale = Math.min(scaleX, scaleY);
 
                 // Check if canvas element is ready
                 if (!canvasRef.current) {
@@ -73,9 +73,9 @@ function GameCanvas() {
                     const k = kaboom({
                         canvas: canvasRef.current,
                         background: [20, 20, 30],
-                        width: canvasWidth,
-                        height: canvasHeight,
-                        scale: 1,
+                        width: LOGICAL_WIDTH,
+                        height: LOGICAL_HEIGHT,
+                        scale: scale, // Scale the entire game up/down
                         global: false,
                         debug: false, // Disable debug to prevent overlay crashes
                     });
@@ -87,23 +87,69 @@ function GameCanvas() {
                     loadGameAssets(k);
 
                     // Define Paths
-                    const { path1Points, path2Points } = getPaths(k, canvasWidth);
+                    const { path1Points, path2Points } = getPaths(k, LOGICAL_WIDTH);
 
                     // Define Game Scene
                     k.scene("main", () => {
-                        // Draw Paths
+                        // --- Background Texture (Organic Tissue) ---
+                        // Spawn random "cells" in the background
+                        for (let i = 0; i < 50; i++) {
+                            k.add([
+                                k.circle(k.rand(20, 100)),
+                                k.pos(k.rand(0, k.width()), k.rand(0, k.height())),
+                                k.color(30, 20, 40), // Dark purple/organic
+                                k.opacity(0.05), // Reduced opacity
+                                k.fixed(),
+                                k.z(-10) // Behind everything
+                            ]);
+                        }
+
+                        // --- Organic Obstacles (Bloons Style) ---
+                        // Add some large "organs" or cell clusters in empty spaces
+                        const obstacles = [
+                            { pos: k.vec2(150, 350), size: 60, color: k.rgb(40, 20, 50) },
+                            { pos: k.vec2(400, 150), size: 70, color: k.rgb(40, 20, 50) },
+                            { pos: k.vec2(550, 450), size: 50, color: k.rgb(40, 20, 50) }
+                        ];
+
+                        obstacles.forEach(obs => {
+                            k.add([
+                                k.circle(obs.size),
+                                k.pos(obs.pos),
+                                k.color(obs.color),
+                                k.opacity(0.4),
+                                k.fixed(),
+                                k.z(-5) // Behind paths but above background
+                            ]);
+                        });
+
+                        // Draw Paths (Veins)
                         k.onDraw(() => {
+                            const pulse = Math.sin(k.time() * 3) * 2; // Pulsing effect
+
+                            // Main Path
+                            // Glow/Bruise Layer
                             k.drawLines({
                                 pts: path1Points,
-                                width: 60,
-                                color: k.rgb(60, 0, 0),
+                                width: 80,
+                                color: k.rgb(50, 0, 0),
+                                opacity: 0.2,
                                 join: "round",
                                 cap: "round",
                             });
+                            // Outer Wall
                             k.drawLines({
-                                pts: path2Points,
-                                width: 60,
-                                color: k.rgb(60, 0, 0),
+                                pts: path1Points,
+                                width: 70,
+                                color: k.rgb(60, 5, 5), // Darker wall
+                                join: "round",
+                                cap: "round",
+                            });
+                            // Inner Stream (Blood)
+                            k.drawLines({
+                                pts: path1Points,
+                                width: 55 + pulse,
+                                color: k.rgb(180, 30, 30), // Vibrant blood red
                                 join: "round",
                                 cap: "round",
                             });
@@ -207,7 +253,7 @@ function GameCanvas() {
                             gameState.money += 50; // Lucky bonus!
                             k.add([
                                 k.text("LUCKY BONUS! +$50", { size: 32, font: "monogram" }),
-                                k.pos(canvasWidth / 2, canvasHeight / 2),
+                                k.pos(k.width() / 2, k.height() / 2 + 80), // Moved down
                                 k.anchor("center"),
                                 k.color(255, 215, 0),
                                 k.lifespan(3),
@@ -220,12 +266,28 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        setupShop(k, gameState, startDrag, account?.address, sbtStats, (type) => {
-                            if (gameState.magicCards[type].cooldownTimer <= 0) {
-                                activateMagicCard(k, gameState, type);
-                                gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
+                        // Setup Shop
+                        setupShop(k, gameState, startDrag, account?.address, sbtStats,
+                            // On Magic Card Click (Activate)
+                            (type) => {
+                                if (gameState.magicCards[type].cooldownTimer <= 0) {
+                                    activateMagicCard(k, gameState, type);
+                                    gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
+                                }
+                            },
+                            // On Magic Card Purchase (Disabled in-game)
+                            async (type, pos) => {
+                                k.shake(2);
+                                k.add([
+                                    k.text("Please buy in store first!", { size: 14, font: "monospace" }),
+                                    k.pos(pos.x, pos.y - 75),
+                                    k.anchor("center"),
+                                    k.color(248, 113, 113), // Red warning color
+                                    k.z(200),
+                                    k.lifespan(0.5, { fade: 0.5 })
+                                ]);
                             }
-                        });
+                        );
 
                         // Wave Management Callbacks
                         const handleWaveVictory = async (walletAddress, signAndExecute) => {
@@ -303,7 +365,6 @@ function GameCanvas() {
                         k.onUpdate(() => {
                             if (gameState.isPaused) return; // Don't update when paused
                             checkWaveCompletion(k, gameState, handleWaveVictory, account?.address, signAndExecute);
-
                             // Update Magic Card Cooldowns
                             gameState.updateCooldowns(k.dt());
 
@@ -312,11 +373,6 @@ function GameCanvas() {
                             magicTypes.forEach(type => {
                                 if (gameState.magicCards[type].owned) {
                                     const t = gameState.magicCards[type].cooldownTimer;
-                                    // Import this dynamically or ensure it's available
-                                    // Since we can't easily import inside the loop without refactoring imports, 
-                                    // we'll assume updateMagicCardCooldownVisuals is available or we need to import it at top level.
-                                    // Wait, I need to import it at the top of the file first.
-                                    // For now, let's use the imported function.
                                     updateMagicCardCooldownVisuals(k, type, t);
                                 }
                             });

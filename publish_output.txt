@@ -1,0 +1,1 @@
+Cannot find gas coin for signer address 0xa4598968402983bbe55efbb73cc62d83f7bac353f9b145d10e1edf79d318e15a with amount sufficient for the required gas budget 1000000000. If you are using the pay or transfer commands, you can use pay-sui or transfer-sui commands instead, which will use the only object as gas payment.

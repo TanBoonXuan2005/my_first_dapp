@@ -1,91 +1,84 @@
 
+
 export function setupGameUI(k, UI_HEIGHT) {
-    // UI Background (Darker, slightly transparent)
+    // UI Background (Glassmorphism Panel) - Top Bar
     k.add([
         k.rect(k.width(), UI_HEIGHT),
         k.pos(0, 0),
-        k.color(15, 23, 42), // --bg-primary
-        k.opacity(0.9),
+        k.color(15, 23, 42), // Dark blue base
+        k.opacity(0.6), // More transparent
         k.z(100),
         "ui-bg"
     ]);
 
-    // Bottom Border for UI
+    // Bottom Border (Gradient-like line)
     k.add([
-        k.rect(k.width(), 2),
+        k.rect(k.width(), 1),
         k.pos(0, UI_HEIGHT),
-        k.color(56, 189, 248), // --accent-primary
+        k.color(56, 189, 248), // Cyan accent
         k.opacity(0.3),
         k.z(100)
     ]);
 
-    // Shop Label
-    k.add([
-        k.text("DEFENSE SYSTEMS", { size: 16, font: "monospace" }),
-        k.pos(20, 20),
-        k.color(148, 163, 184), // --text-secondary
-        k.z(101)
-    ]);
-
-    // Health Display
-    const healthContainer = k.add([
-        k.rect(160, 40, { radius: 8 }),
-        k.pos(k.width() - 200, 20),
-        k.color(30, 41, 59), // --bg-secondary
-        k.outline(1, k.rgb(255, 255, 255)), // slight border
-        k.z(101)
-    ]);
-    healthContainer.outline.color = k.rgb(50, 50, 60); // Fix outline color manually if needed
-
-    const healthText = k.add([
-        k.text("❤️ 100", { size: 24, font: "monospace" }),
-        k.pos(k.width() - 120, 40),
-        k.anchor("center"),
-        k.color(248, 113, 113), // Red
-        k.z(102),
-        "health-text"
-    ]);
-
-    // ATP Display (currency)
-    const atpContainer = k.add([
-        k.rect(160, 40, { radius: 8 }),
-        k.pos(k.width() - 200, 70),
-        k.color(30, 41, 59), // --bg-secondary
-        k.z(101)
-    ]);
-
-    const atpText = k.add([
-        k.text("⚡ 50", { size: 24, font: "monospace" }),
-        k.pos(k.width() - 120, 90),
-        k.anchor("center"),
-        k.color(56, 189, 248), // --accent-primary
-        k.z(102),
-        "atp-text"
-    ]);
-
-    // Wave Number Display
+    // --- Wave Display (Center) ---
     const waveContainer = k.add([
-        k.rect(200, 50, { radius: 12 }),
-        k.pos(k.width() / 2, 40),
+        k.rect(160, 36, { radius: 18 }),
+        k.pos(k.width() / 2, UI_HEIGHT / 2),
         k.anchor("center"),
-        k.color(15, 23, 42),
-        k.outline(2, k.rgb(56, 189, 248)),
+        k.color(30, 41, 59),
+        k.outline(1, k.rgb(56, 189, 248)),
         k.z(101)
     ]);
 
     const waveNumberText = k.add([
-        k.text("WAVE 1", { size: 28, font: "monospace" }),
-        k.pos(k.width() / 2, 40),
+        k.text("WAVE 1", { size: 18, font: "monospace" }),
+        k.pos(k.width() / 2, UI_HEIGHT / 2),
         k.anchor("center"),
         k.color(255, 255, 255),
         k.z(102),
         "wave-text"
     ]);
 
-    // Menu Button
+    // --- Health Display (Left) ---
+    // Icon
+    k.add([
+        k.text("❤️", { size: 20 }),
+        k.pos(30, UI_HEIGHT / 2),
+        k.anchor("center"),
+        k.z(102)
+    ]);
+
+    const healthText = k.add([
+        k.text("100", { size: 20, font: "monospace" }),
+        k.pos(60, UI_HEIGHT / 2),
+        k.anchor("left"),
+        k.color(248, 113, 113), // Red
+        k.z(102),
+        "health-text"
+    ]);
+
+    // --- ATP Display (Right - Left of Menu) ---
+    // Icon
+    k.add([
+        k.text("⚡", { size: 20 }),
+        k.pos(k.width() - 220, UI_HEIGHT / 2), // Moved further left (was 180)
+        k.anchor("center"),
+        k.z(102)
+    ]);
+
+    const atpText = k.add([
+        k.text("50", { size: 20, font: "monospace" }),
+        k.pos(k.width() - 190, UI_HEIGHT / 2), // Moved further left (was 150)
+        k.anchor("left"),
+        k.color(56, 189, 248), // Cyan
+        k.z(102),
+        "atp-text"
+    ]);
+
+    // --- Menu Button (Top Right) ---
     const menuBtn = k.add([
-        k.rect(100, 36, { radius: 8 }),
-        k.pos(k.width() - 60, 40),
+        k.rect(36, 36, { radius: 8 }),
+        k.pos(k.width() - 40, UI_HEIGHT / 2),
         k.anchor("center"),
         k.color(30, 41, 59),
         k.outline(1, k.rgb(148, 163, 184)),
@@ -94,27 +87,115 @@ export function setupGameUI(k, UI_HEIGHT) {
         "menu-btn"
     ]);
 
-    const menuText = k.add([
-        k.text("MENU", { size: 16 }),
-        k.pos(k.width() - 60, 40),
-        k.anchor("center"),
-        k.color(226, 232, 240),
-        k.z(102)
-    ]);
-
-
+    // Hamburger Icon (Simple lines)
+    const iconColor = k.rgb(226, 232, 240);
+    menuBtn.add([k.rect(18, 2), k.pos(0, -5), k.anchor("center"), k.color(iconColor)]);
+    menuBtn.add([k.rect(18, 2), k.pos(0, 0), k.anchor("center"), k.color(iconColor)]);
+    menuBtn.add([k.rect(18, 2), k.pos(0, 5), k.anchor("center"), k.color(iconColor)]);
 
     // Menu Button Hover Effects
     menuBtn.onHover(() => {
         menuBtn.color = k.rgb(51, 65, 85);
+        menuBtn.outline.color = k.rgb(56, 189, 248);
         k.setCursor("pointer");
     });
     menuBtn.onHoverEnd(() => {
         menuBtn.color = k.rgb(30, 41, 59);
+        menuBtn.outline.color = k.rgb(148, 163, 184);
         k.setCursor("default");
     });
 
     return { healthText, atpText, waveNumberText, menuBtn };
+}
+
+export function showPauseMenu(k, onResume, onRestart, onHome) {
+    // Dark Overlay
+    k.add([
+        k.rect(k.width(), k.height()),
+        k.pos(0, 0),
+        k.color(0, 0, 0),
+        k.opacity(0.8),
+        k.fixed(),
+        k.z(400),
+        "pause-menu"
+    ]);
+
+    // Menu Container (Glassmorphism)
+    const menuBox = k.add([
+        k.rect(360, 420, { radius: 24 }),
+        k.pos(k.width() / 2, k.height() / 2),
+        k.anchor("center"),
+        k.color(30, 41, 59),
+        k.outline(2, k.rgb(56, 189, 248)),
+        k.fixed(),
+        k.z(401),
+        "pause-menu"
+    ]);
+
+    // Title
+    k.add([
+        k.text("PAUSED", { size: 40, font: "monospace" }),
+        k.pos(k.width() / 2, k.height() / 2 - 140),
+        k.anchor("center"),
+        k.color(255, 255, 255),
+        k.fixed(),
+        k.z(402),
+        "pause-menu"
+    ]);
+
+    // Helper to create styled buttons
+    function createButton(text, yOffset, baseColor, hoverColor, onClick) {
+        const btn = k.add([
+            k.rect(260, 60, { radius: 12 }),
+            k.pos(k.width() / 2, k.height() / 2 + yOffset),
+            k.anchor("center"),
+            k.color(baseColor),
+            k.area(),
+            k.fixed(),
+            k.z(402),
+            "pause-menu"
+        ]);
+
+        btn.add([
+            k.text(text, { size: 20, font: "monospace" }),
+            k.anchor("center"),
+            k.color(255, 255, 255)
+        ]);
+
+        btn.onClick(onClick);
+
+        // Hover Effect
+        btn.onHover(() => {
+            btn.color = hoverColor;
+            btn.scale = k.vec2(1.05);
+            k.setCursor("pointer");
+        });
+        btn.onHoverEnd(() => {
+            btn.color = baseColor;
+            btn.scale = k.vec2(1);
+            k.setCursor("default");
+        });
+
+        return btn;
+    }
+
+    // RESUME Button (Primary Action - Cyan/Blue)
+    createButton("RESUME GAME", -40, k.rgb(14, 165, 233), k.rgb(56, 189, 248), () => {
+        k.destroyAll("pause-menu");
+        onResume();
+    });
+
+    // RESTART Button (Secondary Action - Muted Blue)
+    createButton("RESTART LEVEL", 40, k.rgb(51, 65, 85), k.rgb(71, 85, 105), () => {
+        k.destroyAll("pause-menu");
+        onRestart();
+    });
+
+    // HOME Button (Destructive/Exit - Reddish/Muted)
+    createButton("EXIT TO HOME", 120, k.rgb(185, 28, 28), k.rgb(220, 38, 38), () => {
+        k.destroyAll("pause-menu");
+        onHome();
+    });
 }
 
 export function showGameOver(k) {
@@ -172,81 +253,5 @@ export function showDamageNumber(k, pos, damage, gameState) {
         damageText.pos.y -= k.dt() * 30;
         damageText.opacity = 1 - (elapsed / 0.8);
         if (elapsed >= 0.8) k.destroy(damageText);
-    });
-}
-
-export function showPauseMenu(k, onResume, onRestart, onHome) {
-    // Overlay
-    const overlay = k.add([
-        k.rect(k.width(), k.height()),
-        k.pos(0, 0),
-        k.color(0, 0, 0),
-        k.opacity(0.7),
-        k.fixed(),
-        k.z(400),
-        "pause-menu"
-    ]);
-
-    const menuBox = k.add([
-        k.rect(300, 300, { radius: 8 }),
-        k.pos(k.width() / 2, k.height() / 2),
-        k.anchor("center"),
-        k.color(50, 50, 60),
-        k.fixed(),
-        k.z(401),
-        "pause-menu"
-    ]);
-
-    k.add([
-        k.text("PAUSED", { size: 32 }),
-        k.pos(k.width() / 2, k.height() / 2 - 100),
-        k.anchor("center"),
-        k.color(255, 255, 255),
-        k.fixed(),
-        k.z(402),
-        "pause-menu"
-    ]);
-
-    // Helper to create buttons
-    function createButton(text, yOffset, onClick) {
-        const btn = k.add([
-            k.rect(200, 50, { radius: 4 }),
-            k.pos(k.width() / 2, k.height() / 2 + yOffset),
-            k.anchor("center"),
-            k.color(80, 80, 90),
-            k.area(),
-            k.fixed(),
-            k.z(402),
-            "pause-menu-btn" // Tag for easier cleanup if needed, though we destroy by tag "pause-menu"
-        ]);
-
-        btn.add([
-            k.text(text, { size: 20 }),
-            k.anchor("center"),
-            k.color(255, 255, 255)
-        ]);
-
-        btn.onClick(onClick);
-        btn.onHover(() => btn.color = k.rgb(100, 100, 110));
-        btn.onHoverEnd(() => btn.color = k.rgb(80, 80, 90));
-
-        // Add "pause-menu" tag to button for group destruction
-        btn.use("pause-menu");
-        return btn;
-    }
-
-    createButton("RESUME", -30, () => {
-        k.destroyAll("pause-menu");
-        onResume();
-    });
-
-    createButton("RESTART", 40, () => {
-        k.destroyAll("pause-menu");
-        onRestart();
-    });
-
-    createButton("HOME", 110, () => {
-        k.destroyAll("pause-menu");
-        onHome();
     });
 }

@@ -1,32 +1,38 @@
-
 export const TOWER_COST = {
     bcell: 10,
     macrophage: 20,
     platelet: 15,
     basophil: 25,
-    nkCell: 30
+    nkCell: 25
 };
 
-export const UI_HEIGHT = 135;
+export const MAGIC_CARD_COSTS = {
+    heal: 0,
+    nuke: 0,
+    freeze: 0,
+    poison: 0
+};
+
+export const UI_HEIGHT = 60;
 
 export function getPaths(k, canvasWidth) {
+    // Single winding path (Bloons style)
     const path1Points = [
-        k.vec2(0, 165),
-        k.vec2(200, 165),
-        k.vec2(300, 265),
-        k.vec2(500, 265),
-        k.vec2(600, 315),
-        k.vec2(canvasWidth, 300)
+        k.vec2(0, 200),
+        k.vec2(200, 200),
+        k.vec2(300, 250),
+        k.vec2(200, 350),
+        k.vec2(100, 350),
+        k.vec2(100, 500),
+        k.vec2(300, 500),
+        k.vec2(400, 400),
+        k.vec2(500, 450),
+        k.vec2(600, 400),
+        k.vec2(canvasWidth, 400)
     ];
 
-    const path2Points = [
-        k.vec2(0, 450),
-        k.vec2(200, 450),
-        k.vec2(300, 350),
-        k.vec2(500, 350),
-        k.vec2(600, 300),
-        k.vec2(canvasWidth, 300)
-    ];
+    // Path 2 is now identical to Path 1 (single path gameplay)
+    const path2Points = [...path1Points];
 
     return { path1Points, path2Points };
 }

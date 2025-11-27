@@ -135,42 +135,58 @@ function Store() {
         }
     ];
 
-    const handlePurchase = async (tower) => {
+    const handlePurchase = async (item) => {
         if (!account) {
             alert('Please connect your wallet first!');
             return;
         }
 
-        if (tower.unlocked) {
-            alert('You already own this tower!');
+        if (item.unlocked) {
+            alert('You already own this item!');
             return;
         }
 
-        if (usdtBalance < tower.price) {
-            alert(`Insufficient USDT! You need ${tower.price} USDT.`);
-            return;
-        }
+        // Magic Card Logic
+        if (item.cooldown !== undefined) {
+            const confirmed = confirm(`Claim ${item.name} for FREE?`);
+            if (!confirmed) return;
 
-        if (isPurchasing) return;
+            // Use mintMagicCard from Local BlockchainService
+            const success = await BlockchainService.mintMagicCard(account.address, item.id, signAndExecute);
+            if (success) {
+                setOwnedMagicCards(prev => ({ ...prev, [item.id]: true }));
+                alert(`Successfully claimed ${item.name}!`);
+            } else {
+                alert("Claim failed. Check console for details.");
+            }
+        } else {
+            // Tower Logic (USDT Purchase)
+            if (usdtBalance < item.price) {
+                alert(`Insufficient USDT! You need ${item.price} USDT.`);
+                return;
+            }
 
-        setIsPurchasing(true);
-        const success = await BlockchainService.purchaseCell(client, account.address, tower.id, tower.price, signAndExecute);
-        setIsPurchasing(false);
+            if (isPurchasing) return;
 
-        if (success) {
-            alert(`Successfully purchased ${tower.name}!`);
-            // Refresh data
-            const balance = await BlockchainService.getUSDTBalance(client, account.address);
-            setUsdtBalance(balance);
+            setIsPurchasing(true);
+            const success = await BlockchainService.purchaseCell(client, account.address, item.id, item.price, signAndExecute);
+            setIsPurchasing(false);
 
-            const stats = await BlockchainService.getSBTStats(client, account.address);
-            setOwnedTowers(prev => ({
-                ...prev,
-                macrophage: !!stats.macrophage,
-                platelet: !!stats.platelet,
-                basophil: !!stats.basophil,
-                nkCell: !!stats.nkCell
-            }));
+            if (success) {
+                alert(`Successfully purchased ${item.name}!`);
+                // Refresh data
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setOwnedTowers(prev => ({
+                    ...prev,
+                    macrophage: !!stats.macrophage,
+                    platelet: !!stats.platelet,
+                    basophil: !!stats.basophil,
+                    nkCell: !!stats.nkCell
+                }));
+            }
         }
     };
 
