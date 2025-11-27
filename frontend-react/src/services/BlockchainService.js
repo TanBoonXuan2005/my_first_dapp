@@ -81,6 +81,14 @@ const BlockchainService = {
         return BlockchainService.mintUnlockSBT(walletAddress, 'basophil', signAndExecute);
     },
 
+    checkDefenderLicense: async (walletAddress) => {
+        return BlockchainService.checkUnlockSBT(walletAddress, 'defender_license');
+    },
+
+    mintDefenderLicense: async (walletAddress, signAndExecute) => {
+        return BlockchainService.mintUnlockSBT(walletAddress, 'defender_license', signAndExecute);
+    },
+
     checkMagicCard: async (walletAddress, type) => {
         return BlockchainService.checkUnlockSBT(walletAddress, type);
     },
@@ -95,7 +103,7 @@ const BlockchainService = {
     // Dev Tools
     resetSBTs: async (walletAddress) => {
         if (!walletAddress) return;
-        const types = ['macrophage', 'platelet', 'basophil', 'nkCell'];
+        const types = ['macrophage', 'platelet', 'basophil', 'nkCell', 'defender_license'];
         types.forEach(type => {
             localStorage.removeItem(`sbt_${type}_${walletAddress}`);
         });
@@ -105,7 +113,7 @@ const BlockchainService = {
 
     getOwnedSBTs: async (walletAddress) => {
         if (!walletAddress) return [];
-        const types = ['macrophage', 'platelet', 'basophil', 'nkCell'];
+        const types = ['macrophage', 'platelet', 'basophil', 'nkCell', 'defender_license'];
         const owned = [];
         for (const type of types) {
             const has = await BlockchainService.checkUnlockSBT(walletAddress, type);
