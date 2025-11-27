@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
 import BlockchainService from '../services/BlockchainService';
+import GAME_CONFIG from '../gameConfig.js';
 import './Store.css';
 
 function Store() {
@@ -44,9 +45,9 @@ function Store() {
             name: 'B-Cell',
             description: 'Produces antibodies to target enemies from a distance',
             image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png',
-            damage: 10,
-            range: 150,
-            speed: 'Medium',
+            damage: GAME_CONFIG.towers.bCell.damage,
+            range: GAME_CONFIG.towers.bCell.range,
+            speed: 'Medium', // Could derive this from attackSpeed if we wanted logic
             price: 0,
             unlocked: true,
             stats: { damage: 10, range: 150, speed: 'Medium' }
@@ -56,36 +57,44 @@ function Store() {
             name: 'Macrophage',
             description: 'A powerful general-purpose defense unit.',
             image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png',
-            price: 500,
-            unlocked: ownedTowers.macrophage,
-            stats: { damage: 25, range: 120, speed: 'Medium' }
+            damage: GAME_CONFIG.towers.macrophage.damage,
+            range: GAME_CONFIG.towers.macrophage.range,
+            speed: 'Slow',
+            price: 100,
+            unlocked: ownedTowers.macrophage
         },
         {
             id: 'platelet',
             name: 'Platelet',
             description: 'Support unit that slows down enemies.',
             image: '/assets/animation_frames/Platelet/Platelet_Idle.png',
-            price: 750,
-            unlocked: ownedTowers.platelet,
-            stats: { damage: 5, range: 180, speed: 'Fast' }
+            damage: GAME_CONFIG.towers.platelet.damage,
+            range: GAME_CONFIG.towers.platelet.range,
+            speed: 'Fast',
+            price: 150,
+            unlocked: ownedTowers.platelet
         },
         {
             id: 'basophil',
             name: 'Basophil',
             description: 'Heavy bomber that deals area damage.',
             image: '/assets/animation_frames/Basophil/Basophil_Idle.png',
-            price: 1000,
-            unlocked: ownedTowers.basophil,
-            stats: { damage: 10, range: 150, speed: 'Slow' }
+            damage: GAME_CONFIG.towers.basophil.damage,
+            range: GAME_CONFIG.towers.basophil.range,
+            speed: 'Very Slow',
+            price: 200,
+            unlocked: ownedTowers.basophil
         },
         {
             id: 'nkCell',
             name: 'NK Cell',
-            description: 'High-damage single-target unit.',
-            price: 2000,
-            image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png',
-            unlocked: ownedTowers.nkCell,
-            stats: { damage: 100, range: 400, speed: 'Slow' }
+            description: 'High damage sniper unit that targets strong enemies',
+            image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Down.png',
+            damage: GAME_CONFIG.towers.nkCell.damage,
+            range: GAME_CONFIG.towers.nkCell.range,
+            speed: 'Slow',
+            price: 250,
+            unlocked: ownedTowers.nkCell
         }
     ];
 
@@ -242,14 +251,14 @@ function Store() {
                                         <div className="stat-item">
                                             <span className="stat-label">Damage</span>
                                             <div className="stat-bar-container">
-                                                <div className="stat-bar" style={{ width: `${(tower.damage / 30) * 100}%` }}></div>
+                                                <div className="stat-bar" style={{ width: `${Math.min((tower.damage / 100) * 100, 100)}%` }}></div>
                                             </div>
                                             <span className="stat-value">{tower.damage}</span>
                                         </div>
                                         <div className="stat-item">
                                             <span className="stat-label">Range</span>
                                             <div className="stat-bar-container">
-                                                <div className="stat-bar" style={{ width: `${(tower.range / 250) * 100}%` }}></div>
+                                                <div className="stat-bar" style={{ width: `${Math.min((tower.range / 500) * 100, 100)}%` }}></div>
                                             </div>
                                             <span className="stat-value">{tower.range}</span>
                                         </div>
