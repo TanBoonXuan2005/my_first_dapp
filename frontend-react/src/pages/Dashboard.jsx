@@ -18,9 +18,9 @@ function Dashboard() {
 
     const handleMintUSDT = async () => {
         if (!account?.address) return;
-        const success = await BlockchainService.mintUSDT(client, account.address, 100, signAndExecute);
+        const success = await BlockchainService.mintUSDT(client, account.address, 10000, signAndExecute);
         if (success) {
-            alert("Successfully minted 100 USDT!");
+            alert("Successfully minted 10,000 USDT!");
             // Refresh data logic is now centralized in useEffect, but for manual refresh:
             const balance = await BlockchainService.getUSDTBalance(client, account.address);
             setUsdtBalance(balance);
@@ -31,7 +31,8 @@ function Dashboard() {
         { id: 'bcell', name: 'B-Cell', image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png', unlocked: true, type: 'Ranged', damage: 15 },
         { id: 'macrophage', name: 'Macrophage', image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png', unlocked: false, type: 'Melee', damage: 25 },
         { id: 'platelet', name: 'Platelet', image: '/assets/animation_frames/Platelet/Platelet_Idle.png', unlocked: false, type: 'Support', damage: 5 },
-        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 }
+        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 },
+        { id: 'nkCell', name: 'NK Cell', image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png', unlocked: false, type: 'Single', damage: 100 }
     ]);
 
     useEffect(() => {
@@ -48,11 +49,13 @@ function Dashboard() {
                 const macrophageUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'macrophage');
                 const plateletUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'platelet');
                 const basophilUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'basophil');
+                const nkCellUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'nkCell');
 
                 setInventory(prev => prev.map(item => {
                     if (item.id === 'macrophage') return { ...item, unlocked: !!sbtStats.macrophage || macrophageUnlocked };
                     if (item.id === 'platelet') return { ...item, unlocked: !!sbtStats.platelet || plateletUnlocked };
                     if (item.id === 'basophil') return { ...item, unlocked: !!sbtStats.basophil || basophilUnlocked };
+                    if (item.id === 'nkCell') return { ...item, unlocked: !!sbtStats.nkCell || nkCellUnlocked };
                     return item;
                 }));
             };
@@ -165,7 +168,7 @@ function Dashboard() {
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            +100
+                                            +10,000
                                         </button>
                                     </div>
                                 </div>
