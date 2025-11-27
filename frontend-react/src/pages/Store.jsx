@@ -1,15 +1,42 @@
-import { useState } from 'react';
-import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useState, useEffect } from 'react';
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
+import BlockchainService from '../services/BlockchainService';
 import './Store.css';
 
 function Store() {
     const account = useCurrentAccount();
+    const client = useSuiClient();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+    const [usdtBalance, setUsdtBalance] = useState(0);
+    const [isPurchasing, setIsPurchasing] = useState(false);
     const [ownedTowers, setOwnedTowers] = useState({
         bcell: true, // Always owned
         macrophage: false,
         platelet: false,
-        basophil: false
+        basophil: false,
+        nkCell: false
     });
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (account?.address) {
+                // Fetch USDT Balance
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
+                // Fetch Owned SBTs
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setOwnedTowers(prev => ({
+                    ...prev,
+                    macrophage: !!stats.macrophage,
+                    platelet: !!stats.platelet,
+                    basophil: !!stats.basophil,
+                    nkCell: !!stats.nkCell
+                }));
+            }
+        };
+        fetchData();
+    }, [account, client]);
 
     const towers = [
         {
@@ -21,40 +48,44 @@ function Store() {
             range: 150,
             speed: 'Medium',
             price: 0,
-            unlocked: true
+            unlocked: true,
+            stats: { damage: 10, range: 150, speed: 'Medium' }
         },
         {
             id: 'macrophage',
             name: 'Macrophage',
-            description: 'Engulfs nearby enemies with powerful area attacks',
+            description: 'A powerful general-purpose defense unit.',
             image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png',
-            damage: 15,
-            range: 120,
-            speed: 'Slow',
-            price: 100,
-            unlocked: ownedTowers.macrophage
+            price: 500,
+            unlocked: ownedTowers.macrophage,
+            stats: { damage: 25, range: 120, speed: 'Medium' }
         },
         {
             id: 'platelet',
             name: 'Platelet',
-            description: 'Deploys fibrin nets to slow down enemies',
+            description: 'Support unit that slows down enemies.',
             image: '/assets/animation_frames/Platelet/Platelet_Idle.png',
-            damage: 8,
-            range: 180,
-            speed: 'Fast',
-            price: 150,
-            unlocked: ownedTowers.platelet
+            price: 750,
+            unlocked: ownedTowers.platelet,
+            stats: { damage: 5, range: 180, speed: 'Fast' }
         },
         {
             id: 'basophil',
             name: 'Basophil',
-            description: 'Releases explosive histamine bombs for area damage',
+            description: 'Heavy bomber that deals area damage.',
             image: '/assets/animation_frames/Basophil/Basophil_Idle.png',
-            damage: 25,
-            range: 200,
-            speed: 'Very Slow',
-            price: 200,
-            unlocked: ownedTowers.basophil
+            price: 1000,
+            unlocked: ownedTowers.basophil,
+            stats: { damage: 10, range: 150, speed: 'Slow' }
+        },
+        {
+            id: 'nkCell',
+            name: 'NK Cell',
+            description: 'High-damage single-target unit.',
+            price: 2000,
+            image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png',
+            unlocked: ownedTowers.nkCell,
+            stats: { damage: 100, range: 400, speed: 'Slow' }
         }
     ];
 
@@ -104,7 +135,7 @@ function Store() {
         }
     ];
 
-    const handlePurchase = (tower) => {
+    const handlePurchase = async (tower) => {
         if (!account) {
             alert('Please connect your wallet first!');
             return;
@@ -115,8 +146,32 @@ function Store() {
             return;
         }
 
-        // TODO: Implement blockchain purchase
-        alert(`Purchase ${tower.name} for ${tower.price} ATP - Coming soon!`);
+        if (usdtBalance < tower.price) {
+            alert(`Insufficient USDT! You need ${tower.price} USDT.`);
+            return;
+        }
+
+        if (isPurchasing) return;
+
+        setIsPurchasing(true);
+        const success = await BlockchainService.purchaseCell(client, account.address, tower.id, tower.price, signAndExecute);
+        setIsPurchasing(false);
+
+        if (success) {
+            alert(`Successfully purchased ${tower.name}!`);
+            // Refresh data
+            const balance = await BlockchainService.getUSDTBalance(client, account.address);
+            setUsdtBalance(balance);
+
+            const stats = await BlockchainService.getSBTStats(client, account.address);
+            setOwnedTowers(prev => ({
+                ...prev,
+                macrophage: !!stats.macrophage,
+                platelet: !!stats.platelet,
+                basophil: !!stats.basophil,
+                nkCell: !!stats.nkCell
+            }));
+        }
     };
 
     return (
@@ -127,10 +182,10 @@ function Store() {
                     <p>Acquire advanced immune cells and upgrades to strengthen your defenses.</p>
                     {account ? (
                         <div className="atp-balance glass-strong">
-                            <span className="atp-icon">⚡</span>
+                            <span className="atp-icon">💲</span>
                             <div className="balance-info">
-                                <span className="balance-label">Current Balance</span>
-                                <span className="atp-amount">500 ATP</span>
+                                <span className="balance-label">USDT Balance</span>
+                                <span className="atp-amount">{usdtBalance.toLocaleString()} USDT</span>
                             </div>
                         </div>
                     ) : (
@@ -202,9 +257,10 @@ function Store() {
                                         <button
                                             className="btn btn-primary full-width"
                                             onClick={() => handlePurchase(tower)}
+                                            disabled={isPurchasing}
                                         >
-                                            <span className="price-tag">{tower.price} ATP</span>
-                                            <span className="action-text">Purchase</span>
+                                            <span className="price-tag">{tower.price.toLocaleString()} USDT</span>
+                                            <span className="action-text">{isPurchasing ? 'Buying...' : 'Purchase'}</span>
                                         </button>
                                     )}
                                 </div>

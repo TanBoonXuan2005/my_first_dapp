@@ -11,23 +11,18 @@ function Dashboard() {
     const navigate = useNavigate();
     const [usdtBalance, setUsdtBalance] = useState(0);
 
-    const fetchBalance = async () => {
-        if (account?.address) {
-            const balance = await BlockchainService.getUSDTBalance(client, account.address);
-            setUsdtBalance(balance);
-        }
-    };
 
-    useEffect(() => {
-        fetchBalance();
-    }, [account, client]);
+
+
 
     const handleMintUSDT = async () => {
         if (!account?.address) return;
         const success = await BlockchainService.mintUSDT(client, account.address, 100, signAndExecute);
         if (success) {
             alert("Successfully minted 100 USDT!");
-            fetchBalance();
+            // Refresh data logic is now centralized in useEffect, but for manual refresh:
+            const balance = await BlockchainService.getUSDTBalance(client, account.address);
+            setUsdtBalance(balance);
         }
     };
 
@@ -38,12 +33,37 @@ function Dashboard() {
         totalEnemiesDefeated: 247
     };
 
-    const ownedTowers = [
+    const [ownedTowers, setOwnedTowers] = useState([
         { id: 'bcell', name: 'B-Cell', image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png', unlocked: true, type: 'Ranged', damage: 15 },
-        { id: 'macrophage', name: 'Macrophage', image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png', unlocked: true, type: 'Melee', damage: 25 },
+        { id: 'macrophage', name: 'Macrophage', image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png', unlocked: false, type: 'Melee', damage: 25 },
         { id: 'platelet', name: 'Platelet', image: '/assets/animation_frames/Platelet/Platelet_Idle.png', unlocked: false, type: 'Support', damage: 5 },
-        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 }
-    ];
+        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 },
+        { id: 'nkCell', name: 'NK Cell', image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png', unlocked: false, type: 'Single', damage: 100 }
+    ]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (account?.address) {
+                // Fetch USDT Balance
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
+                // Fetch Owned SBTs
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+
+                // Update ownedTowers based on stats
+                setOwnedTowers(prev => prev.map(tower => {
+                    if (tower.id === 'bcell') return tower; // Always unlocked
+                    if (tower.id === 'macrophage' && stats.macrophage) return { ...tower, unlocked: true };
+                    if (tower.id === 'platelet' && stats.platelet) return { ...tower, unlocked: true };
+                    if (tower.id === 'basophil' && stats.basophil) return { ...tower, unlocked: true };
+                    if (tower.id === 'nkCell' && stats.nkCell) return { ...tower, unlocked: true };
+                    return { ...tower, unlocked: false };
+                }));
+            }
+        };
+        fetchData();
+    }, [account, client]);
 
     const recentGames = [
         { id: 1, wave: 5, date: '2025-11-24', result: 'Victory', score: 1250 },
