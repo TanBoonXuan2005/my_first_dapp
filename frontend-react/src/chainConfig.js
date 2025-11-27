@@ -1,5 +1,4 @@
-// After deploying with 'one client publish', paste your Package ID here
-export const PACKAGE_ID = "0x3c8d0eacd4640e02f346f483148089563d44dab255d024015efa645120dbb1d8";
+export const PACKAGE_ID = "0xae2b1f86920c0a06ec9386dfa3732593def963ba8a3bb31e649ac8dace71c3a7";
 export const MODULE_NAME = "game_core";
-export const USDT_TREASURY_CAP_ID = "0xd8f560dcfed0cad52cf2e31e0b930138c0be8b4232ac918f3073af7c1b81d99e";
-export const USDT_ID = "0x3c8d0eacd4640e02f346f483148089563d44dab255d024015efa645120dbb1d8::usdt::USDT";
+export const USDT_TREASURY_CAP_ID = "0x77f0e34e3f6ccdf04693afd4f809c45c995e43a23f5458340735cc04573da0de";
+export const USDT_ID = "0xae2b1f86920c0a06ec9386dfa3732593def963ba8a3bb31e649ac8dace71c3a7::usdt::USDT";
