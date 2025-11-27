@@ -296,8 +296,8 @@ function GameCanvas() {
                                 const completedWave = gameState.currentWaveIndex + 1;
                                 console.log(`[Game] Victory at Wave ${completedWave}. Checking unlocks...`);
 
-                                // Wave 1 Victory -> Unlock Macrophage (for Wave 2)
-                                if (completedWave === 1) {
+                                // Wave 9 Victory -> Unlock Macrophage (for Wave 10)
+                                if (completedWave === 9) {
                                     const hasMacrophage = await BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
                                     if (!hasMacrophage) {
                                         console.log("[Game] Unlocking Macrophage...");
@@ -309,8 +309,8 @@ function GameCanvas() {
                                     }
                                 }
 
-                                // Wave 2 Victory -> Unlock Basophil (for Wave 3)
-                                if (completedWave === 2) {
+                                // Wave 3 Victory -> Unlock Basophil (for Wave 4)
+                                if (completedWave === 3) {
                                     const hasBasophil = await BlockchainService.checkUnlockSBT(walletAddress, 'basophil');
                                     if (!hasBasophil) {
                                         console.log("[Game] Unlocking Basophil...");
@@ -322,8 +322,8 @@ function GameCanvas() {
                                     }
                                 }
 
-                                // Wave 3 Victory -> Unlock Platelet (for Wave 4)
-                                if (completedWave === 3) {
+                                // Wave 6 Victory -> Unlock Platelet (for Wave 7)
+                                if (completedWave === 6) {
                                     const hasPlatelet = await BlockchainService.checkUnlockSBT(walletAddress, 'platelet');
                                     if (!hasPlatelet) {
                                         console.log("[Game] Unlocking Platelet...");
@@ -335,8 +335,8 @@ function GameCanvas() {
                                     }
                                 }
 
-                                // Wave 4 Victory -> Unlock NK Cell (for Wave 5)
-                                if (completedWave === 4) {
+                                // Wave 12 Victory -> Unlock NK Cell (for Wave 13)
+                                if (completedWave === 12) {
                                     const hasNK = await BlockchainService.checkUnlockSBT(walletAddress, 'nk_cell');
                                     if (!hasNK) {
                                         console.log("[Game] Unlocking NK Cell...");
