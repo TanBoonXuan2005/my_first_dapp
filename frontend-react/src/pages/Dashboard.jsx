@@ -3,8 +3,7 @@ import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@
 import { useNavigate } from 'react-router-dom';
 import BlockchainService from '../services/BlockchainService';
 import './Dashboard.css';
-import BlockchainService from '../services/BlockchainService';
-import { useState, useEffect } from 'react';
+
 
 function Dashboard() {
     const account = useCurrentAccount();
