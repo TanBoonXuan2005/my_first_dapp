@@ -1,7 +1,7 @@
 // BlockchainService.js
 // Utility service for OneChain interactions using Move SDK
 import { Transaction } from '@onelabs/sui/transactions';
-import { PACKAGE_ID, MODULE_NAME } from '../chainConfig';
+import { PACKAGE_ID, MODULE_NAME, USDT_TREASURY_CAP_ID } from '../chainConfig';
 
 const BlockchainService = {
     // Helper to format address
@@ -178,6 +178,60 @@ const BlockchainService = {
         } catch (err) {
             console.error("[Blockchain] Error fetching USDT balance:", err);
             return 0;
+        }
+    },
+
+    mintUSDT: async (client, walletAddress, amount, signAndExecute) => {
+        if (!client || !walletAddress || !signAndExecute) return false;
+
+        try {
+            // Use the shared TreasuryCap ID from config
+            const treasuryCapId = USDT_TREASURY_CAP_ID;
+
+            if (!treasuryCapId || treasuryCapId.includes("REPLACE")) {
+                console.error("[Blockchain] USDT_TREASURY_CAP_ID not set!");
+                alert("Please update USDT_TREASURY_CAP_ID in chainConfig.js after redeploying!");
+                return false;
+            }
+
+            console.log(`[Blockchain] Using TreasuryCap: ${treasuryCapId}`);
+
+            // 2. Prepare Transaction
+            const tx = new Transaction();
+            const target = `${PACKAGE_ID}::usdt::mint`;
+
+            // Amount in smallest unit (6 decimals)
+            const amountRaw = amount * 1000000;
+
+            tx.moveCall({
+                target: target,
+                arguments: [
+                    tx.object(treasuryCapId),
+                    tx.pure.u64(amountRaw),
+                    tx.pure.address(walletAddress)
+                ]
+            });
+
+            // 3. Execute
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Successfully minted ${amount} USDT!`);
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Mint failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+
+        } catch (error) {
+            console.error("[Blockchain] Error minting USDT:", error);
+            return false;
         }
     }
 };

@@ -1,10 +1,35 @@
-import { useCurrentAccount } from '@onelabs/dapp-kit';
+import { useCurrentAccount, useSuiClient, useSignAndExecuteTransaction } from '@onelabs/dapp-kit';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
+import BlockchainService from '../services/BlockchainService';
+import { useState, useEffect } from 'react';
 
 function Dashboard() {
     const account = useCurrentAccount();
+    const client = useSuiClient();
+    const { mutate: signAndExecute } = useSignAndExecuteTransaction();
     const navigate = useNavigate();
+    const [usdtBalance, setUsdtBalance] = useState(0);
+
+    const fetchBalance = async () => {
+        if (account?.address) {
+            const balance = await BlockchainService.getUSDTBalance(client, account.address);
+            setUsdtBalance(balance);
+        }
+    };
+
+    useEffect(() => {
+        fetchBalance();
+    }, [account, client]);
+
+    const handleMintUSDT = async () => {
+        if (!account?.address) return;
+        const success = await BlockchainService.mintUSDT(client, account.address, 100, signAndExecute);
+        if (success) {
+            alert("Successfully minted 100 USDT!");
+            fetchBalance();
+        }
+    };
 
     // Mock data - TODO: Fetch from blockchain
     const stats = {
@@ -101,8 +126,25 @@ function Dashboard() {
                                     <span className="wallet-value">{account.address}</span>
                                 </div>
                                 <div className="wallet-item">
-                                    <span className="wallet-label">ATP Balance</span>
-                                    <span className="wallet-value text-accent">500 ATP</span>
+                                    <span className="wallet-label">USDT Balance</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span className="wallet-value text-accent">{usdtBalance.toLocaleString()} USDT</span>
+                                        <button
+                                            onClick={handleMintUSDT}
+                                            className="btn-small"
+                                            style={{
+                                                padding: '4px 8px',
+                                                fontSize: '12px',
+                                                backgroundColor: '#22c55e',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '4px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            +100
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
