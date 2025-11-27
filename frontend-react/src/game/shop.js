@@ -36,7 +36,7 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
     checkTowerUnlock(k, gameState, onDragStart, 'basophil', "basophil-idle", GAME_CONFIG.towers.basophil.range, k.rgb(255, 150, 50), 3, walletAddress, sbtStats);
 
     // NK Cell (Unlockable)
-    checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 9, walletAddress, sbtStats);
+    checkTowerUnlock(k, gameState, onDragStart, 'nkCell', "nk-cell-aim-down", GAME_CONFIG.towers.nkCell.range, k.rgb(255, 50, 50), 5, walletAddress, sbtStats);
 
     // --- Magic Cards ---
     // Heal
@@ -71,7 +71,7 @@ function createMagicCardShopItem(k, gameState, type, sprite, color, onMagicCardC
     if (type === 'nuke') xPos = 200;
     if (type === 'freeze') xPos = 280;
     if (type === 'poison') xPos = 360;
-    
+
     const yPos = 200; // Lower row
 
     // Container
@@ -104,7 +104,7 @@ function createMagicCardShopItem(k, gameState, type, sprite, color, onMagicCardC
         'poison': 'Viral Toxin'
     };
     const name = nameMap[type] || type.charAt(0).toUpperCase() + type.slice(1);
-    
+
     k.add([
         k.text(name, { size: 10, width: 65, align: 'center' }), // Smaller text to fit
         k.pos(xPos, yPos + 25),
@@ -142,10 +142,10 @@ function createMagicCardShopItem(k, gameState, type, sprite, color, onMagicCardC
     if (!gameState.magicCards[type].owned) {
         spriteObj.color = k.rgb(100, 100, 100);
         spriteObj.opacity = 0.5;
-        
+
         // Ensure sprite is visible behind lock
         // The sprite is already added at z(102), lock is at z(105)
-        
+
         k.add([
             k.text("🔒", { size: 24 }),
             k.pos(xPos, yPos - 10),
@@ -173,7 +173,7 @@ function updateMagicCardVisuals(k, type, isOwned) {
         if (isOwned) {
             item.color = k.rgb(255, 255, 255);
             item.opacity = 1;
-            
+
             const lockIcons = k.get(`lock-icon-magic-${type}`);
             lockIcons.forEach(icon => k.destroy(icon));
         }
@@ -183,26 +183,34 @@ function updateMagicCardVisuals(k, type, isOwned) {
 export function updateMagicCardCooldownVisuals(k, type, cooldownTimer) {
     const texts = k.get(`cooldown-text-magic-${type}`);
     const containers = k.get(`shop-item-magic-${type}-container`);
-    
+
     if (texts.length > 0) {
         texts[0].text = cooldownTimer > 0 ? Math.ceil(cooldownTimer) : "";
     }
-    
+
     if (containers.length > 0) {
         // Dim the container if on cooldown
         containers[0].opacity = cooldownTimer > 0 ? 0.5 : 1;
     }
 }
 function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color, unlockWave, walletAddress, sbtStats) {
+    // Check sbtStats first (Blockchain Data)
+    if (sbtStats && sbtStats[type]) {
+        gameState.unlockedTowers[type] = true;
+    }
+
     // Create item immediately
     createShopItem(k, gameState, onDragStart, type, sprite, range, color, unlockWave, sbtStats);
 
-    // Update state asynchronously
+    // Update state asynchronously (Fallback to local storage check)
     if (walletAddress) {
         BlockchainService.checkUnlockSBT(walletAddress, type).then(unlocked => {
             if (unlocked) {
-                gameState.unlockedTowers[type] = true;
-                updateTowerVisuals(k, type, true);
+                // Only update if not already unlocked to avoid unnecessary redraws
+                if (!gameState.unlockedTowers[type]) {
+                    gameState.unlockedTowers[type] = true;
+                    updateTowerVisuals(k, type, true);
+                }
             }
         });
     }
