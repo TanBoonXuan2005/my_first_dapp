@@ -319,11 +319,19 @@ function GameCanvas() {
 
                         // Wave Management Callbacks
                         const handleWaveVictory = async (walletAddress, signAndExecute) => {
-                            // Check for automatic unlocks
-                            if (walletAddress && signAndExecute) {
-                                const completedWave = gameState.currentWaveIndex + 1;
-                                console.log(`[Game] Victory at Wave ${completedWave}. Checking unlocks...`);
+                            // 1. Trigger Victory Visuals & Wait for Animation
+                            await onWaveVictory(k, gameState, walletAddress, signAndExecute);
 
+                            // The wave index has already been incremented by onWaveVictory
+                            // So 'completedWave' is actually gameState.currentWaveIndex (which is now the NEXT wave number)
+                            // Wait, let's check logic. 
+                            // onWaveVictory: gameState.currentWaveIndex++
+                            // So if we just finished Wave 1, currentWaveIndex became 2.
+                            // So completedWave was currentWaveIndex - 1.
+                            const completedWave = gameState.currentWaveIndex - 1;
+
+                            // Check for automatic unlocks (Macrophage, etc.)
+                            if (walletAddress && signAndExecute) {
                                 // Wave 9 Victory -> Unlock Macrophage (for Wave 10)
                                 if (completedWave === 9) {
                                     const hasMacrophage = await BlockchainService.checkUnlockSBT(walletAddress, 'macrophage');
@@ -375,13 +383,130 @@ function GameCanvas() {
                                         }
                                     }
                                 }
+
+                                // Wave Reward Roll (Wave 6+)
+                                if (completedWave > 5) {
+                                    console.log(`[Game] Wave ${completedWave} complete. Prompting for Magic Card reward...`);
+
+                                    // Show "Claim Reward" Button
+                                    const claimBtn = k.add([
+                                        k.rect(400, 80, { radius: 8 }),
+                                        k.pos(k.width() / 2, k.height() / 2 + 50),
+                                        k.anchor("center"),
+                                        k.color(255, 215, 0), // Gold
+                                        k.outline(4, k.rgb(255, 255, 255)),
+                                        k.area(),
+                                        k.z(300),
+                                        "claim-btn"
+                                    ]);
+
+                                    const btnText = k.add([
+                                        k.text("✨ Roll for Magic Card! ✨", { size: 20, font: "monospace" }),
+                                        k.pos(k.width() / 2, k.height() / 2 + 50),
+                                        k.anchor("center"),
+                                        k.color(0, 0, 0),
+                                        k.z(301),
+                                        "claim-text"
+                                    ]);
+
+                                    // Wait for user interaction
+                                    await new Promise(resolve => {
+                                        claimBtn.onClick(async () => {
+                                            // Disable button
+                                            claimBtn.color = k.rgb(100, 100, 100);
+                                            btnText.text = "Rolling... Check Wallet";
+
+                                            // 1. Snapshot current counts
+                                            const prevCounts = { ...gameState.magicCards };
+                                            // Deep copy counts specifically
+                                            const prevHeal = prevCounts.heal.count;
+                                            const prevNuke = prevCounts.nuke.count;
+                                            const prevFreeze = prevCounts.freeze.count;
+                                            const prevPoison = prevCounts.poison.count;
+
+                                            // 2. Call Blockchain
+                                            const success = await BlockchainService.claimWaveReward(client, walletAddress, completedWave, signAndExecute);
+
+                                            if (success) {
+                                                btnText.text = "Verifying Result...";
+
+                                                // 3. Fetch updated inventory
+                                                // Wait a moment for indexer? Usually local read after write is fast on Sui fullnodes but a small delay helps
+                                                await new Promise(r => setTimeout(r, 1000));
+                                                const newInventory = await BlockchainService.getMagicCardInventory(client, walletAddress);
+
+                                                if (newInventory) {
+                                                    // Update Game State
+                                                    gameState.magicCards.heal.count = parseInt(newInventory.counts.heal || 0);
+                                                    gameState.magicCards.nuke.count = parseInt(newInventory.counts.nuke || 0);
+                                                    gameState.magicCards.freeze.count = parseInt(newInventory.counts.freeze || 0);
+                                                    gameState.magicCards.poison.count = parseInt(newInventory.counts.poison || 0);
+
+                                                    // Update Visuals
+                                                    ['heal', 'nuke', 'freeze', 'poison'].forEach(type => {
+                                                        updateMagicCardVisuals(k, type, gameState.magicCards[type].count > 0, gameState.magicCards[type].count);
+                                                    });
+
+                                                    // 4. Compare to find winner
+                                                    let wonCard = null;
+                                                    if (gameState.magicCards.heal.count > prevHeal) wonCard = "HEAL";
+                                                    else if (gameState.magicCards.nuke.count > prevNuke) wonCard = "NUKE";
+                                                    else if (gameState.magicCards.freeze.count > prevFreeze) wonCard = "FREEZE";
+                                                    else if (gameState.magicCards.poison.count > prevPoison) wonCard = "POISON";
+
+                                                    // 5. Display Result
+                                                    if (wonCard) {
+                                                        btnText.text = "🎉 WINNER! 🎉";
+                                                        k.add([
+                                                            k.text(`OBTAINED: ${wonCard} CARD!`, { size: 32, font: "monogram" }),
+                                                            k.pos(k.width() / 2, k.height() / 2 + 120),
+                                                            k.anchor("center"),
+                                                            k.color(0, 255, 0), // Green
+                                                            k.lifespan(4),
+                                                            k.z(302)
+                                                        ]);
+                                                        // Celebration particles
+                                                        for (let i = 0; i < 20; i++) {
+                                                            k.add([
+                                                                k.rect(5, 5),
+                                                                k.pos(k.width() / 2, k.height() / 2 + 50),
+                                                                k.color(k.rand(0, 255), k.rand(0, 255), k.rand(0, 255)),
+                                                                k.move(k.Vec2.fromAngle(k.rand(0, 360)), k.rand(100, 300)),
+                                                                k.lifespan(1),
+                                                                k.z(302)
+                                                            ]);
+                                                        }
+                                                    } else {
+                                                        btnText.text = "No luck this time...";
+                                                        k.add([
+                                                            k.text("Try again next wave!", { size: 24 }),
+                                                            k.pos(k.width() / 2, k.height() / 2 + 120),
+                                                            k.anchor("center"),
+                                                            k.color(200, 200, 200),
+                                                            k.lifespan(3),
+                                                            k.z(302)
+                                                        ]);
+                                                    }
+                                                }
+                                            } else {
+                                                btnText.text = "Failed / Cancelled";
+                                            }
+
+                                            // Wait a bit before moving on
+                                            setTimeout(() => {
+                                                k.destroy(claimBtn);
+                                                k.destroy(btnText);
+                                                resolve();
+                                            }, 3000); // Give time to read result
+                                        });
+                                    });
+                                }
                             }
 
-                            onWaveVictory(k, gameState, () => {
-                                startNextWavePreparation(k, gameState, () => {
-                                    spawnWave(k, gameState, () => ({ path1Points, path2Points }));
-                                });
-                            }, walletAddress, signAndExecute);
+                            // Start Next Wave
+                            startNextWavePreparation(k, gameState, () => {
+                                spawnWave(k, gameState, () => ({ path1Points, path2Points }));
+                            });
                         };
 
                         // Start First Wave

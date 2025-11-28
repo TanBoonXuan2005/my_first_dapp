@@ -127,16 +127,11 @@ export function checkWaveCompletion(k, gameState, onWaveVictory, walletAddress, 
 
 import { updateTowerVisuals } from './shop.js';
 
-export async function onWaveVictory(k, gameState, startNextWavePreparationCallback, walletAddress, signAndExecute) {
+export async function onWaveVictory(k, gameState, walletAddress, signAndExecute) {
     console.log(`🎉 Wave ${gameState.currentWaveIndex + 1} Victory!`);
     gameState.gameActive = false; // Pause game
 
     showVictoryMessage(k, gameState.currentWaveIndex + 1, gameState.playerHealth);
-
-    // Check for Unlocks - Handled in GameCanvas.jsx now
-    if (walletAddress) {
-        // Legacy logic removed to avoid conflicts
-    }
 
     // Celebration effect (pause-aware)
     for (let i = 0; i < 10; i++) {
@@ -153,15 +148,11 @@ export async function onWaveVictory(k, gameState, startNextWavePreparationCallba
         })();
     }
 
-    // Infinite waves - no victory condition based on wave count
-    // The game only ends when player health reaches 0
-
     // Increment wave index for next wave
     gameState.currentWaveIndex++;
     console.log(`[Wave] Progressing to wave ${gameState.currentWaveIndex + 1}`);
 
-    // Continue to next wave preparation (pause-aware)
-    pauseAwareWait(k, gameState, 3).then(() => {
-        startNextWavePreparationCallback();
-    });
+    // Wait for celebration to finish (3 seconds)
+    // We return this promise so the caller can decide what to do next
+    return pauseAwareWait(k, gameState, 3);
 }
