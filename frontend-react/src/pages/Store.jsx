@@ -47,7 +47,7 @@ function Store() {
             image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png',
             damage: GAME_CONFIG.towers.bCell.damage,
             range: GAME_CONFIG.towers.bCell.range,
-            speed: 'Medium', // Could derive this from attackSpeed if we wanted logic
+            speed: 'Fast',
             price: 0,
             unlocked: true,
             stats: { damage: 10, range: 150, speed: 'Medium' }
@@ -81,7 +81,7 @@ function Store() {
             image: '/assets/animation_frames/Basophil/Basophil_Idle.png',
             damage: GAME_CONFIG.towers.basophil.damage,
             range: GAME_CONFIG.towers.basophil.range,
-            speed: 'Very Slow',
+            speed: 'Medium',
             price: 8000,
             unlocked: ownedTowers.basophil
         },
@@ -92,7 +92,7 @@ function Store() {
             image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Down.png',
             damage: GAME_CONFIG.towers.nkCell.damage,
             range: GAME_CONFIG.towers.nkCell.range,
-            speed: 'Slow',
+            speed: 'Very Slow',
             price: 10000,
             unlocked: ownedTowers.nkCell
         }
