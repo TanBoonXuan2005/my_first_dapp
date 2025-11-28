@@ -31,9 +31,9 @@ const GAME_CONFIG = {
             explosionRadius: 80   // Explosion damage radius in pixels
         },
         nkCell: {
-            range: 500,           // Long attack range
+            range: 750,           // Long attack range
             attackSpeed: 3.0,     // Slow attack speed
-            damage: 100,           // High single target damage
+            damage: 1500,           // High single target damage
             projectileSpeed: 800  // Fast projectile
         }
     },

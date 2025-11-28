@@ -315,4 +315,94 @@ module my_first_package::game_core {
         };
         transfer::transfer(license, tx_context::sender(ctx));
     }
+
+    // --- Magic Card Inventory (Single SBT) ---
+
+    public struct MagicCardInventory has key {
+        id: UID,
+        heal: u64,
+        nuke: u64,
+        freeze: u64,
+        poison: u64,
+    }
+
+    /// Create a new Magic Card Inventory for the sender
+    entry fun create_inventory(ctx: &mut TxContext) {
+        let inventory = MagicCardInventory {
+            id: object::new(ctx),
+            heal: 0,
+            nuke: 0,
+            freeze: 0,
+            poison: 0,
+        };
+        transfer::transfer(inventory, tx_context::sender(ctx));
+    }
+
+    /// Update the inventory count for a specific card
+    /// is_increase: true to add, false to consume
+    entry fun update_card_inventory(
+        inventory: &mut MagicCardInventory, 
+        card_type: vector<u8>, 
+        amount: u64, 
+        is_increase: bool
+    ) {
+        let type_str = string::utf8(card_type);
+        let heal_str = string::utf8(b"heal");
+        let nuke_str = string::utf8(b"nuke");
+        let freeze_str = string::utf8(b"freeze");
+        let poison_str = string::utf8(b"poison");
+
+        if (type_str == heal_str) {
+            if (is_increase) { inventory.heal = inventory.heal + amount; }
+            else { inventory.heal = inventory.heal - amount; };
+        } else if (type_str == nuke_str) {
+            if (is_increase) { inventory.nuke = inventory.nuke + amount; }
+            else { inventory.nuke = inventory.nuke - amount; };
+        } else if (type_str == freeze_str) {
+            if (is_increase) { inventory.freeze = inventory.freeze + amount; }
+            else { inventory.freeze = inventory.freeze - amount; };
+        } else if (type_str == poison_str) {
+            if (is_increase) { inventory.poison = inventory.poison + amount; }
+            else { inventory.poison = inventory.poison - amount; };
+        };
+    }
+
+    /// Burn the Magic Card Inventory
+    entry fun burn_inventory(inventory: MagicCardInventory) {
+        let MagicCardInventory { id, heal: _, nuke: _, freeze: _, poison: _ } = inventory;
+        object::delete(id);
+    }
+
+    /// Create inventory and add a card in one go (for first purchase)
+    entry fun create_inventory_and_purchase(
+        card_type: vector<u8>,
+        amount: u64,
+        ctx: &mut TxContext
+    ) {
+        let mut inventory = MagicCardInventory {
+            id: object::new(ctx),
+            heal: 0,
+            nuke: 0,
+            freeze: 0,
+            poison: 0,
+        };
+
+        let type_str = string::utf8(card_type);
+        let heal_str = string::utf8(b"heal");
+        let nuke_str = string::utf8(b"nuke");
+        let freeze_str = string::utf8(b"freeze");
+        let poison_str = string::utf8(b"poison");
+
+        if (type_str == heal_str) {
+            inventory.heal = inventory.heal + amount;
+        } else if (type_str == nuke_str) {
+            inventory.nuke = inventory.nuke + amount;
+        } else if (type_str == freeze_str) {
+            inventory.freeze = inventory.freeze + amount;
+        } else if (type_str == poison_str) {
+            inventory.poison = inventory.poison + amount;
+        };
+
+        transfer::transfer(inventory, tx_context::sender(ctx));
+    }
 }
