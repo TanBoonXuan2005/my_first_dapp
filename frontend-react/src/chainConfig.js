@@ -1,4 +1,4 @@
-export const PACKAGE_ID = "0x13b668d0ee99a520987dd7892f0048a7b3b6a834f61e06c99ad191bceb5b6381";
+export const PACKAGE_ID = "0x9fc359b570e6d7932622e42afec7b593d70dc884ac8c6fed36d7ded95e6c2dd1";
 export const MODULE_NAME = "game_core";
-export const USDT_TREASURY_CAP_ID = "0x9c41b66c33452452a04b9c4ef94e878a5abaad1fcce135cb72ef7836f9723537";
-export const USDT_ID = "0x13b668d0ee99a520987dd7892f0048a7b3b6a834f61e06c99ad191bceb5b6381::usdt::USDT";
+export const USDT_TREASURY_CAP_ID = "0x7880697475230ffd01dfe8441d53e0d0d0d638317ad8b276a0d9ddccf8007676";
+export const USDT_ID = "0x9fc359b570e6d7932622e42afec7b593d70dc884ac8c6fed36d7ded95e6c2dd1::usdt::USDT";
