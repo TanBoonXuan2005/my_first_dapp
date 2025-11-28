@@ -27,14 +27,8 @@ flavor = "one"
 
 [env]
 
-[env.devnet]
-chain-id = "833db4e1"
-original-published-id = "0xcf844f015cb24bc48d1c6835f69e75a9d0ea3ece60514ef8459e3bdca0720a6b"
-latest-published-id = "0xcf844f015cb24bc48d1c6835f69e75a9d0ea3ece60514ef8459e3bdca0720a6b"
-published-version = "1"
-
 [env.testnet]
 chain-id = "1bd5c965"
-original-published-id = "0x13b668d0ee99a520987dd7892f0048a7b3b6a834f61e06c99ad191bceb5b6381"
-latest-published-id = "0x13b668d0ee99a520987dd7892f0048a7b3b6a834f61e06c99ad191bceb5b6381"
+original-published-id = "0x9fc359b570e6d7932622e42afec7b593d70dc884ac8c6fed36d7ded95e6c2dd1"
+latest-published-id = "0x9fc359b570e6d7932622e42afec7b593d70dc884ac8c6fed36d7ded95e6c2dd1"
 published-version = "1"
