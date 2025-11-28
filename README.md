@@ -20,20 +20,16 @@ This project demonstrates a fully functional **OneWallet** integration:
 ## 📺 Demo Video
 
 Watch our gameplay and features walkthrough:
-**[INSERT YOUTUBE/LOOM/DRIVE LINK HERE]**
-
-## 💻 Source Code
-
--   **GitHub Repository**: [INSERT GITHUB LINK HERE]
--   **Zip File**: Available upon request.
+https://drive.google.com/drive/folders/1x3So2mRyFsQ54Vibw-vZhsWqQsBsyajH?usp=drive_link
 
 ## 👥 Team Members
 
-| Name               | Role                             | Email                   |
-| **Tan Boon Xuan**  | Frontend Developer & UI Designer | boonxuan05@gmail.com    |
-| **Chean Wei Xuan** | Game Features designer           | daymondchean@gmail.com  |
-| **Chang Juan Jue** | Backend developer                | changstevenn@gmail.com  |
-| **Ong Shi Xuan**   | Game Features designer           | shixuan050718@gmail.com |
+| Name | Role | Email |
+| :--- | :--- | :--- |
+| **Tan Boon Xuan** | Frontend Developer & UI Designer | `boonxuan05@gmail.com` |
+| **Chean Wei Xuan** | Game Features Designer | `daymondchean@gmail.com` |
+| **Chang Juan Jue** | Backend Developer | `changstevenn@gmail.com` |
+| **Ong Shi Xuan** | Game Features Designer | `shixuan050718@gmail.com` |
 
 ## ⚙️ Backend Setup (Important!)
 
