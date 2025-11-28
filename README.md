@@ -35,6 +35,24 @@ Watch our gameplay and features walkthrough:
 | **Chang Juan Jue** | Backend developer                | changstevenn@gmail.com  |
 | **Ong Shi Xuan**   | Game Features designer           | shixuan050718@gmail.com |
 
+## ⚙️ Backend Setup (Important!)
+
+Before running the game, you need to configure your OneWallet to interact with the testnet and the game's simulated economy.
+
+1.  **Enable Developer Mode**:
+    -   Open your OneWallet extension.
+    -   Go to **Settings** -> **Network**.
+    -   Switch to **Testnet** (or toggle **Developer Mode** if applicable).
+
+2.  **Add Simulated USDT**:
+    -   The game uses a simulated USDT token for in-game purchases.
+    -   In your wallet, click on **"Add Custom Asset"** (or similar).
+    -   Enter the following **Coin Type**:
+        ```
+        0x9fc359b570e6d7932622e42afec7b593d70dc884ac8c6fed36d7ded95e6c2dd1::usdt::USDT
+        ```
+    -   This will allow you to see and manage your in-game currency.
+
 ## 🛠️ How to Run Locally
 
 If you prefer to run the game locally, follow these steps:
