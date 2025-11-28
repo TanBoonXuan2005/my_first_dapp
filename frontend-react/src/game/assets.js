@@ -36,4 +36,10 @@ export function loadGameAssets(k) {
     k.loadSprite("magic-nuke", `/assets/animation_frames/Nuke/Nuke.png?v=${v}`);
     k.loadSprite("magic-freeze", `/assets/animation_frames/Freeze/Freeze.png?v=${v}`);
     k.loadSprite("magic-poison", `/assets/animation_frames/Poison/Poison.png?v=${v}`);
+    k.loadSprite("magic-shield", `/assets/animation_frames/Shield/Shield.png?v=${v}`);
+
+    // New Enemies
+    k.loadSprite("adenovirus", `/assets/animation_frames/Adenovirus/Adenovirus_Idle.png?v=${v}`);
+    k.loadSprite("hiv", `/assets/animation_frames/HIV/HIV.png?v=${v}`);
+    k.loadSprite("hiv-death", `/assets/animation_frames/HIV/HIV death.png?v=${v}`);
 }

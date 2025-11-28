@@ -148,6 +148,16 @@ function Store() {
             count: ownedMagicCards.heal
         },
         {
+            id: 'shield',
+            name: 'Shield',
+            description: 'Protects the strongest tower from one hit.',
+            image: '/assets/animation_frames/Shield/Shield.png',
+            cooldown: 0,
+            price: 0,
+            count: 0,
+            isComingSoon: true
+        },
+        {
             id: 'nuke',
             name: 'Cytokine Storm',
             description: 'Deals 500 damage to ALL enemies on screen.',
@@ -387,14 +397,20 @@ function Store() {
                                 </div>
 
                                 <div className="card-actions">
-                                    <button
-                                        className="btn btn-primary full-width"
-                                        onClick={() => handlePurchase(card)}
-                                        disabled={isPurchasing}
-                                    >
-                                        <span className="price-tag">{card.price} USDT</span>
-                                        <span className="action-text">{isPurchasing ? 'Buying...' : 'Purchase'}</span>
-                                    </button>
+                                    {card.isComingSoon ? (
+                                        <button className="btn btn-disabled full-width" disabled>
+                                            Coming Soon
+                                        </button>
+                                    ) : (
+                                        <button
+                                            className="btn btn-primary full-width"
+                                            onClick={() => handlePurchase(card)}
+                                            disabled={isPurchasing}
+                                        >
+                                            <span className="price-tag">{card.price} USDT</span>
+                                            <span className="action-text">{isPurchasing ? 'Buying...' : 'Purchase'}</span>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

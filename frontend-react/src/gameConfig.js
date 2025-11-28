@@ -75,6 +75,14 @@ const GAME_CONFIG = {
         fluVirus: {
             hp: 80,               // Health points
             speed: 100,           // Movement speed (pixels/second)
+        },
+        adenovirus: {
+            hp: 200,
+            speed: 80
+        },
+        hiv: {
+            hp: 500,
+            speed: 60
         }
     },
 
@@ -83,9 +91,26 @@ const GAME_CONFIG = {
     getWaveConfig: (waveIndex) => {
         const waveNumber = waveIndex + 1;
 
+        // Determine Enemy Type
+        let enemyType = 'fluVirus';
+        let baseHp = 80;
+        let baseSpeed = 100;
+
+        if (waveNumber >= 15) {
+            enemyType = 'mixed';
+            baseHp = 600; // Even stronger base for late game
+            baseSpeed = 70;
+        } else if (waveNumber >= 12) {
+            enemyType = 'hiv';
+            baseHp = 500;
+            baseSpeed = 60;
+        } else if (waveNumber >= 6) {
+            enemyType = 'adenovirus';
+            baseHp = 200;
+            baseSpeed = 80;
+        }
+
         // Base stats
-        const baseHp = 80;
-        const baseSpeed = 100;
         const baseCount = 1;
 
         // Scaling factors
@@ -98,8 +123,9 @@ const GAME_CONFIG = {
             enemyCount: Math.floor(baseCount + (waveIndex / 3)), // +1 enemy every 3 waves
             spawnDelay: Math.max(0.5, 2.0 - (waveIndex * 0.1)), // Faster spawns, min 0.5s
             enemyHp: Math.floor(baseHp * hpMultiplier),
-            enemySpeed: Math.floor(baseSpeed * speedMultiplier),
-            preparationTime: 3
+            enemySpeed: baseSpeed * speedMultiplier,
+            enemyType: enemyType,
+            preparationTime: 5 // Seconds between waves
         };
     }
 };

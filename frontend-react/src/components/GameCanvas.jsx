@@ -185,11 +185,11 @@ function GameCanvas() {
                                 showMagicEffectText(k, "HEAL!", k.rgb(0, 255, 0));
                             } else if (type === 'nuke') {
                                 k.get("enemy").forEach(e => {
-                                    e.hp -= 500;
-                                    showDamageNumber(k, e.pos, 500, gameState);
+                                    e.hp -= 999999; // Massive damage to ensure kill
+                                    showDamageNumber(k, e.pos, 99999999, gameState);
                                 });
                                 k.shake(20);
-                                showMagicEffectText(k, "NUKE!", k.rgb(255, 0, 0));
+                                showMagicEffectText(k, "BOOM!", k.rgb(255, 0, 0));
                             } else if (type === 'freeze') {
                                 k.get("enemy").forEach(e => {
                                     e.isFrozen = true;
