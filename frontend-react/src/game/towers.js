@@ -486,7 +486,7 @@ export function placeNKCell(k, dropPos, gameState) {
                 const laser = k.add([
                     k.pos(tower.pos),
                     k.z(40),
-                    k.lifespan(0.3), // Lasts longer
+                    k.lifespan(0.8), // Lasts longer
                     "laser",
                     {
                         draw() {
