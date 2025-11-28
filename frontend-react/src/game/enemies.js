@@ -74,8 +74,8 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState, generation = 0,
             });
 
             k.destroy(enemy);
-            // Base ATP 10, +3% per wave
-            const atpDrop = Math.floor(10 * Math.pow(1.03, gameState.currentWaveIndex));
+            // Constant ATP drop
+            const atpDrop = 10;
             gameState.updateATP(atpDrop); // Award ATP
             gameState.totalEnemiesProcessed++;
             gameState.totalEnemiesProcessed++;

@@ -1,9 +1,9 @@
 export const TOWER_COST = {
     bcell: 10,
-    macrophage: 20,
+    macrophage: 50,
     platelet: 15,
-    basophil: 25,
-    nkCell: 25
+    basophil: 20,
+    nkCell: 200
 };
 
 export const MAGIC_CARD_COSTS = {
