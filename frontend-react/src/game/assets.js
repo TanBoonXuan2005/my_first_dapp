@@ -39,7 +39,7 @@ export function loadGameAssets(k) {
     k.loadSprite("magic-shield", `/assets/animation_frames/Shield/Shield.png?v=${v}`);
 
     // New Enemies
-    k.loadSprite("adenovirus", `/assets/animation_frames/Adenovirus/Adenovirus_Idle.png?v=${v}`);
+    k.loadSprite("adenovirus", `/assets/animation_frames/Adenovirus/Adenovirus.png?v=${v}`);
     k.loadSprite("hiv", `/assets/animation_frames/HIV/HIV.png?v=${v}`);
     k.loadSprite("hiv-death", `/assets/animation_frames/HIV/HIV death.png?v=${v}`);
 }

@@ -19,7 +19,12 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState, generation = 0,
 
     // Scale adjustments
     let scale = 0.06;
-    if (actualType === 'adenovirus' && generation > 0) scale = 0.09; // Larger strong adenovirus
+    if (actualType === 'adenovirus') {
+        scale = 0.6; // ~120px for 200px image
+        if (generation > 0) scale = 1.0; // ~200px for strong version
+    } else if (actualType === 'hiv') {
+        scale = 0.6; // ~120px for 200px image
+    }
 
     const enemy = k.add([
         k.sprite(spriteName),
@@ -84,7 +89,7 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState, generation = 0,
             let deathSprite = spriteName;
             if (spriteName === 'flu-virus') deathSprite = "flu-virus-death";
             else if (spriteName === 'hiv') deathSprite = "hiv-death";
-            
+
             const death = k.add([
                 k.sprite(deathSprite), // Use specific death sprite
                 k.pos(enemy.pos),
@@ -141,7 +146,7 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState, generation = 0,
                 for (const [key, cost] of Object.entries(TOWER_COST)) {
                     const tag = towerMap[key];
                     const towers = k.get(tag);
-                    
+
                     if (towers.length > 0) {
                         // If we find towers of this type, check if they are stronger (more expensive)
                         // or equal cost but maybe we pick the first one found
@@ -165,7 +170,7 @@ export function spawnEnemy(k, pathPoints, waveConfig, gameState, generation = 0,
                         k.move(k.UP, 50),
                         k.z(100)
                     ]);
-                    
+
                     // Visual explosion
                     k.add([
                         k.rect(60, 60),
