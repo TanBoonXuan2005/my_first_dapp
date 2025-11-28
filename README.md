@@ -44,7 +44,12 @@ Before running the game, you need to configure your OneWallet to interact with t
     -   Go to **Settings** -> **Network**.
     -   Switch to **Testnet** (or toggle **Developer Mode** if applicable).
 
-2.  **Add Simulated USDT**:
+2.  **Get Testnet Tokens (OCT)**:
+    -   You need One Chain Token (OCT) to pay for gas fees.
+    -   Go to the **Faucet** (usually available in the wallet or via the OneChain discord/website).
+    -   Request OCT for your wallet address on the **Testnet**.
+
+3.  **Add Simulated USDT**:
     -   The game uses a simulated USDT token for in-game purchases.
     -   In your wallet, click on **"Add Custom Asset"** (or similar).
     -   Enter the following **Coin Type**:
