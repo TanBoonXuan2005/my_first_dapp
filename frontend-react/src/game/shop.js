@@ -7,6 +7,7 @@ import BlockchainService from '../services/BlockchainService.js';
  * Handles the interaction between clicking a shop item and initiating the drag process.
  *
  * @param {import("kaboom").KaboomCtx} k - The Kaboom.js context.
+ * @param {Object} client - The Sui client.
  * @param {import("./gameState.js").GameState} gameState - The game state manager.
  * @param {Function} onDragStart - The function to call when a shop item is clicked (from setupInput).
  * @param {string} walletAddress - The connected wallet address.
@@ -14,7 +15,7 @@ import BlockchainService from '../services/BlockchainService.js';
  * @param {Function} onMagicCardClick - Callback for magic card clicks.
  * @param {Function} onPurchase - Callback for purchasing items.
  */
-export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {}, onMagicCardClick, onPurchase) {
+export function setupShop(k, client, gameState, onDragStart, walletAddress, sbtStats = {}, onMagicCardClick, onPurchase) {
     // Shop Background Panel (Glassmorphism) - Bottom Aligned
     // User's Design Preference
     k.add([
@@ -68,13 +69,13 @@ export function setupShop(k, gameState, onDragStart, walletAddress, sbtStats = {
 
     // --- Magic Cards ---
     // Heal
-    checkMagicCardUnlock(k, gameState, 'heal', "magic-heal", k.rgb(0, 255, 0), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
+    checkMagicCardUnlock(k, client, gameState, 'heal', "magic-heal", k.rgb(0, 255, 0), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
     // Nuke
-    checkMagicCardUnlock(k, gameState, 'nuke', "magic-nuke", k.rgb(255, 0, 0), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
+    checkMagicCardUnlock(k, client, gameState, 'nuke', "magic-nuke", k.rgb(255, 0, 0), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
     // Freeze
-    checkMagicCardUnlock(k, gameState, 'freeze', "magic-freeze", k.rgb(0, 255, 255), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
+    checkMagicCardUnlock(k, client, gameState, 'freeze', "magic-freeze", k.rgb(0, 255, 255), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
     // Poison
-    checkMagicCardUnlock(k, gameState, 'poison', "magic-poison", k.rgb(128, 0, 128), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
+    checkMagicCardUnlock(k, client, gameState, 'poison', "magic-poison", k.rgb(128, 0, 128), walletAddress, onMagicCardClick, onPurchase, startX, currentIndex++);
 }
 
 // Helper to handle async unlock check but reserve spot
@@ -91,14 +92,14 @@ function checkTowerUnlock(k, gameState, onDragStart, type, sprite, range, color,
     }
 }
 
-function checkMagicCardUnlock(k, gameState, type, sprite, color, walletAddress, onMagicCardClick, onPurchase, startX, index) {
+function checkMagicCardUnlock(k, client, gameState, type, sprite, color, walletAddress, onMagicCardClick, onPurchase, startX, index) {
     createMergedShopItem(k, gameState, null, type, sprite, 0, color, 0, null, startX, index, true, onMagicCardClick, onPurchase);
 
     if (walletAddress) {
-        BlockchainService.checkMagicCard(walletAddress, type).then(owned => {
-            if (owned) {
-                gameState.magicCards[type].owned = true;
-                updateMagicCardVisuals(k, type, true);
+        BlockchainService.getMagicCardInventory(client, walletAddress).then(inventory => {
+            if (inventory) {
+                gameState.magicCards[type].count = parseInt(inventory.counts[type] || 0);
+                updateMagicCardVisuals(k, type, gameState.magicCards[type].count > 0, gameState.magicCards[type].count);
             }
         });
     }
@@ -172,12 +173,22 @@ function createMergedShopItem(k, gameState, onDragStart, type, sprite, range, co
             k.color(250, 204, 21),
             k.z(104)
         ]);
+    } else {
+        // Count Badge for Magic Cards
+        k.add([
+            k.text(`x${gameState.magicCards[type].count}`, { size: 14, font: "monospace" }),
+            k.pos(xPos + 30, baseY - 35),
+            k.anchor("center"),
+            k.color(255, 255, 255),
+            k.z(104),
+            `magic-count-${type}`
+        ]);
     }
 
     // Interaction
     container.onClick(() => {
         if (isMagic) {
-            if (gameState.magicCards[type].owned) {
+            if (gameState.magicCards[type].count > 0) {
                 if (onMagicClick) onMagicClick(type);
             } else {
                 // Purchase Logic
@@ -221,7 +232,7 @@ function createMergedShopItem(k, gameState, onDragStart, type, sprite, range, co
     });
 
     // Initial Locked State
-    const isLocked = isMagic ? !gameState.magicCards[type].owned : (unlockWave && !gameState.unlockedTowers[type]);
+    const isLocked = isMagic ? (gameState.magicCards[type].count <= 0) : (unlockWave && !gameState.unlockedTowers[type]);
 
     if (isLocked) {
         spriteObj.color = k.rgb(100, 100, 100);
@@ -262,7 +273,7 @@ export function updateTowerVisuals(k, type, isUnlocked) {
     }
 }
 
-export function updateMagicCardVisuals(k, type, isOwned) {
+export function updateMagicCardVisuals(k, type, isOwned, count = null) {
     const items = k.get(`shop-item-magic-${type}`);
     if (items.length > 0) {
         const item = items[0];
@@ -271,6 +282,19 @@ export function updateMagicCardVisuals(k, type, isOwned) {
             item.opacity = 1;
             const lockIcons = k.get(`lock-icon-magic-${type}`);
             lockIcons.forEach(icon => k.destroy(icon));
+        } else {
+            // If not owned (count 0), ensure it looks locked/dimmed
+            item.color = k.rgb(100, 100, 100);
+            item.opacity = 0.5;
+            // Add lock icon if missing? (Simplified: usually we just destroy locks, but re-adding might be needed if we consume last card)
+            // For now, let's just handle the text update.
+        }
+    }
+
+    if (count !== null) {
+        const countTexts = k.get(`magic-count-${type}`);
+        if (countTexts.length > 0) {
+            countTexts[0].text = `x${count}`;
         }
     }
 }

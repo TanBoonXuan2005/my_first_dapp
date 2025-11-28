@@ -60,7 +60,7 @@ function Store() {
             damage: GAME_CONFIG.towers.macrophage.damage,
             range: GAME_CONFIG.towers.macrophage.range,
             speed: 'Slow',
-            price: 100,
+            price: 5000,
             unlocked: ownedTowers.macrophage
         },
         {
@@ -71,7 +71,7 @@ function Store() {
             damage: GAME_CONFIG.towers.platelet.damage,
             range: GAME_CONFIG.towers.platelet.range,
             speed: 'Fast',
-            price: 150,
+            price: 6000,
             unlocked: ownedTowers.platelet
         },
         {
@@ -82,7 +82,7 @@ function Store() {
             damage: GAME_CONFIG.towers.basophil.damage,
             range: GAME_CONFIG.towers.basophil.range,
             speed: 'Very Slow',
-            price: 200,
+            price: 8000,
             unlocked: ownedTowers.basophil
         },
         {
@@ -93,17 +93,49 @@ function Store() {
             damage: GAME_CONFIG.towers.nkCell.damage,
             range: GAME_CONFIG.towers.nkCell.range,
             speed: 'Slow',
-            price: 250,
+            price: 10000,
             unlocked: ownedTowers.nkCell
         }
     ];
 
     const [ownedMagicCards, setOwnedMagicCards] = useState({
-        heal: false,
-        nuke: false,
-        freeze: false,
-        poison: false
+        heal: 0,
+        nuke: 0,
+        freeze: 0,
+        poison: 0
     });
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (account?.address) {
+                // Fetch USDT Balance
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+
+                // Fetch Owned SBTs
+                const stats = await BlockchainService.getSBTStats(client, account.address);
+                setOwnedTowers(prev => ({
+                    ...prev,
+                    macrophage: !!stats.macrophage,
+                    platelet: !!stats.platelet,
+                    basophil: !!stats.basophil,
+                    nkCell: !!stats.nkCell
+                }));
+
+                // Fetch Magic Card Inventory
+                const inventory = await BlockchainService.getMagicCardInventory(client, account.address);
+                if (inventory) {
+                    setOwnedMagicCards({
+                        heal: parseInt(inventory.counts.heal),
+                        nuke: parseInt(inventory.counts.nuke),
+                        freeze: parseInt(inventory.counts.freeze),
+                        poison: parseInt(inventory.counts.poison)
+                    });
+                }
+            }
+        };
+        fetchData();
+    }, [account, client]);
 
     const magicCards = [
         {
@@ -112,8 +144,8 @@ function Store() {
             description: 'Restores 50 HP to your base instantly.',
             image: '/assets/animation_frames/Heal/Heal.png',
             cooldown: 60,
-            price: 0,
-            unlocked: ownedMagicCards.heal
+            price: 500,
+            count: ownedMagicCards.heal
         },
         {
             id: 'nuke',
@@ -121,8 +153,8 @@ function Store() {
             description: 'Deals 500 damage to ALL enemies on screen.',
             image: '/assets/animation_frames/Nuke/Nuke.png',
             cooldown: 120,
-            price: 0,
-            unlocked: ownedMagicCards.nuke
+            price: 1000,
+            count: ownedMagicCards.nuke
         },
         {
             id: 'freeze',
@@ -130,8 +162,8 @@ function Store() {
             description: 'Freezes all enemies for 5 seconds.',
             image: '/assets/animation_frames/Freeze/Freeze.png',
             cooldown: 90,
-            price: 0,
-            unlocked: ownedMagicCards.freeze
+            price: 750,
+            count: ownedMagicCards.freeze
         },
         {
             id: 'poison',
@@ -139,8 +171,8 @@ function Store() {
             description: 'Deals 50 damage per second for 10 seconds.',
             image: '/assets/animation_frames/Poison/Poison.png',
             cooldown: 60,
-            price: 0,
-            unlocked: ownedMagicCards.poison
+            price: 600,
+            count: ownedMagicCards.poison
         }
     ];
 
@@ -150,32 +182,50 @@ function Store() {
             return;
         }
 
-        if (item.unlocked) {
-            alert('You already own this item!');
-            return;
-        }
+        if (isPurchasing) return;
 
         // Magic Card Logic
         if (item.cooldown !== undefined) {
-            const confirmed = confirm(`Claim ${item.name} for FREE?`);
-            if (!confirmed) return;
-
-            // Use mintMagicCard from Local BlockchainService
-            const success = await BlockchainService.mintMagicCard(account.address, item.id, signAndExecute);
-            if (success) {
-                setOwnedMagicCards(prev => ({ ...prev, [item.id]: true }));
-                alert(`Successfully claimed ${item.name}!`);
-            } else {
-                alert("Claim failed. Check console for details.");
-            }
-        } else {
-            // Tower Logic (USDT Purchase)
             if (usdtBalance < item.price) {
                 alert(`Insufficient USDT! You need ${item.price} USDT.`);
                 return;
             }
 
-            if (isPurchasing) return;
+            const confirmed = confirm(`Purchase ${item.name} for ${item.price} USDT?`);
+            if (!confirmed) return;
+
+            setIsPurchasing(true);
+            const success = await BlockchainService.buyMagicCard(client, account.address, item.id, item.price, signAndExecute);
+            setIsPurchasing(false);
+
+            if (success) {
+                alert(`Successfully purchased ${item.name}!`);
+                // Refresh data
+                const balance = await BlockchainService.getUSDTBalance(client, account.address);
+                setUsdtBalance(balance);
+                const inventory = await BlockchainService.getMagicCardInventory(client, account.address);
+                if (inventory) {
+                    setOwnedMagicCards({
+                        heal: parseInt(inventory.counts.heal),
+                        nuke: parseInt(inventory.counts.nuke),
+                        freeze: parseInt(inventory.counts.freeze),
+                        poison: parseInt(inventory.counts.poison)
+                    });
+                }
+            } else {
+                alert("Purchase failed. Check console for details.");
+            }
+        } else {
+            // Tower Logic (USDT Purchase)
+            if (item.unlocked) {
+                alert('You already own this item!');
+                return;
+            }
+
+            if (usdtBalance < item.price) {
+                alert(`Insufficient USDT! You need ${item.price} USDT.`);
+                return;
+            }
 
             setIsPurchasing(true);
             const success = await BlockchainService.purchaseCell(client, account.address, item.id, item.price, signAndExecute);
@@ -303,18 +353,16 @@ function Store() {
                     {magicCards.map((card, index) => (
                         <div
                             key={card.id}
-                            className={`tower-card glass ${card.unlocked ? 'owned' : ''}`}
+                            className={`tower-card glass`}
                             style={{ animationDelay: `${index * 0.1}s` }}
                         >
                             <div className="card-content">
-                                {card.unlocked && (
-                                    <div className="owned-badge">
-                                        <span className="check-icon">✓</span> Owned
-                                    </div>
-                                )}
+                                <div className="owned-badge" style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#d8b4fe' }}>
+                                    <span className="check-icon">📦</span> Owned: {card.count}
+                                </div>
 
                                 <div className="tower-visual">
-                                    <div className="visual-glow" style={{ background: `radial-gradient(circle, ${card.unlocked ? 'rgba(56, 189, 248, 0.2)' : 'rgba(148, 163, 184, 0.1)'} 0%, transparent 70%)` }}></div>
+                                    <div className="visual-glow" style={{ background: `radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, transparent 70%)` }}></div>
                                     <img
                                         src={card.image}
                                         alt={card.name}
@@ -339,19 +387,14 @@ function Store() {
                                 </div>
 
                                 <div className="card-actions">
-                                    {card.unlocked ? (
-                                        <button className="btn btn-secondary full-width" disabled>
-                                            In Inventory
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="btn btn-primary full-width"
-                                            onClick={() => handlePurchase(card)}
-                                        >
-                                            <span className="price-tag">Free</span>
-                                            <span className="action-text">Claim</span>
-                                        </button>
-                                    )}
+                                    <button
+                                        className="btn btn-primary full-width"
+                                        onClick={() => handlePurchase(card)}
+                                        disabled={isPurchasing}
+                                    >
+                                        <span className="price-tag">{card.price} USDT</span>
+                                        <span className="action-text">{isPurchasing ? 'Buying...' : 'Purchase'}</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>

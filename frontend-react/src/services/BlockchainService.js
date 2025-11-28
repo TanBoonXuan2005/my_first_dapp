@@ -171,6 +171,7 @@ const BlockchainService = {
             const plateletType = `${PACKAGE_ID}::game_core::Platelet`;
             const basophilType = `${PACKAGE_ID}::game_core::Basophil`;
             const nkCellType = `${PACKAGE_ID}::game_core::NKCell`;
+            const inventoryType = `${PACKAGE_ID}::game_core::MagicCardInventory`;
 
             // Fetch all owned objects of these types
             const { data } = await client.getOwnedObjects({
@@ -180,7 +181,8 @@ const BlockchainService = {
                         { StructType: macrophageType },
                         { StructType: plateletType },
                         { StructType: basophilType },
-                        { StructType: nkCellType }
+                        { StructType: nkCellType },
+                        { StructType: inventoryType }
                     ]
                 },
                 options: {
@@ -209,6 +211,8 @@ const BlockchainService = {
                     tx.moveCall({ target: `${PACKAGE_ID}::game_core::burn_basophil`, arguments: [tx.object(objectId)] });
                 } else if (type === nkCellType) {
                     tx.moveCall({ target: `${PACKAGE_ID}::game_core::burn_nk_cell`, arguments: [tx.object(objectId)] });
+                } else if (type === inventoryType) {
+                    tx.moveCall({ target: `${PACKAGE_ID}::game_core::burn_inventory`, arguments: [tx.object(objectId)] });
                 }
             });
 
@@ -233,7 +237,8 @@ const BlockchainService = {
             console.error("[Blockchain] Error resetting SBTs:", error);
             return false;
         }
-    },
+    }
+    ,
 
     getOwnedSBTs: async (walletAddress) => {
         if (!walletAddress) return [];
@@ -464,6 +469,206 @@ const BlockchainService = {
 
         } catch (error) {
             console.error("[Blockchain] Error purchasing cell:", error);
+            return false;
+        }
+    },
+
+    // --- Magic Card Inventory (Single SBT) ---
+
+    getMagicCardInventory: async (client, walletAddress) => {
+        if (!client || !walletAddress) return null;
+        try {
+            const inventoryType = `${PACKAGE_ID}::game_core::MagicCardInventory`;
+            const { data } = await client.getOwnedObjects({
+                owner: walletAddress,
+                filter: { StructType: inventoryType },
+                options: { showContent: true }
+            });
+
+            if (data.length > 0) {
+                const content = data[0].data?.content;
+                return {
+                    objectId: data[0].data?.objectId,
+                    counts: content?.fields || { heal: 0, nuke: 0, freeze: 0, poison: 0 }
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error("[Blockchain] Error fetching Magic Card Inventory:", error);
+            return null;
+        }
+    },
+
+    createMagicCardInventory: async (walletAddress, signAndExecute) => {
+        if (!walletAddress || !signAndExecute) return null;
+        try {
+            const tx = new Transaction();
+            tx.moveCall({
+                target: `${PACKAGE_ID}::game_core::create_inventory`,
+                arguments: []
+            });
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    {
+                        transaction: tx,
+                        options: { showEffects: true }
+                    },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Inventory created! Digest: ${result.digest}`);
+                            // Find the created object ID
+                            const created = result.effects?.created?.[0]?.reference?.objectId;
+                            resolve(created || true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Create Inventory failed:`, err);
+                            resolve(null);
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error("[Blockchain] Error creating inventory:", error);
+            return null;
+        }
+    },
+
+    buyMagicCard: async (client, walletAddress, type, price, signAndExecute) => {
+        if (!client || !walletAddress || !signAndExecute) return false;
+
+        // 1. Check Inventory
+        const inventory = await BlockchainService.getMagicCardInventory(client, walletAddress);
+        const inventoryId = inventory?.objectId;
+
+        try {
+            const tx = new Transaction();
+
+            // 2. Payment (Burn/Transfer)
+            const BURN_ADDRESS = "0x0000000000000000000000000000000000000000000000000000000000000000";
+            const coinType = `${PACKAGE_ID}::usdt::USDT`;
+            const priceRaw = price * 1000000;
+
+            const { data: coins } = await client.getCoins({
+                owner: walletAddress,
+                coinType: coinType
+            });
+            const validCoins = coins.filter(c => parseInt(c.balance) > 0);
+
+            if (validCoins.length === 0) {
+                alert("No USDT found!");
+                return false;
+            }
+
+            let primaryCoin = validCoins[0];
+            let currentBalance = parseInt(primaryCoin.balance);
+            const coinsToMerge = [];
+
+            if (currentBalance < priceRaw) {
+                for (let i = 1; i < validCoins.length; i++) {
+                    const coin = validCoins[i];
+                    coinsToMerge.push(coin);
+                    currentBalance += parseInt(coin.balance);
+                    if (currentBalance >= priceRaw) break;
+                }
+            }
+
+            if (currentBalance < priceRaw) {
+                alert(`Insufficient USDT! Need ${price} USDT.`);
+                return false;
+            }
+
+            if (coinsToMerge.length > 0) {
+                tx.mergeCoins(
+                    tx.object(primaryCoin.coinObjectId),
+                    coinsToMerge.map(c => tx.object(c.coinObjectId))
+                );
+            }
+
+            const [paymentCoin] = tx.splitCoins(tx.object(primaryCoin.coinObjectId), [tx.pure.u64(priceRaw)]);
+            tx.transferObjects([paymentCoin], tx.pure.address(BURN_ADDRESS));
+
+            // 3. Update or Create Inventory
+            if (inventoryId) {
+                // Normal update
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::game_core::update_card_inventory`,
+                    arguments: [
+                        tx.object(inventoryId), // Inventory Object
+                        tx.pure.vector('u8', new TextEncoder().encode(type)), // Card Type as vector<u8>
+                        tx.pure.u64(1),                // Amount
+                        tx.pure.bool(true)             // is_increase = true
+                    ]
+                });
+            } else {
+                // First time purchase: Create AND Add
+                console.log("[Blockchain] First purchase! Creating inventory and adding card...");
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::game_core::create_inventory_and_purchase`,
+                    arguments: [
+                        tx.pure.vector('u8', new TextEncoder().encode(type)),
+                        tx.pure.u64(1)
+                    ]
+                });
+            }
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Purchased ${type}!`);
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Purchase failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+
+        } catch (error) {
+            console.error("[Blockchain] Error buying magic card:", error);
+            return false;
+        }
+    },
+
+    useMagicCard: async (client, walletAddress, type, signAndExecute) => {
+        if (!client || !walletAddress || !signAndExecute) return false;
+
+        const inventory = await BlockchainService.getMagicCardInventory(client, walletAddress);
+        if (!inventory) return false;
+
+        try {
+            const tx = new Transaction();
+            tx.moveCall({
+                target: `${PACKAGE_ID}::game_core::update_card_inventory`,
+                arguments: [
+                    tx.object(inventory.objectId),
+                    tx.pure.vector('u8', new TextEncoder().encode(type)),
+                    tx.pure.u64(1),
+                    tx.pure.bool(false) // is_increase = false (consume)
+                ]
+            });
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Used ${type}!`);
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Use failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+        } catch (error) {
+            console.error("[Blockchain] Error using magic card:", error);
             return false;
         }
     }

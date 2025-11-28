@@ -35,6 +35,8 @@ function Dashboard() {
         { id: 'nkCell', name: 'NK Cell', image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png', unlocked: false, type: 'Single', damage: 100 }
     ]);
 
+    const [magicCards, setMagicCards] = useState({ heal: 0, nuke: 0, freeze: 0, poison: 0 });
+
     useEffect(() => {
         if (account?.address) {
             const fetchInventory = async () => {
@@ -44,6 +46,17 @@ function Dashboard() {
 
                 // Fetch real SBT stats from blockchain
                 const sbtStats = await BlockchainService.getSBTStats(client, account.address);
+
+                // Fetch Magic Card Inventory
+                const cardInventory = await BlockchainService.getMagicCardInventory(client, account.address);
+                if (cardInventory) {
+                    setMagicCards({
+                        heal: parseInt(cardInventory.counts.heal),
+                        nuke: parseInt(cardInventory.counts.nuke),
+                        freeze: parseInt(cardInventory.counts.freeze),
+                        poison: parseInt(cardInventory.counts.poison)
+                    });
+                }
 
                 // Also check local storage simulation for smoother dev experience
                 const macrophageUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'macrophage');
@@ -220,6 +233,43 @@ function Dashboard() {
                                         {tower.unlocked ? (
                                             <div className="inventory-stats">
                                                 <span>DMG: {tower.damage}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="lock-overlay">
+                                                <span className="lock-icon">🔒</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="inventory-section glass fade-in" style={{ animationDelay: '0.2s', marginTop: '20px' }}>
+                            <div className="section-header">
+                                <h2>✨ Magic Cards</h2>
+                                <span className="inventory-count">{Object.values(magicCards).reduce((acc, val) => acc + val, 0)} Owned</span>
+                            </div>
+                            <div className="inventory-grid">
+                                {[
+                                    { id: 'heal', name: 'Healing Pulse', image: '/assets/animation_frames/Heal/Heal.png', type: 'Support' },
+                                    { id: 'nuke', name: 'Cytokine Storm', image: '/assets/animation_frames/Nuke/Nuke.png', type: 'Damage' },
+                                    { id: 'freeze', name: 'Cryo Stasis', image: '/assets/animation_frames/Freeze/Freeze.png', type: 'Control' },
+                                    { id: 'poison', name: 'Viral Toxin', image: '/assets/animation_frames/Poison/Poison.png', type: 'DoT' }
+                                ].map((card) => (
+                                    <div
+                                        key={card.id}
+                                        className={`inventory-item ${magicCards[card.id] > 0 ? 'unlocked' : 'locked'}`}
+                                    >
+                                        <div className="inventory-icon">
+                                            <img src={card.image} alt={card.name} />
+                                        </div>
+                                        <div className="inventory-info">
+                                            <div className="inventory-name">{card.name}</div>
+                                            <div className="inventory-type">{card.type}</div>
+                                        </div>
+                                        {magicCards[card.id] > 0 ? (
+                                            <div className="inventory-stats">
+                                                <span>Count: {magicCards[card.id]}</span>
                                             </div>
                                         ) : (
                                             <div className="lock-overlay">
