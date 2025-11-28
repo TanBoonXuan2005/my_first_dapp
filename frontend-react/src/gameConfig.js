@@ -32,7 +32,7 @@ const GAME_CONFIG = {
         },
         nkCell: {
             range: 750,           // Long attack range
-            attackSpeed: 3.0,     // Slow attack speed
+            attackSpeed: 6.0,     // Slow attack speed
             damage: 1500,           // High single target damage
             projectileSpeed: 800  // Fast projectile
         }
