@@ -18,9 +18,9 @@ function Dashboard() {
 
     const handleMintUSDT = async () => {
         if (!account?.address) return;
-        const success = await BlockchainService.mintUSDT(client, account.address, 100, signAndExecute);
+        const success = await BlockchainService.mintUSDT(client, account.address, 10000, signAndExecute);
         if (success) {
-            alert("Successfully minted 100 USDT!");
+            alert("Successfully minted 10,000 USDT!");
             // Refresh data logic is now centralized in useEffect, but for manual refresh:
             const balance = await BlockchainService.getUSDTBalance(client, account.address);
             setUsdtBalance(balance);
@@ -31,8 +31,11 @@ function Dashboard() {
         { id: 'bcell', name: 'B-Cell', image: '/assets/animation_frames/B-Cells/B-Cell_Idle(Neutral Form).png', unlocked: true, type: 'Ranged', damage: 15 },
         { id: 'macrophage', name: 'Macrophage', image: '/assets/animation_frames/Macrophage/Macrophage_Idle(Neutral).png', unlocked: false, type: 'Melee', damage: 25 },
         { id: 'platelet', name: 'Platelet', image: '/assets/animation_frames/Platelet/Platelet_Idle.png', unlocked: false, type: 'Support', damage: 5 },
-        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 }
+        { id: 'basophil', name: 'Basophil', image: '/assets/animation_frames/Basophil/Basophil_Idle.png', unlocked: false, type: 'AoE', damage: 10 },
+        { id: 'nkCell', name: 'NK Cell', image: '/assets/animation_frames/NK-Cell/NK-Cell_Aim_Side.png', unlocked: false, type: 'Single', damage: 100 }
     ]);
+
+    const [magicCards, setMagicCards] = useState({ heal: 0, nuke: 0, freeze: 0, poison: 0 });
 
     useEffect(() => {
         if (account?.address) {
@@ -44,15 +47,28 @@ function Dashboard() {
                 // Fetch real SBT stats from blockchain
                 const sbtStats = await BlockchainService.getSBTStats(client, account.address);
 
+                // Fetch Magic Card Inventory
+                const cardInventory = await BlockchainService.getMagicCardInventory(client, account.address);
+                if (cardInventory) {
+                    setMagicCards({
+                        heal: parseInt(cardInventory.counts.heal),
+                        nuke: parseInt(cardInventory.counts.nuke),
+                        freeze: parseInt(cardInventory.counts.freeze),
+                        poison: parseInt(cardInventory.counts.poison)
+                    });
+                }
+
                 // Also check local storage simulation for smoother dev experience
                 const macrophageUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'macrophage');
                 const plateletUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'platelet');
                 const basophilUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'basophil');
+                const nkCellUnlocked = await BlockchainService.checkUnlockSBT(account.address, 'nkCell');
 
                 setInventory(prev => prev.map(item => {
                     if (item.id === 'macrophage') return { ...item, unlocked: !!sbtStats.macrophage || macrophageUnlocked };
                     if (item.id === 'platelet') return { ...item, unlocked: !!sbtStats.platelet || plateletUnlocked };
                     if (item.id === 'basophil') return { ...item, unlocked: !!sbtStats.basophil || basophilUnlocked };
+                    if (item.id === 'nkCell') return { ...item, unlocked: !!sbtStats.nkCell || nkCellUnlocked };
                     return item;
                 }));
             };
@@ -165,7 +181,7 @@ function Dashboard() {
                                                 cursor: 'pointer'
                                             }}
                                         >
-                                            +100
+                                            +10,000
                                         </button>
                                     </div>
                                 </div>
@@ -217,6 +233,43 @@ function Dashboard() {
                                         {tower.unlocked ? (
                                             <div className="inventory-stats">
                                                 <span>DMG: {tower.damage}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="lock-overlay">
+                                                <span className="lock-icon">🔒</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="inventory-section glass fade-in" style={{ animationDelay: '0.2s', marginTop: '20px' }}>
+                            <div className="section-header">
+                                <h2>✨ Magic Cards</h2>
+                                <span className="inventory-count">{Object.values(magicCards).reduce((acc, val) => acc + val, 0)} Owned</span>
+                            </div>
+                            <div className="inventory-grid">
+                                {[
+                                    { id: 'heal', name: 'Healing Pulse', image: '/assets/animation_frames/Heal/Heal.png', type: 'Support' },
+                                    { id: 'nuke', name: 'Cytokine Storm', image: '/assets/animation_frames/Nuke/Nuke.png', type: 'Damage' },
+                                    { id: 'freeze', name: 'Cryo Stasis', image: '/assets/animation_frames/Freeze/Freeze.png', type: 'Control' },
+                                    { id: 'poison', name: 'Viral Toxin', image: '/assets/animation_frames/Poison/Poison.png', type: 'DoT' }
+                                ].map((card) => (
+                                    <div
+                                        key={card.id}
+                                        className={`inventory-item ${magicCards[card.id] > 0 ? 'unlocked' : 'locked'}`}
+                                    >
+                                        <div className="inventory-icon">
+                                            <img src={card.image} alt={card.name} />
+                                        </div>
+                                        <div className="inventory-info">
+                                            <div className="inventory-name">{card.name}</div>
+                                            <div className="inventory-type">{card.type}</div>
+                                        </div>
+                                        {magicCards[card.id] > 0 ? (
+                                            <div className="inventory-stats">
+                                                <span>Count: {magicCards[card.id]}</span>
                                             </div>
                                         ) : (
                                             <div className="lock-overlay">

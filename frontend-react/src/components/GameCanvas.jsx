@@ -266,13 +266,41 @@ function GameCanvas() {
                         const startDrag = setupInput(k, gameState, () => ({ path1Points, path2Points }));
 
                         // Setup Shop
-                        // Setup Shop
-                        setupShop(k, gameState, startDrag, account?.address, sbtStats,
+                        setupShop(k, client, gameState, startDrag, account?.address, sbtStats,
                             // On Magic Card Click (Activate)
-                            (type) => {
-                                if (gameState.magicCards[type].cooldownTimer <= 0) {
+                            async (type) => {
+                                if (gameState.magicCards[type].cooldownTimer > 0) return;
+                                if (gameState.magicCards[type].count <= 0) return;
+
+                                // Optimistic update? Or wait for chain?
+                                // Let's wait for chain to be safe, or maybe optimistic for better UX?
+                                // Given "updated to the backend as well", let's do chain first.
+                                // But that might be slow.
+                                // Let's try:
+                                // 1. Check count > 0 (already done)
+                                // 2. Call chain
+                                // 3. If success, activate + decrement
+
+                                console.log(`[Game] Using Magic Card: ${type}`);
+                                const success = await BlockchainService.useMagicCard(client, account?.address, type, signAndExecute);
+
+                                if (success) {
+                                    gameState.magicCards[type].count--;
+                                    // Update visual count
+                                    const countText = k.get(`magic-count-${type}`);
+                                    if (countText.length > 0) {
+                                        countText[0].text = `x${gameState.magicCards[type].count}`;
+                                    }
+
                                     activateMagicCard(k, gameState, type);
                                     gameState.magicCards[type].cooldownTimer = GAME_CONFIG.magicCards[type].cooldown;
+
+                                    // If count becomes 0, lock it visually
+                                    if (gameState.magicCards[type].count <= 0) {
+                                        updateMagicCardVisuals(k, type, false);
+                                    }
+                                } else {
+                                    console.log("[Game] Failed to use magic card");
                                 }
                             },
                             // On Magic Card Purchase (Disabled in-game)
