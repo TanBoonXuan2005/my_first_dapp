@@ -58,6 +58,9 @@ Before running the game, you need to configure your OneWallet to interact with t
         ```
     -   This will allow you to see and manage your in-game currency.
 
+### 💡 Troubleshooting / Tips
+-   **Transaction Lag**: If you experience lag or delays during transactions (e.g., minting USDT or purchasing cards), try **opening the One Wallet extension in the side panel** of your browser. This often helps refresh the connection and speed up approval prompts.
+
 ## 🛠️ How to Run Locally
 
 If you prefer to run the game locally, follow these steps:
