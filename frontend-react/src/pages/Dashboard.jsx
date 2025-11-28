@@ -141,7 +141,7 @@ function Dashboard() {
 
                     <div className="inventory-section glass fade-in" style={{ animationDelay: '0.1s' }}>
                         <div className="section-header">
-                            <h2>🎒 Tower Inventory</h2>
+                            <h2>🎒 Immune cells Inventory</h2>
                             <span className="inventory-count">{inventory.filter(t => t.unlocked).length}/{inventory.length}</span>
                         </div>
                         <div className="inventory-grid">
