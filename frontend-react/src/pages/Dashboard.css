@@ -7,7 +7,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -21,27 +21,6 @@
 .header-content p {
     font-size: 1.1rem;
     color: var(--text-secondary);
-}
-
-.player-rank {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.75rem 1.5rem;
-    min-width: 120px;
-}
-
-.rank-label {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-}
-
-.rank-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--accent-primary);
 }
 
 .connect-prompt {
@@ -61,73 +40,12 @@
     filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.2));
 }
 
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 3rem;
-}
-
-.stat-card {
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    background: rgba(30, 41, 59, 0.6);
-    border-color: rgba(56, 189, 248, 0.2);
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
-}
-
-.stat-icon-wrapper {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(56, 189, 248, 0.1);
-    border-radius: 12px;
-}
-
-.stat-icon {
-    font-size: 2rem;
-}
-
-.stat-content {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.stat-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 600;
-}
-
-.stat-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
 .dashboard-content {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 2rem;
-}
-
-.left-column {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .section-header {
@@ -145,8 +63,7 @@
 }
 
 .wallet-section,
-.inventory-section,
-.history-section {
+.inventory-section {
     padding: 2rem;
 }
 
@@ -190,7 +107,7 @@
 
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 1rem;
 }
 
@@ -243,6 +160,7 @@
     font-weight: 600;
     color: var(--text-primary);
     font-size: 1rem;
+    text-align: center;
 }
 
 .inventory-type {
@@ -278,125 +196,13 @@
     opacity: 0.8;
 }
 
-.history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background: rgba(15, 23, 42, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-    border-radius: 10px;
-    transition: all 0.2s ease;
-}
-
-.history-item:hover {
-    background: rgba(255, 255, 255, 0.03);
-    transform: translateX(4px);
-}
-
-.history-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.history-wave {
-    font-weight: 700;
-    color: var(--text-primary);
-    font-size: 1rem;
-}
-
-.history-date {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-.history-stats {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.history-score {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-}
-
-.history-result {
-    padding: 0.35rem 0.85rem;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.history-result.victory {
-    background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.2);
-}
-
-.history-result.defeat {
-    background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-}
-
 /* Responsive */
-@media (max-width: 1024px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .dashboard-content {
-        grid-template-columns: 1fr;
-    }
-
-    .dashboard-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1.5rem;
-    }
-
-    .player-rank {
-        align-self: flex-start;
-        padding-left: 0;
-    }
-}
-
 @media (max-width: 768px) {
     .header-content h1 {
         font-size: 2.25rem;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .stat-card {
-        justify-content: flex-start;
-    }
-
     .inventory-grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    }
-
-    .history-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-
-    .history-stats {
-        width: 100%;
-        justify-content: space-between;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     }
 }

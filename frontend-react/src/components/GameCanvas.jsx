@@ -399,7 +399,7 @@ function GameCanvas() {
                             // Update UI for cooldowns
                             const magicTypes = ['heal', 'nuke', 'freeze', 'poison'];
                             magicTypes.forEach(type => {
-                                if (gameState.magicCards[type].owned) {
+                                if (gameState.magicCards[type].count > 0) {
                                     const t = gameState.magicCards[type].cooldownTimer;
                                     updateMagicCardCooldownVisuals(k, type, t);
                                 }

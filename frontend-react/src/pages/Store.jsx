@@ -379,7 +379,7 @@ function Store() {
                                         <div className="stat-item">
                                             <span className="stat-label">Cooldown</span>
                                             <div className="stat-bar-container">
-                                                <div className="stat-bar" style={{ width: `${(120 - card.cooldown) / 120 * 100}%`, background: '#a855f7' }}></div>
+                                                <div className="stat-bar" style={{ width: `${(card.cooldown / 120) * 100}%`, background: '#a855f7' }}></div>
                                             </div>
                                             <span className="stat-value">{card.cooldown}s</span>
                                         </div>
