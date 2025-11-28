@@ -486,7 +486,7 @@ export function placeNKCell(k, dropPos, gameState) {
                 const laser = k.add([
                     k.pos(tower.pos),
                     k.z(40),
-                    k.lifespan(0.1), // Lasts for 0.1 seconds
+                    k.lifespan(0.3), // Lasts longer
                     "laser",
                     {
                         draw() {
@@ -495,7 +495,7 @@ export function placeNKCell(k, dropPos, gameState) {
                                 p1: k.vec2(0),
                                 p2: nearestEnemy.pos.sub(this.pos),
                                 width: 4,
-                                color: k.rgb(0, 255, 255), // Cyan color
+                                color: k.rgb(255, 170, 0), // Bright Orange
                                 opacity: 0.8
                             });
                         }
