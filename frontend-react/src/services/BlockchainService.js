@@ -167,11 +167,11 @@ const BlockchainService = {
             console.log("[Blockchain] 🧹 Starting Reset (Burn) Process...");
             const tx = new Transaction();
 
-            const macrophageType = `${PACKAGE_ID}::game_core::Macrophage`;
-            const plateletType = `${PACKAGE_ID}::game_core::Platelet`;
-            const basophilType = `${PACKAGE_ID}::game_core::Basophil`;
-            const nkCellType = `${PACKAGE_ID}::game_core::NKCell`;
-            const inventoryType = `${PACKAGE_ID}::game_core::MagicCardInventory`;
+            const macrophageType = `${PACKAGE_ID}::sbt::Macrophage`;
+            const plateletType = `${PACKAGE_ID}::sbt::Platelet`;
+            const basophilType = `${PACKAGE_ID}::sbt::Basophil`;
+            const nkCellType = `${PACKAGE_ID}::sbt::NKCell`;
+            const inventoryType = `${PACKAGE_ID}::inventory::Inventory`;
 
             // Fetch all owned objects of these types
             const { data } = await client.getOwnedObjects({
@@ -255,10 +255,10 @@ const BlockchainService = {
         if (!client || !walletAddress) return {};
 
         try {
-            const macrophageType = `${PACKAGE_ID}::game_core::Macrophage`;
-            const plateletType = `${PACKAGE_ID}::game_core::Platelet`;
-            const basophilType = `${PACKAGE_ID}::game_core::Basophil`;
-            const nkCellType = `${PACKAGE_ID}::game_core::NKCell`;
+            const macrophageType = `${PACKAGE_ID}::sbt::Macrophage`;
+            const plateletType = `${PACKAGE_ID}::sbt::Platelet`;
+            const basophilType = `${PACKAGE_ID}::sbt::Basophil`;
+            const nkCellType = `${PACKAGE_ID}::sbt::NKCell`;
 
             const { data } = await client.getOwnedObjects({
                 owner: walletAddress,
@@ -478,7 +478,7 @@ const BlockchainService = {
     getMagicCardInventory: async (client, walletAddress) => {
         if (!client || !walletAddress) return null;
         try {
-            const inventoryType = `${PACKAGE_ID}::game_core::MagicCardInventory`;
+            const inventoryType = `${PACKAGE_ID}::inventory::Inventory`;
             const { data } = await client.getOwnedObjects({
                 owner: walletAddress,
                 filter: { StructType: inventoryType },
@@ -669,6 +669,68 @@ const BlockchainService = {
             });
         } catch (error) {
             console.error("[Blockchain] Error using magic card:", error);
+            return false;
+        }
+    },
+
+    claimWaveReward: async (client, walletAddress, wave, signAndExecute) => {
+        if (!client || !walletAddress || !signAndExecute) return false;
+
+        // Only waves > 5 eligible
+        if (wave <= 5) return false;
+
+        console.log(`[Blockchain] 🎲 Rolling for Wave ${wave} Reward...`);
+
+        // 1. Check Inventory
+        const inventory = await BlockchainService.getMagicCardInventory(client, walletAddress);
+        const inventoryId = inventory?.objectId;
+
+        try {
+            const tx = new Transaction();
+            const RANDOM_OBJECT_ID = "0x8"; // Standard Random Object ID
+
+            if (inventoryId) {
+                // Existing inventory: claim_wave_reward
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::game_core::claim_wave_reward`,
+                    arguments: [
+                        tx.object(inventoryId),
+                        tx.pure.u64(wave),
+                        tx.object(RANDOM_OBJECT_ID)
+                    ]
+                });
+            } else {
+                // No inventory: create_inventory_and_claim_reward
+                console.log("[Blockchain] No inventory found. Creating one for reward claim...");
+                tx.moveCall({
+                    target: `${PACKAGE_ID}::game_core::create_inventory_and_claim_reward`,
+                    arguments: [
+                        tx.pure.u64(wave),
+                        tx.object(RANDOM_OBJECT_ID)
+                    ]
+                });
+            }
+
+            return new Promise((resolve) => {
+                signAndExecute(
+                    { transaction: tx },
+                    {
+                        onSuccess: (result) => {
+                            console.log(`[Blockchain] ✅ Reward Roll Transaction Success! Digest: ${result.digest}`);
+                            // We don't know if they won or not without parsing events/effects, 
+                            // but for now we just confirm the roll happened.
+                            resolve(true);
+                        },
+                        onError: (err) => {
+                            console.error(`[Blockchain] ❌ Reward Roll failed:`, err);
+                            resolve(false);
+                        }
+                    }
+                );
+            });
+
+        } catch (error) {
+            console.error("[Blockchain] Error claiming wave reward:", error);
             return false;
         }
     }
