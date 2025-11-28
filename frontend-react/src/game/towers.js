@@ -478,36 +478,29 @@ export function placeNKCell(k, dropPos, gameState) {
                 // Use side-1 or up-1 for shooting frame if available, otherwise just shoot
                 // For simplicity, we just spawn projectile
 
-                const projectile = k.add([
-                    k.sprite("y-antibody"), // Reusing antibody for now
+                // Instant hitscan laser
+                showDamageNumber(k, nearestEnemy.pos, tower.damage);
+                nearestEnemy.hp -= tower.damage;
+
+                // Visual Laser Beam
+                const laser = k.add([
                     k.pos(tower.pos),
-                    k.anchor("center"),
-                    k.scale(0.04),
-                    k.area(),
-                    k.z(30),
-                    "projectile",
+                    k.z(40),
+                    k.lifespan(0.1), // Lasts for 0.1 seconds
+                    "laser",
                     {
-                        speed: GAME_CONFIG.towers.nkCell.projectileSpeed,
-                        target: nearestEnemy,
-                        damage: tower.damage
+                        draw() {
+                            if (!nearestEnemy.exists()) return;
+                            k.drawLine({
+                                p1: k.vec2(0),
+                                p2: nearestEnemy.pos.sub(this.pos),
+                                width: 4,
+                                color: k.rgb(0, 255, 255), // Cyan color
+                                opacity: 0.8
+                            });
+                        }
                     }
                 ]);
-
-                projectile.onUpdate(() => {
-                    if (!projectile.target.exists()) {
-                        k.destroy(projectile);
-                        return;
-                    }
-
-                    const dir = projectile.target.pos.sub(projectile.pos).unit();
-                    projectile.move(dir.scale(projectile.speed));
-
-                    if (projectile.pos.dist(projectile.target.pos) < 20) {
-                        showDamageNumber(k, projectile.target.pos, projectile.damage);
-                        projectile.target.hp -= projectile.damage;
-                        k.destroy(projectile);
-                    }
-                });
             }
         }
     });
